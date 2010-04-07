@@ -1,10 +1,15 @@
 <?php
 
-require 'bogart.php';
+require 'Bogart/ClassLoader.php';
+Bogart\ClassLoader::register();
 
-Config::$foo = 'bar';
-Set::$foo = 'bar';
-Config::$sessions = true;
+use Bogart\Config;
+use Bogart\Route;
+use Bogart\Bogart;
+
+set('test', 'test2');
+
+var_dump(getAll());
 
 enable('sessions', 'logging');
 disable('sessions', 'logging');

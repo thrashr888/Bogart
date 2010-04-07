@@ -1,23 +1,33 @@
 <?php
 
-require 'SplClassLoader.php';
-$classLoader = new SplClassLoader('Bogart', __DIR__); // load us in our namespace
-$classLoader->register();
+namespace Bogart;
 
-use 'Bogart\Route';
-use 'Bogart\Request';
-use 'Bogart\Response';
+use Bogart\Route;
+use Bogart\Request;
+use Bogart\Response;
 // TODO: Merge the request and route???
 
 class Bogart
 {
-  public static __construct($name)
+  public __construct($name)
   {
     $request = new Request();
     $response = new Response();
     $view = new View();
     
-    $view = Route::execute();
+    $callback = Route::execute();
+    // we'll need to account for static pages w/ no routing + a template
+    
+    if(is_a($route, 'View'))
+    {
+      // we return a certain type of view object (html, json, etc.)
+      $view = $callback;
+    }
+    else
+    {
+      // try to create a default view based on the format, using a template based on it's name
+      // if no template, account for 404 pages
+    }
     
     if(!$view)
     {

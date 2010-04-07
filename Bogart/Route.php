@@ -2,10 +2,10 @@
 
 namespace Bogart;
 
+use Bogart\Config;
+
 class Route
 {
-  private static $routes = array();
-  
   public function execute(Request $request)
   {
     foreach(Route::$routes[$request->method] as $route)
@@ -30,7 +30,7 @@ class Route
         {
           $request->params['splat'] = $match;
         }
-        $callback = $this::$routes[$request->method][$route];
+        $callback = Config::$routes[$request->method][$route];
         $request->route = $route;
         return $callback($request);
       }
@@ -39,21 +39,21 @@ class Route
   
   public static function Get($route, $callback = false)
   {
-    $this::$routes['get'][$route] = $callback;
+    Config::$routes['get'][$route] = $callback;
   }
 
   public static function Post($route, $callback = false)
   {
-    $this::$routes['post'][$route] = $callback;
+    Config::$routes['post'][$route] = $callback;
   }
 
   public static function Put($route, $callback = false)
   {
-    $this::$routes['put'][$route] = $callback;
+    Config::$routes['put'][$route] = $callback;
   }
 
   public static function Delete($route, $callback = false)
   {
-    $this::$routes['delete'][$route] = $callback;
+    Config::$routes['delete'][$route] = $callback;
   }
 }
