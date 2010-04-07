@@ -6,54 +6,94 @@ use Bogart\Config;
 
 class Route
 {
-  public function execute(Request $request)
+  public function execute(Request $request, Response $response)
   {
-    foreach(Route::$routes[$request->method] as $route)
+    // try to match a route
+    foreach(Config::$data['routes'] as $route)
     {
-      $route = str_replace('*', '(.+)', $route);
-      if(strstr('*', $route))
+      if($route['method'] != $request->method)
       {
-        $route_type = 'splat';
-      }
-      if(strpos('r/', $route) == 0)
-      {
-        $route_type = 'regex';
+        continue;
       }
       
-      if($match = preg_match($route, $request->url))
+      if(strpos('r/', $route['route']) === 0)
       {
+        $route_type = 'regex';
+        $route_regex = $route['route'];
+      }
+      elseif(strstr($route['route'], '*'))
+      {
+        $route_type = 'splat';
+        $route_search = str_replace(array('*', '/'), array('(.+)', '\/'), $route['route']);
+        $route_regex = '/'.($route_search).'/i';
+      }
+      else
+      {
+        $route_type = 'match';
+        $route_regex = '/'.addslashes($route['route']).'/i';
+      }
+      
+      if(preg_match($route_regex, $request->url, $matches))
+      {
+          debug($route_regex);
+            debug($matches);
         if($route_type == 'regex')
         {
-          $request->params['captures'] = $match;
+          $request->params['captures'] = $matches;
         }
         if($route_type == 'splat')
         {
-          $request->params['splat'] = $match;
+          $request->params['splat'] = ($matches);
         }
-        $callback = Config::$routes[$request->method][$route];
-        $request->route = $route;
-        return $callback($request);
+        $callback = $route['callback'];
+        $request->route = $route['route'];
+        
+        if(is_callable($callback))
+        {
+          return $callback($request, $response);
+        }
+        else
+        {
+          return null;
+        }
       }
     }
+    return null;
   }
   
   public static function Get($route, $callback = false)
   {
-    Config::$routes['get'][$route] = $callback;
+    Config::$data['routes'][] = array(
+      'method' => 'get',
+      'route' => $route,
+      'callback' => $callback,
+      );
   }
 
   public static function Post($route, $callback = false)
   {
-    Config::$routes['post'][$route] = $callback;
+    Config::$data['routes'][] = array(
+      'method' => 'post',
+      'route' => $route,
+      'callback' => $callback,
+      );
   }
 
   public static function Put($route, $callback = false)
   {
-    Config::$routes['put'][$route] = $callback;
+    Config::$data['routes'][] = array(
+      'method' => 'put',
+      'route' => $route,
+      'callback' => $callback,
+      );
   }
 
   public static function Delete($route, $callback = false)
   {
-    Config::$routes['delete'][$route] = $callback;
+    Config::$data['routes'][] = array(
+      'method' => 'delete',
+      'route' => $route,
+      'callback' => $callback,
+      );
   }
 }

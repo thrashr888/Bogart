@@ -4,7 +4,7 @@ namespace Bogart;
 
 class Config
 {
-  public static $data = array(), $routes = array();
+  public static $data = array();
   
   public static function get($name)
   {

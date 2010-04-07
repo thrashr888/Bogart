@@ -9,8 +9,6 @@ use Bogart\Bogart;
 
 set('test', 'test2');
 
-var_dump(getAll());
-
 enable('sessions', 'logging');
 disable('sessions', 'logging');
 set('foo', 'bar');
@@ -18,15 +16,13 @@ set('five', function(){
   return 3+2;
 });
 
-// homepage, no dynamic data
-Route::Get('/');
-
 // splat routes
-Route::Get('/say/*/to/*', function($this){
-  $test = $this->params['splat'];
+Route::Get('/say/*/to/*', function($request, $response){
+  $test = $request->params['splat'];
+  debug($request);
   echo 'test-'.join(', ', $test);
 
-  return $this->HTML('index', $test);
+  return $response->HTML('index', $test);
 });
 
 // regex route with .json format
@@ -46,6 +42,9 @@ Route::Get('/stylesheets/*.css', function($this){
   return $this->less($test, $test);
 });
 
+// homepage, no dynamic data
+Route::Get('/*');
+
 // a catch-all for posts
 Route::Post('/*', function(){
   echo 'test';
@@ -56,5 +55,7 @@ Route::Post('/save', function(){
   echo 'test';
   return 'index';
 });
+
+debug(getAll());
 
 new Bogart;

@@ -17,10 +17,16 @@ class View
     
     if(is_array($this->data))
     {
-      explode($this->data);
+      extract($this->data);
     }
     
-    include Config::$dirs['base'].'/views/'.$this->template.'.'.$this->format;
+    Config::$data['view']['template_file'] = Config::$data['dirs']['base'].'/views/'.$this->template.'.'.$this->format;
+    var_dump(Config::$data['view']['template_file']);
+    
+    if(file_exists(Config::$data['view']['template_file']))
+    {
+      include Config::$data['view']['template_file'];
+    }
     
     return ob_get_clean();
   }

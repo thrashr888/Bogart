@@ -9,16 +9,21 @@ use Bogart\Response;
 
 class Bogart
 {
-  public __construct($name)
+  public function __construct()
   {
     $request = new Request();
-    $response = new Response();
     $view = new View();
+    $response = new Response($view);
     
-    $callback = Route::execute();
+    ob_start();
+    $callback = Route::execute($request, $response);
+    $content = ob_get_clean();
     // we'll need to account for static pages w/ no routing + a template
     
-    if(is_a($route, 'View'))
+    debug($request);
+    debug($callback);
+    
+    if(is_a($callback, 'View'))
     {
       // we return a certain type of view object (html, json, etc.)
       $view = $callback;
@@ -46,7 +51,7 @@ class Bogart
     }
     $content = $view->render();
     
-    $response->setFormat($request->getFormat());
+    $response->format = $request->format;
     
     echo $response->send($content);
     exit;
@@ -54,7 +59,7 @@ class Bogart
   
   function getAppName($backtrace)
   {
-    $match = preg_match('/\/([\w_-])\.php$\/i', $backtrace[0]['file']);
+    $match = preg_match('/\/([\w_-])\.php$/i', $backtrace[0]['file']);
     return $match[0];
   }
 }
