@@ -1,28 +1,35 @@
 <?php
 
-require 'Bogart/ClassLoader.php';
-Bogart\ClassLoader::register();
+include 'lib/Bogart/bootstrap.php';
 
-use Bogart\Config;
-use Bogart\Route;
 use Bogart\Bogart;
-
-set('test', 'test2');
+use Bogart\Config;
+use Bogart\Store;
+use Bogart\Route;
 
 enable('sessions', 'logging');
-disable('sessions', 'logging');
+disable('sessions', 'database');
 set('foo', 'bar');
 set('five', function(){
   return 3+2;
 });
 
 // splat routes
-Route::Get('/say/*/to/*', function($request, $response){
-  $test = $request->params['splat'];
-  debug($request);
+Route::Get('/say/*/to/*', function($b){
+  $test = $b->params['splat'];
+  debug($b);
   echo 'test-'.join(', ', $test);
 
-  return $response->HTML('index', $test);
+  //return $b->HTML('index', $test);
+});
+
+// named routes
+Route::Get('/say/:hello/to/:world', function($b){
+  $test = $b->params['splat'];
+  debug($b);
+  echo 'test-'.join(', ', $test);
+
+  return $b->HTML('index', $test);
 });
 
 // regex route with .json format
@@ -56,6 +63,10 @@ Route::Post('/save', function(){
   return 'index';
 });
 
-debug(getAll());
+//debug(getAll());
 
-new Bogart;
+//Store::coll('cfg')->drop();
+
+Bogart::go();
+
+\Bogart\Log::pretty();

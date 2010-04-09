@@ -2,8 +2,6 @@
 
 namespace Bogart;
 
-include 'functions.php';
-
 class ClassLoader
 {
   static protected $instance;

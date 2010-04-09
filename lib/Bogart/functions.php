@@ -4,24 +4,24 @@ use Bogart\Config;
 
 function Get($name)
 {
-  return Config::$data[$name];
+  return Config::get($name);
 }
 
 function GetAll()
 {
-  return Config::$data;
+  return Config::getAll();
 }
 
 function Set($name, $value)
 {
-  Config::$data[$name] = $value;
+  Config::set($name, $value);
 }
 
 function Enable()
 {
   foreach(func_get_args() as $arg)
   {
-    Config::$data[$arg] = true;
+    Config::enable($arg);
   }
 }
 
@@ -29,7 +29,7 @@ function Disable()
 {
   foreach(func_get_args() as $arg)
   {
-    Config::$data[$arg] = false;
+    Config::disable($arg);
   }
 }
 

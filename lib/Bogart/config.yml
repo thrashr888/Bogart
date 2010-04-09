@@ -1,0 +1,10 @@
+app:
+  name: Default Bogart App
+mongo:
+  persistant: true
+  dbname: Bogart
+store:
+  cfg:
+    womething: test
+    another: value
+    boolean: true

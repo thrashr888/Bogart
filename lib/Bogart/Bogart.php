@@ -2,6 +2,9 @@
 
 namespace Bogart;
 
+use Bogart\Config;
+use Bogart\Store;
+use Bogart\Log;
 use Bogart\Route;
 use Bogart\Request;
 use Bogart\Response;
@@ -9,19 +12,24 @@ use Bogart\Response;
 
 class Bogart
 {
-  public function __construct()
+  public static function go()
   {
     $request = new Request();
     $view = new View();
     $response = new Response($view);
+    Log::write('instantiate classes', 'go');
     
     ob_start();
     $callback = Route::execute($request, $response);
     $content = ob_get_clean();
+    Log::write('executed route', 'go');
     // we'll need to account for static pages w/ no routing + a template
     
     debug($request);
     debug($callback);
+    
+    Config::save('mongo');
+    Log::write('saved config', 'go');
     
     if(is_a($callback, 'View'))
     {
@@ -44,20 +52,23 @@ class Bogart
     {
       if(!$view->template)
       {
-        $view->template = $this->getAppName(debug_backtrace());
+        $view->template = self::getAppName(debug_backtrace());
       }
       $view->format = $request->format;
       $response->setContent($content);
     }
+    Log::write('chose view', 'go');
+    
     $content = $view->render();
+    Log::write('rendered view', 'go');
     
     $response->format = $request->format;
     
     echo $response->send($content);
-    exit;
+    Log::write('sent content', 'go');
   }
   
-  function getAppName($backtrace)
+  protected static function getAppName($backtrace)
   {
     $match = preg_match('/\/([\w_-])\.php$/i', $backtrace[0]['file']);
     return $match[0];
