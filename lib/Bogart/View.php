@@ -14,7 +14,7 @@ class View
   
   public function __constructor($renderer)
   {
-    $this->renderer = $renderer;
+    $this->renderer = new \Mustache();
   }
   
   public function render()
@@ -30,19 +30,22 @@ class View
     
     $template_contents = file_get_contents(Config::get('view.template.file'));
     
-    Log::write(Config::get('view.template.file'));
-    stop($this->renderer);
-    stop(Config::get('view.template.file'));
+    Log::write('Using template: '.Config::get('view.template.file'));
+    //debug(Config::get('view.template.file'));
+    
+    $this->renderer = new \Mustache();
     
     return $this->renderer->render($template_contents, $this->data);
   }
   
   public static function HTML($template, $data = array())
   {
-    $view = new self(new \Mustache());
+    $renderer = new \Mustache();
+    $view = new self($renderer);
     $view->template = $template;
     $view->data = $data;
     $view->format = 'html';
+    //debug($view);
     return $view;
   }
 }

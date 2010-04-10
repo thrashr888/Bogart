@@ -30,7 +30,7 @@ class Log
         'count' => ++self::$count,
         'message' => $message,
         'time' => time(),
-        'trace' => $backtrace[0],
+        'trace' => $backtrace[1],
         'request_id' => self::$request_id,
         'type' => $type,
         'level' => $level,
@@ -95,10 +95,9 @@ class Log
     {
       return;
     }
+    $output = '';
     
     $log = self::read(self::$request_id);
-    
-    $output = "<div id='bogart_log'>";
     foreach($log as $item)
     {
       $time = new \DateTime("@".$item['time']);
@@ -119,7 +118,7 @@ class Log
         is_array($item['message']) || is_object($item['message']) ? '<pre>'.print_r($item['message'], true).'</pre>' : $item['message']
         );
     }
-    $output .= "</div>";
+    
     return $output;
   }
 }

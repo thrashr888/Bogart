@@ -170,7 +170,7 @@ class Config
       $yml = sfYaml::dump(self::getAll(false));
       file_put_contents($method, $yml);
     }
-    Log::write('saved store', 'config');
+    Log::write('Saved store.', 'config');
   }
   
   public static function getStore($key, $default = null)

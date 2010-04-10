@@ -1,35 +1,5 @@
 <?php
 
-/*
-Bogart: Sinatra for PHP
-
-Here's the main idea for this framework:
-Be minimal. Don't be everything. Just make decisions.
-
-Requires:
-- PHP 5.3
-- MongoDB
-- mod_rewrite
-- Amazon S3?
-
-Decisions so far:
-- Sinatra is awesome. Copy it.
-- MongoDB only.
-- PHP 5.3 only. Don't be afraid.
-- Closures for actions.
-- Splats and :named routes.
-- Requires mod_rewrite.
-- Files are only on S3 (maybe this doesn't matter).
-- Templates are mustache.php only.
-- Keep the file structure flat. Not too many classes.
-- Functions are cool when namespaced.
-- No plugins. Just extend if you need to.
-- Config in yaml.
-- No built in shit like blogs or comments or user or whatever.
-- Don't impose a user auth model. Use Twitter or Facebook for that.
-
-*/
-
 require 'lib/Bogart/ClassLoader.php';
 Bogart\ClassLoader::register();
 
@@ -45,18 +15,20 @@ enable('sessions', 'logging');
 disable('store');
 
 // named routes
-Route::Get('/say/:hello/to/:world', function(\Bogart\Request $r){
-  $test = $r->params['splat'];
-  debug($r);
+Route::Get('/say/:hello/to/:world', function(\Bogart\Request $req)
+{
+  $test = $req->params['splat'];
+  debug($req);
   echo 'test-'.join(', ', $test);
 
-  return View::HTML('index', $test);
+  return View::HTML('other', $test);
 });
 
 // splat routes
-Route::Get('/say/*/to/*', function(\Bogart\Request $r){
-  $test = $r->params['splat'];
-  debug($r);
+Route::Get('/say/*/to/*', function(\Bogart\Request $req)
+{
+  $test = $req->params['splat'];
+  debug($req);
   echo 'test-'.join(', ', $test);
 
   return View::HTML('index', $test);
@@ -98,5 +70,3 @@ Route::Post('/save', function(){
 //Store::coll('cfg')->drop();
 
 $p->dispatch();
-
-echo \Bogart\Log::pretty();

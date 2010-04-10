@@ -37,6 +37,8 @@ class Project
     Config::set('bogart.env', $env);
     Config::set('bogart.debug', $debug);
     
+    Log::write("Init project: name: '$name', env: '$env', debug: '$debug'");
+    
     // set to the user defined error handler
     set_error_handler("error_handler");
     
@@ -45,22 +47,23 @@ class Project
   
   public function dispatch()
   {
+    Log::write('Running dispatch.');
     try
     {
       $controller = new Controller();
       $controller->execute();
       if(Config::get('bogart.debug'))
       {
-        Controller::outputDebug(Log::pretty());
+        Exception::outputDebug();
       }
     }
     catch(\Exception $e)
     {
       echo 'broke.';
-      debug($e);
+      debug($e->__toString());
       if(Config::get('bogart.debug'))
       {
-        Controller::outputDebug(Log::pretty());
+        Exception::outputDebug();
       }
       exit;
     }

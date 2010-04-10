@@ -2,6 +2,7 @@
 
 use Bogart\Config;
 use Bogart\Controller;
+use Bogart\Exception;
 
 function Get($name)
 {
@@ -57,9 +58,12 @@ function debug($var = false, $showHtml = false, $return=false) {
 	}
 }
 
-function stop($var = null)
-{
-  if($var)debug($var);
+function stop($var = 'stop')
+{  
+	$calledFrom = debug_backtrace();
+  debug('Stop called from <b>'.$calledFrom[0]['file'].'</b> on line <b>'.$calledFrom[0]['line'].'</b>');
+	debug($var);
+  Exception::outputDebug();
   exit;
 }
 
@@ -90,8 +94,8 @@ function error_handler($errno, $errstr, $errfile, $errline) {
       
     if($errno == E_ERROR || $errno == E_USER_ERROR)
     {
-      Controller::outputDebug();
+      //Exception::outputDebug();
     }
-    Controller::outputDebug();
+    Exception::outputDebug();
     return true;
 }

@@ -4,26 +4,29 @@ namespace Bogart;
 
 class Response
 {
-  public $format = 'html', $content = NULL;
+  public
+    $format = 'html',
+    $content = NULL,
+    $headers = null;
   
-  public function __construct(View $view)
+  public function send($content)
   {
-    $this->view = $view;
+    echo $content;
   }
   
-  public function setContent($content)
+  public function setHeader($header)
   {
-    $this->content = $content;
+    $this->headers[] = $header;
   }
   
-  public function send()
+  public function sendHeaders()
   {
-    $this->view->render();
-  }
-  
-  public function HTML($template, $data)
-  {
-    //$this->setContent($);
-    
+    if($this->headers)
+    {
+      foreach($this->headers as $header)
+      {
+        header($header);
+      }
+    }
   }
 }

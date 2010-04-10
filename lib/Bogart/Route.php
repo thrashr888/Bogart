@@ -8,12 +8,12 @@ class Route
 {
   public $method, $type, $regex, $callback;
   
-  public function execute(Request $request, Response $response)
+  public static function find(Request $request, Response $response)
   {
     // try to match a route
     foreach(Config::get('bogart.routes') as $route)
     {  
-      Log::write('checking route: '.$route['route'], 'route');
+      Log::write('Checking route: '.$route['route'], 'route');
       
       if($route['method'] != $request->method)
       {
@@ -39,8 +39,6 @@ class Route
         $route['regex'] = '/'.addslashes($route['route']).'/i';
       }
       
-      Log::write($route, 'route');
-      
       if(preg_match($route['regex'], $request->url, $route['matches']))
       {
         if($route['type'] == 'regex')
@@ -53,7 +51,8 @@ class Route
         }
         $request->route = $route['route'];
         
-        Log::write('route found: '.$route['route'], 'route');
+        Log::write('Matched route: '.$route['route'], 'route');
+        Log::write($route, 'route');
         
         return $route;
       }
