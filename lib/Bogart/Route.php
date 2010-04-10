@@ -6,10 +6,12 @@ use Bogart\Config;
 
 class Route
 {
+  public $method, $type, $regex, $callback;
+  
   public function execute(Request $request, Response $response)
   {
     // try to match a route
-    foreach(Config::get('bogart_routes') as $route)
+    foreach(Config::get('bogart.routes') as $route)
     {  
       Log::write('checking route: '.$route['route'], 'route');
       
@@ -20,47 +22,40 @@ class Route
       
       if(strpos('r/', $route['route']) === 0)
       {
-        $route_type = 'regex';
-        $route_regex = $route['route'];
+        $route['type'] = 'regex';
+        $route['regex'] = $route['route'];
       }
-      elseif(strstr($route['route'], '*'))
+      if(strstr($route['route'], '*') || strstr($route['route'], ':'))
       {
-        $route_type = 'splat';
-        $route_search = preg_replace(array('*', ':([a-z_])'), array('(.+)', '(?<$1>[^\\])'), $route['route']);
-        $route_regex = '/'.addslashes($route_search).'/i';
+        $route['type'] = 'splat';
+        $search = array('/(\*)/', '/\:([a-z_]+)/i', '/\//');
+        $replace = array('(.+)', '(?<\1>[^/]+)', '\\\/');
+        $route_search = preg_replace($search, $replace, $route['route']);
+        $route['regex'] = '/'.($route_search).'/i';
       }
       else
       {
-        $route_type = 'match';
-        $route_regex = '/'.addslashes($route['route']).'/i';
+        $route['type'] = 'match';
+        $route['regex'] = '/'.addslashes($route['route']).'/i';
       }
-      Log::write('route type: '.$route_type, 'route');
       
-      if(preg_match($route_regex, $request->url, $matches))
+      Log::write($route, 'route');
+      
+      if(preg_match($route['regex'], $request->url, $route['matches']))
       {
-          debug($route_regex);
-          debug($matches);
-        if($route_type == 'regex')
+        if($route['type'] == 'regex')
         {
-          $request->params['captures'] = $matches;
+          $request->params['captures'] = $route['matches'];
         }
-        if($route_type == 'splat')
+        if($route['type'] == 'splat')
         {
-          $request->params['splat'] = ($matches);
+          $request->params['splat'] = $route['matches'];
         }
-        $callback = $route['callback'];
         $request->route = $route['route'];
         
         Log::write('route found: '.$route['route'], 'route');
         
-        if(is_callable($callback))
-        {
-          return $callback($request, $response);
-        }
-        else
-        {
-          return null;
-        }
+        return $route;
       }
     }
     return null;
@@ -68,7 +63,7 @@ class Route
   
   public static function Get($route, $callback = false)
   {
-    Config::add('bogart_routes', array(
+    Config::add('bogart.routes', array(
       'method' => 'get',
       'route' => $route,
       'callback' => $callback,
@@ -77,7 +72,7 @@ class Route
 
   public static function Post($route, $callback = false)
   {
-    Config::add('bogart_routes', array(
+    Config::add('bogart.routes', array(
       'method' => 'post',
       'route' => $route,
       'callback' => $callback,
@@ -86,7 +81,7 @@ class Route
 
   public static function Put($route, $callback = false)
   {
-    Config::add('bogart_routes', array(
+    Config::add('bogart.routes', array(
       'method' => 'put',
       'route' => $route,
       'callback' => $callback,
@@ -95,10 +90,30 @@ class Route
 
   public static function Delete($route, $callback = false)
   {
-    Config::add('bogart_routes', array(
+    Config::add('bogart.routes', array(
       'method' => 'delete',
       'route' => $route,
       'callback' => $callback,
       ));
   }
+}
+
+function Get($route, $callback = false)
+{
+  return Route::Get($route, $callback);
+}
+
+function Post($route, $callback = false)
+{
+  return Route::Post($route, $callback);
+}
+
+function Put($route, $callback = false)
+{
+  return Route::Put($route, $callback);
+}
+
+function Delete($route, $callback = false)
+{
+  return Route::Delete($route, $callback);
 }

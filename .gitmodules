@@ -1,3 +1,6 @@
 [submodule "lib/Bogart/vendor/sfYaml"]
 	path = lib/Bogart/vendor/sfYaml
 	url = git://github.com/fabpot/yaml.git
+[submodule "lib/Bogart/vendor/mustache"]
+	path = lib/Bogart/vendor/mustache
+	url = git://github.com/bobthecow/mustache.php.git

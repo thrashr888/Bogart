@@ -1,6 +1,7 @@
 <?php
 
 use Bogart\Config;
+use Bogart\Controller;
 
 function Get($name)
 {
@@ -21,7 +22,7 @@ function Enable()
 {
   foreach(func_get_args() as $arg)
   {
-    Config::enable($arg);
+    Config::enable('bogart.setting.'.$arg);
   }
 }
 
@@ -29,7 +30,7 @@ function Disable()
 {
   foreach(func_get_args() as $arg)
   {
-    Config::disable($arg);
+    Config::disable('bogart.setting.'.$arg);
   }
 }
 
@@ -54,4 +55,43 @@ function debug($var = false, $showHtml = false, $return=false) {
 	}else{
 		return $var;
 	}
+}
+
+function stop($var = null)
+{
+  if($var)debug($var);
+  exit;
+}
+
+function error_handler($errno, $errstr, $errfile, $errline) {
+    switch ($errno) {
+        case E_NOTICE:
+        case E_USER_NOTICE:
+            $errors = "Notice";
+            break;
+        case E_WARNING:
+        case E_USER_WARNING:
+            $errors = "Warning";
+            break;
+        case E_ERROR:
+        case E_USER_ERROR:
+            $errors = "Fatal Error";
+            break;
+        default:
+            $errors = "Unknown";
+            break;
+    }
+
+    if (ini_get("display_errors"))
+        printf ("<br />\n<b>%s</b>: %s in <b>%s</b> on line <b>%d</b><br /><br />\n", $errors, $errstr, $errfile, $errline);
+      
+    //if (ini_get('log_errors'))
+    error_log(sprintf("PHP %s:  %s in %s on line %d", $errors, $errstr, $errfile, $errline));
+      
+    if($errno == E_ERROR || $errno == E_USER_ERROR)
+    {
+      Controller::outputDebug();
+    }
+    Controller::outputDebug();
+    return true;
 }

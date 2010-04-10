@@ -2,6 +2,8 @@
 
 namespace Bogart;
 
+use Bogart\Log;
+
 class Request
 {
   public $params = array(),
@@ -16,6 +18,9 @@ class Request
     $this->method = $_SERVER['REQUEST_METHOD'];
     $this->url = $_SERVER['REQUEST_URI'];
     $this->method = $this->getMethod();
+    
+    Log::write('Request: '.$this->url, 'request');
+    Log::write($_SERVER, 'request');
     
     // take a basic guess as to what file type it's asking for
     if($format = preg_match('/\/.*\.[a-z]/i', $this->url))

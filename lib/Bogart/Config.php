@@ -2,17 +2,41 @@
 
 namespace Bogart;
 
+use Bogart\Exception;
+
 class Config
 {
-  public static $data = array('store' => array());
+  public static $data = array();
   
   public static function get($name, $default = null)
   {
-    return isset(self::$data[$name]) ? self::$data[$name] : $default;
+    if(strstr($name, '.'))
+    {
+      $return = self::$data;
+      foreach(explode('.', $name) as $i => $depth)
+      {
+        if(!isset($return[$depth]))
+        {
+          return null;
+        }
+        $return = $return[$depth];
+      }
+      return $return;
+    }
+    else
+    {
+      return isset(self::$data[$name]) ? self::$data[$name] : $default;
+    }
   }
-
+  
+  public static function has($name)
+  {
+    (bool) self::get($name);
+  }
+  
   public static function getAll($object = true)
   {
+    ksort(self::$data);
     return $object ? (object) self::$data : self::$data;
   }
   
@@ -23,19 +47,59 @@ class Config
   
   public static function set($name, $value)
   {
-    self::$data[$name] = $value;
+    if(strstr($name, '.'))
+    {
+      $d = explode('.', $name);
+      $c = count($d);
+      switch($c)
+      {
+        case 1:
+          self::$data[$d[0]] = $value;
+          break;
+        case 2:
+          self::$data[$d[0]][$d[1]] = $value;
+          break;
+        case 3:
+          self::$data[$d[0]][$d[1]][$d[2]] = $value;
+          break;
+      }
+    }
+    else
+    {
+      self::$data[$name] = $value;
+    }
   }
 
   public static function add($name, $value)
   {
-    self::$data[$name][] = $value;
+    if(strstr($name, '.'))
+    {
+      $d = explode('.', $name);
+      $c = count($d);
+      switch($c)
+      {
+        case 1:
+          self::$data[$d[0]][] = $value;
+          break;
+        case 2:
+          self::$data[$d[0]][$d[1]][] = $value;
+          break;
+        case 3:
+          self::$data[$d[0]][$d[1]][$d[2]][] = $value;
+          break;
+      }
+    }
+    else
+    {
+      self::$data[$name][] = $value;
+    }
   }
   
   public static function enable()
   {
     foreach(func_get_args() as $arg)
     {
-      self::$data[$arg] = true;
+      self::set('bogart.setting.'.$arg, true);
     }
   }
 
@@ -43,8 +107,13 @@ class Config
   {
     foreach(func_get_args() as $arg)
     {
-      self::$data[$arg] = false;
+      self::set('bogart.setting.'.$arg, false);
     }
+  }
+  
+  public static function merge($data)
+  {
+    self::$data = array_replace_recursive(self::$data, $data);
   }
 
   public static function load($method)
@@ -56,19 +125,13 @@ class Config
     elseif(strstr($method, '.yml'))
     {
       $load = \sfYaml::load($method);
-      foreach($load as $k => $v)
+      if($load)
       {
-          if(is_array($v))
-          {
-            foreach($v as $k2 => $v2)
-            {
-              self::set($k.'_'.$k2, $v2);
-            }
-          }
-          else
-          {
-            self::set($k, $v);
-          }
+        self::load($load);
+      }
+      else
+      {
+        throw new Exception('Cannot load yaml file: '.$method);
       }
     }
     elseif($method == 'store')
@@ -79,7 +142,7 @@ class Config
       $data = Store::findOne('cfg', $find);
       if(is_array($data))
       {
-        self::$data['store_cfg'] = array_replace_recursive(self::$data['store_cfg'], $data['cfg']);
+        self::$data['store']['cfg'] = array_replace_recursive(self::$data['store']['cfg'], $data['cfg']);
       }
     }
     else
@@ -112,12 +175,13 @@ class Config
   
   public static function getStore($key, $default = null)
   {
+    return self::get('store.cfg.'.$key);
     return isset(self::$data['store_cfg'][$key]) ?: $default;
   }
   
   public static function setStore($key, $value)
   {
-    self::$data['store_cfg'][$key] = $value;
+    self::set('store.cfg.'.$key, $value);
     Config::save('store');
   }
 }

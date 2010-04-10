@@ -1,39 +1,69 @@
 <?php
 
-include 'lib/Bogart/bootstrap.php';
+/*
+Bogart: Sinatra for PHP
 
-use Bogart\Bogart;
+Here's the main idea for this framework:
+Be minimal. Don't be everything. Just make decisions.
+
+Requires:
+- PHP 5.3
+- MongoDB
+- mod_rewrite
+- Amazon S3?
+
+Decisions so far:
+- Sinatra is awesome. Copy it.
+- MongoDB only.
+- PHP 5.3 only. Don't be afraid.
+- Closures for actions.
+- Splats and :named routes.
+- Requires mod_rewrite.
+- Files are only on S3 (maybe this doesn't matter).
+- Templates are mustache.php only.
+- Keep the file structure flat. Not too many classes.
+- Functions are cool when namespaced.
+- No plugins. Just extend if you need to.
+- Config in yaml.
+- No built in shit like blogs or comments or user or whatever.
+- Don't impose a user auth model. Use Twitter or Facebook for that.
+
+*/
+
+require 'lib/Bogart/ClassLoader.php';
+Bogart\ClassLoader::register();
+
+use Bogart\Project;
 use Bogart\Config;
 use Bogart\Store;
 use Bogart\Route;
+use Bogart\View;
+
+$p = new Project('index', 'dev', true);
 
 enable('sessions', 'logging');
-disable('sessions', 'database');
-set('foo', 'bar');
-set('five', function(){
-  return 3+2;
+disable('store');
+
+// named routes
+Route::Get('/say/:hello/to/:world', function(\Bogart\Request $r){
+  $test = $r->params['splat'];
+  debug($r);
+  echo 'test-'.join(', ', $test);
+
+  return View::HTML('index', $test);
 });
 
 // splat routes
-Route::Get('/say/*/to/*', function($b){
-  $test = $b->params['splat'];
-  debug($b);
+Route::Get('/say/*/to/*', function(\Bogart\Request $r){
+  $test = $r->params['splat'];
+  debug($r);
   echo 'test-'.join(', ', $test);
 
-  //return $b->HTML('index', $test);
-});
-
-// named routes
-Route::Get('/say/:hello/to/:world', function($b){
-  $test = $b->params['splat'];
-  debug($b);
-  echo 'test-'.join(', ', $test);
-
-  return $b->HTML('index', $test);
+  return View::HTML('index', $test);
 });
 
 // regex route with .json format
-Route::Get('r/.json', function($this){
+Route::Get('*.json', function($this){
   $this->content_type = 'text/json';
   $test = $this->params['test'];
   //echo "[{test-$test}]";
@@ -67,6 +97,6 @@ Route::Post('/save', function(){
 
 //Store::coll('cfg')->drop();
 
-Bogart::go();
+$p->dispatch();
 
-\Bogart\Log::pretty();
+echo \Bogart\Log::pretty();

@@ -2,41 +2,47 @@
 
 namespace Bogart;
 
+use Bogart\Exception;
+
 class View
 {
-  public $format = 'html', $data = array();
+  public
+    $format = 'html',
+    $template = 'index',
+    $data = array(),
+    $renderer = null;
   
-  public function __constructor()
+  public function __constructor($renderer)
   {
-    
+    $this->renderer = $renderer;
   }
   
   public function render()
   {
-    ob_start();
+    Config::set('view.template.file', Config::get('dir.app').'/views/'.$this->template.'.'.$this->format);
     
-    if(is_array($this->data))
+    if(!file_exists(Config::get('view.template.file')))
     {
-      extract($this->data);
+      throw new \Exception('Template not found.');
     }
     
-    Config::$data['view']['template_file'] = Config::$data['dirs']['base'].'/views/'.$this->template.'.'.$this->format;
-    var_dump(Config::$data['view']['template_file']);
+    $this->data['cfg'] = Config::getAll();
     
-    if(file_exists(Config::$data['view']['template_file']))
-    {
-      include Config::$data['view']['template_file'];
-    }
+    $template_contents = file_get_contents(Config::get('view.template.file'));
     
-    return ob_get_clean();
+    Log::write(Config::get('view.template.file'));
+    stop($this->renderer);
+    stop(Config::get('view.template.file'));
+    
+    return $this->renderer->render($template_contents, $this->data);
   }
   
-  public static function html($template, $data)
+  public static function HTML($template, $data = array())
   {
-    $view = new self();
-    $view = $template;
-    $view = $data;
-    $view = 'html';
+    $view = new self(new \Mustache());
+    $view->template = $template;
+    $view->data = $data;
+    $view->format = 'html';
     return $view;
   }
 }

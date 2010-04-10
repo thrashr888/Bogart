@@ -2,6 +2,8 @@
 
 namespace Bogart;
 
+use Bogart\Exception;
+
 class Store
 {
   public static $instance = array();
@@ -14,16 +16,27 @@ class Store
   
   public function connect($dbname = null, $config = array())
   {
-      if(Config::get('mongo_persistant'))
+      if(Config::get('mongo.persistant'))
       {
         $config['persist'] = 'x';
       }
-      $this->mongo = new \Mongo(Config::get('mongo_connection'), $config);
-      $this->dbname = Config::get('mongo_dbname', $dbname);
-      $this->conn = $this->mongo->{$this->dbname};
+      
+      try
+      {
+        $this->mongo = new \Mongo(Config::get('mongo.connection'), $config);
+        $this->dbname = Config::get('mongo.dbname', $dbname);
+        $this->conn = $this->mongo->{$this->dbname};
+      }
+      catch(\Exception $e)
+      {
+        throw new Exception('Cannot connect to the database.');
+        echo 'Cannot connect to the database.';
+        debug($this);
+        exit(1);
+      }
   }
   
-  public function getInstance($dbname = null, $config = array())
+  public static function getInstance($dbname = null, $config = array())
   {
     // allows for many connections
     $conn = $dbname ?: 'default';

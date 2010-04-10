@@ -18,14 +18,19 @@ class Log
   const DEBUG   = 7; // Debug-level messages
   const SUCCESS = 8; // Good messages
   
-  public static function write($message, $type = null, $level = self::INFO)
+  public static function write($message = null, $type = 'general', $level = self::INFO)
   {
+    if(!Config::get('bogart.setting.log'))
+    {
+      return;
+    }
+    
     $backtrace = debug_backtrace();
     Store::insert('log', array(
         'count' => ++self::$count,
         'message' => $message,
         'time' => time(),
-        'trace' => $backtrace[1],
+        'trace' => $backtrace[0],
         'request_id' => self::$request_id,
         'type' => $type,
         'level' => $level,
@@ -86,14 +91,19 @@ class Log
 
   public static function pretty()
   {
+    if(!Config::get('bogart.setting.log'))
+    {
+      return;
+    }
+    
     $log = self::read(self::$request_id);
     
-    echo "<div id='bogart_log'>";
+    $output = "<div id='bogart_log'>";
     foreach($log as $item)
     {
       $time = new \DateTime("@".$item['time']);
       
-      echo sprintf("<p style='font-family:verdana;font-size:11;color:%s'>#%s | %s | id:%s | {%s <a href='%s'>%s</a>} in class (%s) on line <b>%d</b> of file <b>%s</b><br />\n%s {%s}: <b style='color:black;'>%s</b></p>\n",
+      $output .= sprintf("<p style='font-family:verdana;font-size:11;color:%s'>#%s | %s | id:%s | {%s <a href='%s'>%s</a>} in class (%s) on line <b>%d</b> of file <b>%s</b><br />\n%s {%s}: <b style='color:black;'>%s</b></p>\n",
         self::getLevelColor($item['level']),
         $item['count'],
         $time->format(DATE_W3C),
@@ -106,9 +116,10 @@ class Log
         $item['trace']['file'],
         self::getLevelName($item['level']),
         $item['type'],
-        $item['message']
+        is_array($item['message']) || is_object($item['message']) ? '<pre>'.print_r($item['message'], true).'</pre>' : $item['message']
         );
     }
-    echo "</div>";
+    $output .= "</div>";
+    return $output;
   }
 }
