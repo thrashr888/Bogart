@@ -1,17 +1,19 @@
 
 Bogart: Sinatra for PHP
------------------------
+=======================
 
 Here's the main idea for this framework:
 Be minimal. Don't be everything. Just make decisions.
 
 Requires:
+
 - PHP 5.3
 - MongoDB
 - mod_rewrite
 - Amazon S3?
 
 Decisions so far:
+
 - Sinatra is awesome. Copy it.
 - MongoDB only.
 - PHP 5.3 only. Don't be afraid.
