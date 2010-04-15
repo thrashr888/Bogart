@@ -26,7 +26,7 @@ define('MONGO_CONNECTION', '');
 /**
  * Sets the design theme - themes options are: swanky-purse, trontastic and classic
  */
-define('THEME', 'swanky-purse');
+define('THEME', 'trontastic');
 
 /**
  * Vork core-functionality tools

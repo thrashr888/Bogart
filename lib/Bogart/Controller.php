@@ -13,15 +13,14 @@ class Controller
 {
   public function __construct()
   {
-    
   }
   
   public function execute()
   {
-    $request = new Request();
-    $view = new View();
+    $request = new Request;
+    $view = new View;
     $response = new Response($view);
-    $renderer = new \Mustache();
+    $renderer = new \Mustache;
     
     Log::write($request, 'controller');
     
@@ -29,6 +28,9 @@ class Controller
     Log::write($route, 'controller');
     
     // TODO: we'll need to account for static pages w/ no routing + a template
+    // and having no template, just echo'd from within the controller
+    
+    $controller_content = '';
     
     if(isset($route['callback']) && is_a($route['callback'], 'Closure'))
     {
@@ -85,12 +87,6 @@ class Controller
     Log::write('Sent content.', 'controller');
     
     // cleanup ... 
-  }
-  
-  protected static function getAppName($backtrace)
-  {
-    $match = preg_match('/\/([\w_-])\.php$/i', $backtrace[1]['file']);
-    return $match[0];
   }
   
   public static function error_handler($errno, $errstr, $errfile, $errline)

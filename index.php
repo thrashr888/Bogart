@@ -9,7 +9,7 @@ use Bogart\Store;
 use Bogart\Route;
 use Bogart\View;
 
-$p = new Project('index', 'dev', true);
+$p = new Project(__FILE__, 'dev', true);
 
 enable('sessions', 'logging');
 disable('store');

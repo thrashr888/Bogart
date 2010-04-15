@@ -29,10 +29,8 @@ class Store
       }
       catch(\Exception $e)
       {
-        throw new Exception('Cannot connect to the database.');
-        echo 'Cannot connect to the database.';
-        debug($this);
-        exit(1);
+        //throw new \Exception('Cannot connect to the database.');
+        die('Cannot connect to the database.');
       }
   }
   

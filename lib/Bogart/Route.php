@@ -39,7 +39,7 @@ class Route
         $route['regex'] = '/'.addslashes($route['route']).'/i';
       }
       
-      if(preg_match($route['regex'], $request->url, $route['matches']))
+      if(preg_match($route['regex'], $request->uri, $route['matches']))
       {
         if($route['type'] == 'regex')
         {

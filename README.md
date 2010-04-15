@@ -5,14 +5,16 @@ Bogart: Sinatra for PHP
 Here's the main idea for this framework:
 Be minimal. Don't be everything. Just make decisions.
 
-Requires:
+Requires
+--------
 
 - PHP 5.3
 - MongoDB
 - mod_rewrite
 - Amazon S3?
 
-Decisions so far:
+Decisions So Far
+----------------
 
 - Sinatra is awesome. Copy it.
 - MongoDB only.
@@ -21,6 +23,7 @@ Decisions so far:
 - Splats and :named routes.
 - Requires mod_rewrite.
 - Files are only on S3 (maybe this doesn't matter).
+- Asset servers are round-robin.
 - Templates are mustache.php only.
 - Keep the file structure flat. Not too many classes.
 - Functions are cool when namespaced.
@@ -32,4 +35,15 @@ Decisions so far:
 
 Example
 -------
+
 It lives in index.php. Check it out.
+
+License
+-------
+
+MIT
+
+Author
+------
+
+Paul Thrasher 2010

@@ -5,7 +5,7 @@ mongo:
 bogart:
   setting:
     database: true
-assets:
-  servers: ['http://d1f7kn811ho9qg.cloudfront.net']
+asset:
+  servers: ['d1f7kn811ho9qg.cloudfront.net']
 view:
   title: Just a test

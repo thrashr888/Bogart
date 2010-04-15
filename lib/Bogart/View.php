@@ -23,15 +23,14 @@ class View
     
     if(!file_exists(Config::get('view.template.file')))
     {
-      throw new \Exception('Template not found.');
+      throw new Exception('Template not found.');
     }
     
     $this->data['cfg'] = Config::getAll();
     
     $template_contents = file_get_contents(Config::get('view.template.file'));
     
-    Log::write('Using template: '.Config::get('view.template.file'));
-    //debug(Config::get('view.template.file'));
+    Log::write('Using template: `'.Config::get('view.template.file').'`');
     
     $this->renderer = new \Mustache();
     
@@ -46,6 +45,7 @@ class View
     $view->data = $data;
     $view->format = 'html';
     //debug($view);
+    Log::write($view);
     return $view;
   }
 }
