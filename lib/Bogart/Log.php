@@ -6,7 +6,8 @@ use Bogart\Store;
 
 class Log
 {
-  public static $request_id, $count = 0;
+  public static
+    $request_id, $count = 0;
   
   const EMERG   = 0; // System is unusable
   const ALERT   = 1; // Immediate action required

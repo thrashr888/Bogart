@@ -6,7 +6,11 @@ use Bogart\Config;
 
 class Route
 {
-  public $method, $type, $regex, $callback;
+  public
+    $method,
+    $type,
+    $regex,
+    $callback;
   
   public static function find(Request $request, Response $response)
   {

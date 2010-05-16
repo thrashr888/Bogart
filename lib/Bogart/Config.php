@@ -8,7 +8,8 @@ include 'vendor/sfYaml/lib/sfYaml.php';
 
 class Config
 {
-  public static $data = array();
+  public static
+    $data = array();
   
   public static function get($name, $default = null)
   {

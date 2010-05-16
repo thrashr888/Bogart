@@ -6,9 +6,12 @@ use Bogart\Store;
 
 class User
 {
-  public static $hash_method = 'sha1', $persist_name = 'user_id';
+  public static
+    $hash_method = 'sha1',
+    $persist_name = 'user_id';
   
-  public $user_id = null;
+  public
+    $user_id = null;
   
   public function __construct()
   {

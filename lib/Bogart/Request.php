@@ -6,7 +6,8 @@ use Bogart\Log;
 
 class Request
 {
-  public $params = array(),
+  public
+    $params = array(),
     $method = null,
     $url = null,
     $uri = null,

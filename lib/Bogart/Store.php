@@ -6,8 +6,13 @@ use Bogart\Exception;
 
 class Store
 {
-  public static $instance = array();
-  public $mongo, $conn, $dbname;
+  public static
+    $instance = array();
+  
+  public
+    $mongo,
+    $conn,
+    $dbname;
   
   public function __construct($dbname = null, $config = array())
   {

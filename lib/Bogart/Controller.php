@@ -14,7 +14,8 @@ use Bogart\Renderer\Mustache;
 
 class Controller
 {
-  public $services = array();
+  public
+    $services = array();
   
   public function __construct(Array $services = array())
   {
