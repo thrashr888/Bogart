@@ -36,9 +36,28 @@ function Disable()
 }
 
 // for debugging
-function debug($var = false, $showHtml = false, $return=false) {
+function debug($var = null, $showHtml = false, $return=false) {
+	$var = print_r($var, true);
+	
+	$calledFrom = debug_backtrace();
+	$trace = '<strong>' . str_replace('/var/www/html/', '', $calledFrom[0]['file']) . '</strong>';
+	$trace .= ' (line <strong>' . $calledFrom[0]['line'] . '</strong>)'."\n";
+
+	if ($showHtml) {
+		$var = str_replace('<', '&lt;', str_replace('>', '&gt;', $var));
+	}
+	
+	$var = $trace.$var;
+	if(!$return){
+		print "\n<pre class=\"debug\">\n{$var}\n</pre>\n";
+	}else{
+		return $var;
+	}
+}
+
+function dump($var = null, $showHtml = false, $return=false) {
 	ob_start();
-	print_r($var);
+	var_dump($var);
 	$var = ob_get_clean();
 	
 	$calledFrom = debug_backtrace();
@@ -50,7 +69,6 @@ function debug($var = false, $showHtml = false, $return=false) {
 	}
 	
 	$var = $trace.$var;
-	//dUtils::log($var);
 	if(!$return){
 		print "\n<pre class=\"debug\">\n{$var}\n</pre>\n";
 	}else{

@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * http://local.bogart/admin/
+ * http://local.bogart/say/test/to/test2
+ **/
 require 'lib/Bogart/ClassLoader.php';
 Bogart\ClassLoader::register();
 
@@ -8,24 +11,57 @@ use Bogart\Config;
 use Bogart\Store;
 use Bogart\Route;
 use Bogart\View;
+use Bogart\Request;
+use Bogart\Response;
+use Bogart\User;
 
-$p = new Project(__FILE__, 'dev', true);
+Route::Get('/', function(Request $request, Response $response, User $user)
+{
+  $posts = Store::get('Posts');
+  $user->setUserId(555);
+  $title = 'Home';
+  return View::HTML('index', compact('posts', 'title'));
+});
 
-enable('sessions', 'logging');
-disable('store');
+Route::Get('/post/submit2', 'info');
 
-// named routes
-Route::Get('/say/:hello/to/:world', function(\Bogart\Request $req)
+// http://local.bogart/post/submit2?post[title]=test&post[body]=body
+Route::Get('/post/submit', function(Request $request)
+{
+  $posts = Store::get('Posts');
+  $title ="Posts";
+  return 'index';
+  return View::HTML('index', compact('posts', 'title'));
+});
+
+Route::Post('/post/submit', function(Request $request)
+{
+  //Store::insert('Posts', array('title' => 'test', 'body' => '<p>body</p>')); // just a test
+  
+  //debug($request->params);
+  $post =  $request->params['post'];
+  if(Store::insert('Posts', $post))
+  {
+    $message = 'Saved: '.$post['_id'];
+  }
+  
+  $posts = Store::get('Posts');
+  //debug(compact($posts, $message));
+  $title ="Submit a Post";
+  return View::HTML('index', compact('posts', 'message', 'title'));
+});
+
+Route::Get('/say/:hello/to/:world', function(Request $request, Response $response)
 {
   $test = $req->params['splat'];
-  debug($req);
+  //debug($req);
   echo 'test-'.join(', ', $test);
 
   return View::HTML('other', $test);
 });
 
 // splat routes
-Route::Get('/say/*/to/*', function(\Bogart\Request $req)
+Route::Get('/say/*/to/*', function(Request $request)
 {
   $test = $req->params['splat'];
   debug($req);
@@ -35,7 +71,8 @@ Route::Get('/say/*/to/*', function(\Bogart\Request $req)
 });
 
 // regex route with .json format
-Route::Get('*.json', function($this){
+Route::Get('*.json', function(Request $request)
+{
   $this->content_type = 'text/json';
   $test = $this->params['test'];
   //echo "[{test-$test}]";
@@ -43,7 +80,8 @@ Route::Get('*.json', function($this){
 });
 
 // run all of the css files through less
-Route::Get('/stylesheets/*.css', function($this){
+Route::Get('/stylesheets/*.css', function(Request $request)
+{
   $this->content_type = 'text/css';
   $this->charset = 'utf-8';
   $test = $this->params['splat'][0];
@@ -65,8 +103,6 @@ Route::Post('/save', function(){
   return 'index';
 });
 
-//debug(getAll());
-
 //Store::coll('cfg')->drop();
 
-$p->dispatch();
+Project::run(__FILE__, 'dev', true);

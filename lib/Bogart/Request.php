@@ -10,6 +10,7 @@ class Request
     $method = null,
     $url = null,
     $uri = null,
+    $parsed = null,
     $format = 'html',
     $route = null;
   
@@ -24,16 +25,25 @@ class Request
     $this->method = $_SERVER['REQUEST_METHOD'];
     $this->url = $this->generateUrl();
     $this->uri = $_SERVER['REQUEST_URI'];
+    $this->parsed = parse_url($this->url);
     $this->method = $this->getMethod();
     
     Log::write('Request: '.$this->url, 'request');
     Log::write($_SERVER, 'request');
+    Config::set('bogart.request.url', $this->url);
+    Config::set('bogart.request.method', $this->method);
+    Config::set('bogart.request.params', $this->params);
     
     // take a basic guess as to what file type it's asking for
     if($format = preg_match('/\/.*\.[a-z]/i', $this->url))
     {
       $this->format = $format[1];
     }
+  }
+  
+  public function getPath()
+  {
+    return $this->parsed['path'];
   }
   
   protected function generateUrl()

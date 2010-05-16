@@ -10,31 +10,53 @@ use Bogart\Request;
 use Bogart\Response;
 use Bogart\Controller;
 use Bogart\Exception;
+use Bogart\Timer;
 
 class Project
 {
-  public function __construct($script_name, $env, $debug = false)
+  public static function run($script_name, $env, $debug = false)
+  {
+    self::init($script_name, $env, $debug);
+    
+    Log::write('Running.');
+    
+    try
+    {
+      $controller = new Controller();
+      $controller->execute();
+    }
+    catch(\Exception $e)
+    {
+      // this is the last defence for catching exceptions
+      $e = Exception::createFromException($e);
+      $e->printStackTrace();
+    }
+  }
+  
+  protected static function init($script_file, $env, $debug = false)
   {
     Log::$request_id = microtime(true).rand(10000000, 99999999);
-
-    include 'functions.php';
-    include 'vendor/sfYaml/lib/sfYaml.php';
-    include 'vendor/mustache/mustache.php';
+    Timer::write('project::init');
     
     Config::set('bogart.env', $env);
     Config::set('bogart.debug', $debug);
-    $app_name = $this->parseAppName($script_name);
-    Config::set('app.name', $app_name);
-    Config::set('app.script_name', $script_name);
     
-    $this->loadConfig();
-    $this->setup();
+    Config::set('bogart.script.file', $script_file);
+    Config::set('bogart.script.name', $script_name = self::parseAppName($script_file));
     
-    Log::write("Init project: name: '$app_name', env: '$env', debug: '$debug'");
+    include 'functions.php';
+    
+    self::loadConfig();
+    self::setup();
+    
+    Log::write("Init project: name: '$script_name', env: '$env', debug: '$debug'");
+    Timer::write('project::init');
   }
   
-  public function loadConfig()
-  {  
+  protected static function loadConfig()
+  {
+    Timer::write('project::loadConfig');
+    
     Config::set('dir.bogart', dirname(__FILE__));
     Config::set('dir.app', realpath(dirname(__FILE__).'/../..'));
     
@@ -47,55 +69,37 @@ class Project
     }
     
     Config::load('store');
+    
+    Timer::write('project::loadConfig');
   }
   
-  protected function parseAppName($file)
+  protected static function setup()
   {
-    if(!preg_match('/([^\/]+)\.(.*)/i', $file, $match))
-    {
-      throw new \Exception('Cannot find app name.');
-    }
-    return $match[1];
-  }
-  
-  public function setup()
-  {  
+    Timer::write('project::setup');
+    
     $server_pool = Config::get('asset.servers');
     Config::set('asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
     
     // set to the user defined error handler
     set_error_handler("error_handler");
+    //set_error_handler(array('Controller','error_handler'));
     
-    date_default_timezone_set(Config::get('system.timezone'));
+    date_default_timezone_set(Config::get('system.timezone', 'America/Los_Angeles'));
+    
     session_name(Config::get('app.name'));
     session_start();
     if(!isset($_SESSION['hi'])) $_SESSION['hi'] = true;
     Log::write($_SESSION);
     
-    //set_error_handler(array('Controller','error_handler'));
+    Timer::write('project::setup');
   }
   
-  public function dispatch()
+  protected static function parseAppName($file)
   {
-    Log::write('Running dispatch.');
-    try
+    if(!preg_match('/([^\/]+)\.(.*)/i', $file, $match))
     {
-      $controller = new Controller();
-      $controller->execute();
-      if(Config::get('bogart.debug'))
-      {
-        Exception::outputDebug();
-      }
+      throw new Exception('Cannot find app name.');
     }
-    catch(\Exception $e)
-    {
-      echo 'broke.';
-      debug($e->__toString());
-      if(Config::get('bogart.debug'))
-      {
-        Exception::outputDebug();
-      }
-      exit;
-    }
+    return $match[1];
   }
 }

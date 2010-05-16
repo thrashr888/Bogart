@@ -27,17 +27,18 @@ class Log
     
     $backtrace = debug_backtrace();
     Store::db()->createCollection('log', true, 5*1024*1024, 100000);
-    Store::insert('log', array(
-        'count' => ++self::$count,
-        'message' => $message,
-        'time' => time(),
-        'trace' => $backtrace[0],
-        'request_id' => self::$request_id,
-        'type' => $type,
-        'level' => $level,
-        'request_uri' => (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'],
-        'request_method' => $_SERVER['REQUEST_METHOD']
-        ));
+    $log = array(
+          'count' => ++self::$count,
+          'message' => $message,
+          'time' => time(),
+          'trace' => $backtrace[0],
+          'request_id' => self::$request_id,
+          'type' => $type,
+          'level' => $level,
+          'request_uri' => (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'],
+          'request_method' => $_SERVER['REQUEST_METHOD']
+          );
+    Store::insert('log', $log);
   }
   
   public static function read($request_id)
@@ -103,7 +104,7 @@ class Log
     {
       $time = new \DateTime("@".$item['time']);
       
-      $output .= sprintf("<p style='font-family:verdana;font-size:10;color:%s'>#%s | %s | id:%s | {%s <a href='%s'>%s</a>} in class (%s) on line <b>%d</b> of file <b>%s</b><br />\n%s {%s}: <b style='color:black;'>%s</b></p>\n",
+      $output .= sprintf("<p style='font-family:verdana;font-size:10;color:%s'>#%s | %s | id:%s | {%s <a href='%s'>%s</a>} in class (%s) on line <b>%d</b> of file <b>%s</b><br />\n%s {%s}: <b style='color:black;font-size:12px;'>%s</b></p>\n",
         self::getLevelColor($item['level']),
         $item['count'],
         $time->format(DATE_W3C),

@@ -4,6 +4,8 @@ namespace Bogart;
 
 use Bogart\Exception;
 
+include 'vendor/sfYaml/lib/sfYaml.php';
+
 class Config
 {
   public static $data = array();
@@ -27,6 +29,48 @@ class Config
     {
       return isset(self::$data[$name]) ? self::$data[$name] : $default;
     }
+  }
+  
+  public static function getAllFlat($pk = null, $pv = null)
+  {
+    if(!$pv)
+    {
+      $pv = self::$data;
+    }
+    
+    foreach($pv as $k1 => $v1)
+    {
+      if(is_array($v1))
+      {
+        foreach($v1 as $k2 => $v2){
+            if(is_array($v2))
+            {
+              foreach($v2 as $k3 => $v3){
+                  if(is_array($v3))
+                  {
+                    foreach($v3 as $k4 => $v4){
+                        if(is_array($v4))
+                        {
+                          foreach($v4 as $k5 => $v5){
+                            $out[$k1.'_'.$k2.'_'.$k3.'_'.$k4.'_'.$k5] = $v5;
+                          }
+                        }elseif(is_scalar($v4)){
+                          $out[$k1.'_'.$k2.'_'.$k3.'_'.$k4] = $v4;
+                        }
+                    }
+                  }elseif(is_scalar($v3)){
+                    $out[$k1.'_'.$k2.'_'.$k3] = $v3;
+                  }
+              }
+            }elseif(is_scalar($v2)){
+              $out[$k1.'_'.$k2] = $v2;
+            }
+        }
+      }elseif(is_scalar($v1)){
+        $out[$k1] = $v1;
+      }
+    }
+    return $out;
   }
   
   public static function has($name)
@@ -137,7 +181,7 @@ class Config
     elseif($method == 'store')
     {
       $find = array(
-        'name' => self::$data['app_name'],
+        'name' => self::get('app_name'),
         );
       $data = Store::findOne('cfg', $find);
       if(is_array($data))
@@ -147,12 +191,12 @@ class Config
     }
     else
     {
-      throw Exception('Nothing to load.');
+      throw new Exception('Nothing to load.');
     }
-    //Log::write('loaded store');
+    Log::write('loaded store');
   }
   
-  public static function save($method = false)
+  public static function save($method)
   {
     if($method == 'store')
     {

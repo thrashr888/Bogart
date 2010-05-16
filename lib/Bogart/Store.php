@@ -65,9 +65,10 @@ class Store
     return $query ? self::coll($name)->findOne($query) : self::coll($name)->findOne();
   }
   
-  public static function get($name)
+  public static function get($name, $query = null)
   {
-    $cursor = self::find($name);
+    $cursor = self::find($name, $query);
+    $return = array();
     foreach ($cursor as $key => $val)
     {
       $return[$key] = $val;
@@ -75,9 +76,9 @@ class Store
     return $return;
   }
   
-  public static function getOne($name, $key = null)
+  public static function getOne($name, $query = null, $key = null)
   {
-    $cursor = self::find($name);
+    $cursor = self::findOne($name);
     foreach ($cursor as $val)
     {
       return $key != null ? $val[$key] : $val;
@@ -89,13 +90,14 @@ class Store
     return self::insert($name, $value);
   }
   
-  public static function insert($name, $value = null)
+  public static function insert($name, &$value = null, $safe = true)
   {
-    return self::coll($name)->insert($value);
+    // TODO: catch exceptions or allow them to be caught in controller?
+    return self::coll($name)->insert($value, $safe);
   }
   
-  public static function update($name, $find, $value, $options = null)
+  public static function update($name, $find, &$value, $options = null)
   {
-    return self::coll($name)->update($find, $value, $options);
+    return self::coll($name)->update($find, array('$set' => $value), $options);
   }
 }

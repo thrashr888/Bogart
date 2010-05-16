@@ -10,7 +10,9 @@ class Route
   
   public static function find(Request $request, Response $response)
   {
-    // try to match a route
+    $match_path = $request->getPath();
+    
+    // try to match a route, one by one
     foreach(Config::get('bogart.routes') as $route)
     {  
       Log::write('Checking route: '.$route['route'], 'route');
@@ -20,27 +22,35 @@ class Route
         continue;
       }
       
+      // this triggers regex
       if(strpos('r/', $route['route']) === 0)
       {
         $route['type'] = 'regex';
         $route['regex'] = $route['route'];
       }
+      
+      // this checks for splats and :named params
       if(strstr($route['route'], '*') || strstr($route['route'], ':'))
       {
         $route['type'] = 'splat';
         $search = array('/(\*)/', '/\:([a-z_]+)/i', '/\//');
         $replace = array('(.+)', '(?<\1>[^/]+)', '\\\/');
         $route_search = preg_replace($search, $replace, $route['route']);
-        $route['regex'] = '/'.($route_search).'/i';
+        $route['regex'] = '/^'.$route_search.'$/i';
       }
       else
       {
+        // match as-is
         $route['type'] = 'match';
-        $route['regex'] = '/'.addslashes($route['route']).'/i';
+        $route_search = str_replace('/', '\/', $route['route']);
+        $route['regex'] = '/^'.$route_search.'$/i';
       }
       
-      if(preg_match($route['regex'], $request->uri, $route['matches']))
+      // get for a regex route match to the requested url
+      if(preg_match($route['regex'], $match_path, $route['matches']))
       {
+        // matched a route. set the params and return it.
+        
         if($route['type'] == 'regex')
         {
           $request->params['captures'] = $route['matches'];

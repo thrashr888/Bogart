@@ -22,3 +22,5 @@ store:
     womething: test
     another: value
     boolean: true
+system:
+  timezone: America/Los_Angeles

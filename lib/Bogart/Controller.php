@@ -7,7 +7,9 @@ use Bogart\Log;
 use Bogart\Route;
 use Bogart\Request;
 use Bogart\Response;
+use Bogart\User;
 use Bogart\Exception;
+use Bogart\Renderer\Mustache;
 
 class Controller
 {
@@ -20,7 +22,8 @@ class Controller
     $request = new Request;
     $view = new View;
     $response = new Response($view);
-    $renderer = new \Mustache;
+    $renderer = new Mustache();
+    $user = new User();
     
     Log::write($request, 'controller');
     
@@ -34,11 +37,23 @@ class Controller
     
     if(isset($route['callback']) && is_a($route['callback'], 'Closure'))
     {
+      // compile the args for the closure
+      $m = new \ReflectionMethod($route['callback'], '__invoke');
+      foreach($m->getParameters() as $param)
+      {
+        $param = $param->getName();
+        $args[] = $$param;
+      }  
+      Log::write($args, 'controller');
+      
       try
       {
         ob_start();
         // we return a certain type of view object (html, json, etc.) or null
-        $view = $route['callback']($request, $response);
+        // call the closure w/ it's requested args
+        $view = call_user_func_array($route['callback'], $args);
+        Log::write($view, 'controller');
+        
         $controller_content = ob_get_clean();
       }
       catch(\Exception $e)
@@ -50,18 +65,40 @@ class Controller
       Config::save('mongo'); // save in case it changed
       Log::write('Saved config.', 'controller');
     }
+    elseif(isset($route['callback']) && is_string($route['callback']))
+    {
+      // we're passed a template name. just serve up the html with the vars available via the url.
+      $view = View::HTML($route['callback']);
+    }
+    elseif(null === $route)
+    {
+      // no match, 404
+      debug('test');
+      exit;
+      throw new Exception('File not found.', 404);
+    }
     else
     {
-      // try to create a default view based on the format, using a template based on it's name
-      // if no template, account for 404 pages
+      debug('test');
+      exit;
+      // no callback but we have a route match.
+      if(preg_match("/([a-z0-9_\-]+)/i", $route['route'], $matches))
+      {
+        // try to create a default view based on the format, using a template based on it's name
+        // if no template exists, it'll just get an exception thrown and a 404
+        //debug($matches);
+        $view = View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
+      }else{
+        // no match, 404
+        throw new Exception('File not found.', 404);
+      }
     }
     
     if(!$view)
     {
       Log::write('View not found.', 'controller');
-      $view = new View($renderer);
-      $view->template = 'not_found';
-      $view->request = $request;
+      $view = View::HTML('static/not_found');
+      throw new Exception('File not found.', 404);
     }
     else
     {
@@ -85,6 +122,12 @@ class Controller
     
     echo $response->send($content);
     Log::write('Sent content.', 'controller');
+    
+    // output debugging?
+    if(Config::get('bogart.debug'))
+    {
+      Exception::outputDebug();
+    }
     
     // cleanup ... 
   }

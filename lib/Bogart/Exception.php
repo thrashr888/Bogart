@@ -2,11 +2,84 @@
 
 namespace Bogart;
 
-class Exception
+// TODO: don't just kill the page, return a nice html page
+// TODO: upon error code 404, handle returning an 404 error
+
+class Exception extends \Exception
 {
+  protected
+    $wrappedException = null;
+
+  static protected
+    $lastException = null;
+  
   public function __toString()
   {
-    return $this->message;
+    return $this->getMessage();
+  }
+
+  static public function createFromException(\Exception $e)
+  {
+    $exception = new self(sprintf('Wrapped %s: %s', get_class($e), $e->getMessage()), $e->getCode());
+    $exception->setWrappedException($e);
+    self::$lastException = $e;
+
+    return $exception;
+  }
+
+  public function setWrappedException(\Exception $e)
+  {
+    $this->wrappedException = $e;
+
+    self::$lastException = $e;
+  }
+
+  static public function getLastException()
+  {
+    return self::$lastException;
+  }
+
+  static public function clearLastException()
+  {
+  	self::$lastException = null;
+  }
+  
+  public function printStackTrace()
+  {
+    if($this->getCode() == 404)
+    {
+      header('HTTP/1.0 404 Not Found');
+      $view = View::HTML('static/not_found', array('url' => Config::get('bogart.request.url')));
+      echo $view->render();
+      
+      if(Config::get('bogart.debug'))
+      {
+        Exception::outputDebug();
+      }
+      
+      die(1);
+    }
+
+    error_log($this->getMessage());
+    header('HTTP/1.0 500 Internal Server Error');
+    
+    try{
+      $this->outputStackTrace();
+    }catch(\Exception $e){}; // ignore
+    
+    die(1);
+  }
+  
+  protected function outputStackTrace()
+  {
+    echo '<p>broke.</p>';
+    
+    if(Config::get('bogart.debug'))
+    {
+      echo '<pre>'.$this->wrappedException->getMessage().'</pre>';
+      echo '<pre>'.$this->wrappedException->getTraceAsString().'</pre>';
+      Exception::outputDebug();
+    }
   }
   
   public static function outputDebug()
@@ -16,18 +89,22 @@ class Exception
     echo "<div id='bogart_debug_container' style=\"border-bottom: 2px solid {$color}; border-left: 2px solid {$color}; position: absolute; top: 0; right: 0; background-color: #eee; text-align: right; -webkit-border-bottom-left-radius: 10px; -moz-border-radius-bottomleft: 10px; border-bottom-left-radius: 10px; color: green; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; font-size: 14px;\"
       >&nbsp;&#x272A; ";
     
-    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_log_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display = 'block';}\"
-         style=\"text-decoration:none; color: grey;\">&#x2776; log</a> | ";
+    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_log_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
+         style=\"text-decoration:none; color: grey;\">&#x278A; log</a> | ";
+   
+   echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_timer_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
+        style=\"text-decoration:none; color: grey;\">&#x278B; timer</a> | ";
     
-    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_config_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display = 'block';}\"
-        style=\"text-decoration:none; color: grey;\">&#x2777; config</a> | ";
+    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_config_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
+        style=\"text-decoration:none; color: grey;\">&#x278C; config</a> | ";
     
-    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_server_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display = 'block';}\"
-        style=\"text-decoration:none; color: grey;\">&#x2778; server</a> | ";
+    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_server_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
+        style=\"text-decoration:none; color: grey;\">&#x278D; server</a> | ";
     
     echo "<a href=\"javascript::void(0);\" onclick=\"el=document.getElementById('bogart_debug_container');document.body.removeChild(el);\" style=\"color: grey; text-decoration: none;\">&#x2716;</a>&nbsp;";
     
     self::outputLog();
+    self::outputTimer();
     self::outputConfig();
     self::outputServer();
     
@@ -43,9 +120,15 @@ class Exception
   
   public static function outputLog()
   {
-    $log = Log::pretty();
     echo "<div id='bogart_log_container' style=\"overflow-x: scroll; width: 1000px; display: none; padding: 0 0.5em 0 1em; text-align: left;\"><h3>Log</h3>";
-    echo $log;
+    echo Log::pretty();
+    echo "</div>"; 
+  }
+  
+  public static function outputTimer()
+  {
+    echo "<div id='bogart_timer_container' style=\"overflow-x: scroll; width: 1000px; display: none; padding: 0 0.5em 0 1em; text-align: left;\"><h3>Timer</h3>";
+    echo Timer::pretty();
     echo "</div>"; 
   }
   
@@ -73,6 +156,7 @@ class Exception
     
     echo "<h3>Server</h3>";
     echo self::prettyPrint($_SERVER);
+    //echo '<pre>'.\sfYaml::dump($_SERVER).'</pre>'; // this is kinda easier
     
     echo "<h3>Environment</h3>";
     echo self::prettyPrint($_ENV);
