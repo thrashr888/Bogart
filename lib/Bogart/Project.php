@@ -22,7 +22,7 @@ class Project
     
     try
     {
-      $controller = new Controller();
+      $controller = new Controller(self::getServices());
       $controller->execute();
     }
     catch(\Exception $e)
@@ -31,6 +31,15 @@ class Project
       $e = Exception::createFromException($e);
       $e->printStackTrace();
     }
+  }
+  
+  protected static function getServices()
+  {
+    $service['request'] = new Request;
+    $service['response'] = new Response;
+    $service['view'] = new View;
+    $service['user'] = new User;
+    return $service;
   }
   
   protected static function init($script_file, $env, $debug = false)
@@ -57,15 +66,15 @@ class Project
   {
     Timer::write('project::loadConfig');
     
-    Config::set('dir.bogart', dirname(__FILE__));
-    Config::set('dir.app', realpath(dirname(__FILE__).'/../..'));
+    Config::set('bogart.dir.bogart', dirname(__FILE__));
+    Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../..'));
     
     // Load the config.yml so we can init Store for Log
-    Config::load(Config::get('dir.bogart').'/config.yml');
+    Config::load(Config::get('bogart.dir.bogart').'/config.yml');
 
-    if(file_exists(Config::get('dir.app').'/config.yml'))
+    if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
     {
-      Config::load(Config::get('dir.app').'/config.yml');
+      Config::load(Config::get('bogart.dir.app').'/config.yml');
     }
     
     Config::load('store');
@@ -77,8 +86,8 @@ class Project
   {
     Timer::write('project::setup');
     
-    $server_pool = Config::get('asset.servers');
-    Config::set('asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
+    $server_pool = Config::get('app.asset.servers');
+    Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
     
     // set to the user defined error handler
     set_error_handler("error_handler");

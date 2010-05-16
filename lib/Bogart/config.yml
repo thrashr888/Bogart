@@ -1,8 +1,9 @@
 app:
   name: Default Bogart App
-asset:
-  servers: ['/']
-mongo:
+  asset:
+    servers: ['/']
+db:
+  type: mongo
   connection: 'localhost:27017'
   persistant: true
   dbname: Bogart
@@ -11,16 +12,21 @@ bogart:
     sessions: true
     store: true
     log: true
+    user: true
+    timer: true
   dir:
     bogart: <?php echo __DIR__."\n" ?>
     app: <?php echo realpath(__DIR__.'/../..')."\n" ?>
-    lib: <?php echo realpath(__DIR__.'/../../lib')."\n" ?>
-    views: <?php echo realpath(__DIR__.'/../../views')."\n" ?>
-    vendor: <?php echo realpath(__DIR__.'/../../vendor')."\n" ?>
+    lib: <?php echo realpath(__DIR__.'/../..').'/lib'."\n" ?>
+    views: <?php echo realpath(__DIR__.'/../..').'/views'."\n" ?>
+    vendor: <?php echo realpath(__DIR__.'/../..').'/vendor'."\n" ?>
+    cache: <?php echo realpath(__DIR__.'/../..').'/cache'."\n" ?>
+  request:
+    format: html
+  view:
+    renderer: mustache
 store:
   cfg:
-    womething: test
-    another: value
     boolean: true
 system:
   timezone: America/Los_Angeles

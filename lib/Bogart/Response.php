@@ -7,11 +7,20 @@ class Response
   public
     $format = 'html',
     $content = NULL,
-    $headers = null;
+    $headers = array(),
+    $view = NULL;
   
-  public function send($content)
+  public function send($content = NULL)
   {
-    echo $content;
+    if($content)
+    {
+      $this->content = $content;
+    }
+    if(!headers_sent())
+    {
+      $this->sendHeaders();
+    }
+    echo $this->content;
   }
   
   public function setHeader($header)

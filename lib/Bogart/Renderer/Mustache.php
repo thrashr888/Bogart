@@ -9,8 +9,6 @@ include __DIR__.'/../vendor/mustache/Mustache.php';
 
 class Mustache extends Renderer
 {
-  protected $instance;
-  
   public function __construct(Array $options = array())
   {
     $options = array_merge(array(
@@ -24,12 +22,7 @@ class Mustache extends Renderer
   
   public function render($file, Array $data = array(), Array $options = array())
   {
-    Config::set('view.template.file', $file);
-    
-    $template_contents = file_get_contents(Config::get('view.template.file'));
-    
-    //debug($data);
-    
+    $template_contents = file_get_contents($file);
     return $this->instance->render($template_contents, $data);
   }
 }

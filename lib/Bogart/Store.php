@@ -16,15 +16,15 @@ class Store
   
   public function connect($dbname = null, $config = array())
   {
-      if(Config::get('mongo.persistant'))
+      if(Config::get('db.persistant'))
       {
         $config['persist'] = 'x';
       }
       
       try
       {
-        $this->mongo = new \Mongo(Config::get('mongo.connection'), $config);
-        $this->dbname = Config::get('mongo.dbname', $dbname);
+        $this->mongo = new \Mongo(Config::get('db.connection'), $config);
+        $this->dbname = Config::get('db.dbname', $dbname);
         $this->conn = $this->mongo->{$this->dbname};
       }
       catch(\Exception $e)

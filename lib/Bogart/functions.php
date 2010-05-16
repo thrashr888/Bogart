@@ -117,3 +117,26 @@ function error_handler($errno, $errstr, $errfile, $errline) {
     Exception::outputDebug();
     return true;
 }
+
+function flatten($val, $key='') {
+    static $out = array();
+    
+    if (is_array($val)) {
+        $vals = array();
+        foreach ($val as $k => $v) {
+            $k = $key == '' ? $k : $key.'_'.$k;
+            $flatten = flatten($v, $k);
+            list($k, $v) = each($flatten);
+            $vals[$k] = $v;
+        }
+        $val = $vals;       
+    } else if (is_scalar($val)) {
+        $out[$key] = $val;
+    }
+    
+    if ($key == '') {
+        return $out;
+    } else {
+        return array($key => $val);
+    }
+}

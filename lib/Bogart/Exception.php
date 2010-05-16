@@ -46,40 +46,26 @@ class Exception extends \Exception
   
   public function printStackTrace()
   {
-    if($this->getCode() == 404)
-    {
-      header('HTTP/1.0 404 Not Found');
-      $view = View::HTML('static/not_found', array('url' => Config::get('bogart.request.url')));
-      echo $view->render();
-      
-      if(Config::get('bogart.debug'))
-      {
-        Exception::outputDebug();
-      }
-      
-      die(1);
-    }
-
-    error_log($this->getMessage());
-    header('HTTP/1.0 500 Internal Server Error');
-    
     try{
       $this->outputStackTrace();
     }catch(\Exception $e){}; // ignore
-    
-    die(1);
-  }
-  
-  protected function outputStackTrace()
-  {
-    echo '<p>broke.</p>';
-    
+
     if(Config::get('bogart.debug'))
     {
       echo '<pre>'.$this->wrappedException->getMessage().'</pre>';
       echo '<pre>'.$this->wrappedException->getTraceAsString().'</pre>';
       Exception::outputDebug();
     }
+    
+    die(1);
+  }
+  
+  protected function outputStackTrace()
+  {
+    error_log($this->getMessage());
+    header('HTTP/1.0 500 Internal Server Error');
+    
+    echo '<p>broke.</p>';
   }
   
   public static function outputDebug()

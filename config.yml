@@ -1,11 +1,10 @@
 app:
   name: Bogart Test App
-mongo:
+  asset:
+    servers: ['d1f7kn811ho9qg.cloudfront.net']
+db:
   connection: 'localhost:27017'
+  dbname: BogartTest
 bogart:
   setting:
     database: true
-asset:
-  servers: ['d1f7kn811ho9qg.cloudfront.net']
-view:
-  title: Just a test

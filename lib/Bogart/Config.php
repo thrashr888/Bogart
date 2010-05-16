@@ -31,46 +31,8 @@ class Config
     }
   }
   
-  public static function getAllFlat($pk = null, $pv = null)
-  {
-    if(!$pv)
-    {
-      $pv = self::$data;
-    }
-    
-    foreach($pv as $k1 => $v1)
-    {
-      if(is_array($v1))
-      {
-        foreach($v1 as $k2 => $v2){
-            if(is_array($v2))
-            {
-              foreach($v2 as $k3 => $v3){
-                  if(is_array($v3))
-                  {
-                    foreach($v3 as $k4 => $v4){
-                        if(is_array($v4))
-                        {
-                          foreach($v4 as $k5 => $v5){
-                            $out[$k1.'_'.$k2.'_'.$k3.'_'.$k4.'_'.$k5] = $v5;
-                          }
-                        }elseif(is_scalar($v4)){
-                          $out[$k1.'_'.$k2.'_'.$k3.'_'.$k4] = $v4;
-                        }
-                    }
-                  }elseif(is_scalar($v3)){
-                    $out[$k1.'_'.$k2.'_'.$k3] = $v3;
-                  }
-              }
-            }elseif(is_scalar($v2)){
-              $out[$k1.'_'.$k2] = $v2;
-            }
-        }
-      }elseif(is_scalar($v1)){
-        $out[$k1] = $v1;
-      }
-    }
-    return $out;
+  public static function getAllFlat() {
+    return flatten(self::$data);
   }
   
   public static function has($name)
@@ -106,6 +68,9 @@ class Config
         case 3:
           self::$data[$d[0]][$d[1]][$d[2]] = $value;
           break;
+        case 4:
+          self::$data[$d[0]][$d[1]][$d[2]][$d[3]] = $value;
+          break;
       }
     }
     else
@@ -130,6 +95,9 @@ class Config
           break;
         case 3:
           self::$data[$d[0]][$d[1]][$d[2]][] = $value;
+          break;
+        case 4:
+          self::$data[$d[0]][$d[1]][$d[2]][$d[3]][] = $value;
           break;
       }
     }
