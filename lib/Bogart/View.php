@@ -4,7 +4,6 @@ namespace Bogart;
 
 use Bogart\Exception;
 use Bogart\Exception404;
-use \Bogart\Renderer\Mustache as Renderer;
 
 class View
 {
@@ -18,51 +17,49 @@ class View
   public function render(Array $options = array())
   {
     $options = array_merge(array(
-      'renderer' => Config::get('bogart.view.renderer'),
+      'renderer' => Config::setting('renderer'),
       ), $this->options, $options);
     
     $template = Config::get('bogart.dir.app').'/views/'.$this->template.'.'.$this->format;
-    Config::set('bogart.view.templat', $template);
-    Config::set('bogart.view.template.file', $template);
     
-    if(!file_exists(Config::get('bogart.view.template.file')))
+    if(!file_exists($template))
     {
-      debug(Config::get('bogart.dir.app').'/views/'.$this->template.'.'.$this->format);
-      debug(Config::get('bogart.view'));
       throw new Exception404('Template ('.Config::get('bogart.view.template.file').') not found.');
     }
     
-    $this->data['cfg'] = Config::getAllFlat();
-    
-    Log::write('Using template: `'.Config::get('bogart.view.template.file').'`');
-    Config::set('bogart.view.template.renderer', $options['renderer']);
-    
-    if($options['renderer'] == 'mustache')
+    if($options['renderer'])
     {
-      //$this->renderer = new \Bogart\Renderer\Mustache();
+      $options['renderer'] = 'Bogart\Renderer\\'.ucfirst($options['renderer']);
+      try{
+        $this->renderer = new $options['renderer']($options);
+      }
+      catch(\Exception $e)
+      {
+        throw new Exception('Renderer `'.$options['renderer'].'` not callable.');
+      }
     }
     else
     {
-      throw new Exception('Renderer '.$options['renderer'].' not found.');
+      throw new Exception('Renderer `'.$options['renderer'].'` not found.');
     }
     
-    $this->renderer = new Renderer($options);
-    //debug($this->data);
+    Config::set('bogart.view.template.file', $template);
+    Log::write('Using template: `'.$template.'`');
+    Config::set('bogart.view.template.renderer', $options['renderer']);
+    
+    $this->data['cfg'] = Config::getAllFlat();
     
     return $this->renderer->render(Config::get('bogart.view.template.file'), $this->data, $options);
   }
   
   public static function HTML($template, Array $data = array(), Array $options = array())
   {
-    $renderer = new Renderer();
-    $view = new self();
+    $view = new self($options);
     $view->template = $template;
     $view->data = $data;
     $view->options = $options;
     $view->format = 'html';
-    //debug($view);
-    //debug($data);
-    Log::write($view);
+    Log::write($view, 'view');
     return $view;
   }
 }

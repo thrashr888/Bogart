@@ -12,12 +12,15 @@ class Route
     $regex,
     $callback;
   
+  protected static
+    $routes;
+  
   public static function find(Request $request, Response $response)
   {
     $match_path = $request->getPath();
     
     // try to match a route, one by one
-    foreach(Config::get('bogart.routes') as $route)
+    foreach(Route::$routes as $route)
     {  
       Log::write('Checking route: '.$route['route'], 'route');
       
@@ -66,7 +69,6 @@ class Route
         $request->route = $route['route'];
         
         Log::write('Matched route: '.$route['route'], 'route');
-        Log::write($route, 'route');
         
         return $route;
       }
@@ -76,38 +78,38 @@ class Route
   
   public static function Get($route, $callback = false)
   {
-    Config::add('bogart.routes', array(
+    Route::$routes[] = array(
       'method' => 'get',
       'route' => $route,
       'callback' => $callback,
-      ));
+      );
   }
 
   public static function Post($route, $callback = false)
   {
-    Config::add('bogart.routes', array(
+    Route::$routes[] = array(
       'method' => 'post',
       'route' => $route,
       'callback' => $callback,
-      ));
+      );
   }
 
   public static function Put($route, $callback = false)
   {
-    Config::add('bogart.routes', array(
+    Route::$routes[] = array(
       'method' => 'put',
       'route' => $route,
       'callback' => $callback,
-      ));
+      );
   }
 
   public static function Delete($route, $callback = false)
   {
-    Config::add('bogart.routes', array(
+    Route::$routes[] = array(
       'method' => 'delete',
       'route' => $route,
       'callback' => $callback,
-      ));
+      );
   }
 }
 

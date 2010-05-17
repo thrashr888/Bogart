@@ -17,6 +17,10 @@ class Controller
   public
     $services = array();
   
+  protected
+    $controller_content = '',
+    $content_for_response;
+  
   public function __construct(Array $services = array())
   {
     foreach($services as $name => $object)
@@ -25,44 +29,44 @@ class Controller
     }
   }
   
-  public function execute()
+  protected function findRoute()
   {
-    Log::write($this->service['request'], 'controller');
-    
     $this->service['route'] = Route::find($this->service['request'], $this->service['response']);
+    Config::set('bogart.route', $this->service['route']);
     Log::write($this->service['route'], 'controller');
-    
+  }
+  
+  protected function getView()
+  {
     // TODO: we'll need to account for static pages w/ no routing + a template
     // and having no template, just echo'd from within the controller
-    
-    $controller_content = '';
     
     if(isset($this->service['route']['callback']) && is_a($this->service['route']['callback'], 'Closure'))
     {
       // compile the args for the closure
-      $m = new \ReflectionMethod($route['callback'], '__invoke');
+      $m = new \ReflectionMethod($this->service['route']['callback'], '__invoke');
       foreach($m->getParameters() as $param)
       {
         $param = $param->getName();
         $args[] = $this->service[$param]; // grab the actual service param
       }  
       Log::write($args, 'controller');
-      
+
       try
       {
         ob_start();
         // we return a certain type of view object (html, json, etc.) or null
         // call the closure w/ it's requested args
-        $view = call_user_func_array($this->service['route']['callback'], $args);
-        Log::write($view, 'controller');
-        
-        $controller_content = ob_get_clean();
+        $this->service['view'] = call_user_func_array($this->service['route']['callback'], $args);
+        Log::write($this->service['view'], 'controller');
+
+        $this->controller_content = ob_get_clean();
       }
       catch(\Exception $e)
       {
         Log::write($e, 'controller', Log::ERR);
       }
-      
+
       Log::write('Executed route.', 'controller');
       Config::save('mongo'); // save in case it changed
       Log::write('Saved config.', 'controller');
@@ -70,33 +74,38 @@ class Controller
     elseif(isset($this->service['route']['callback']) && is_string($this->service['route']['callback']))
     {
       // we're passed a template name. just serve up the html with the vars available via the url.
-      $view = View::HTML($this->service['route']['callback']);
+      $this->service['view'] = View::HTML($this->service['route']['callback']);
     }
     elseif(null === $this->service['route'])
     {
       // no match, 404
-      debug('test');
-      exit;
-      throw new Exception404('File not found.', 404);
+      debug($this->service['view']);
+      throw new Exception404('Route not found.', 404);
     }
     else
     {
-      debug('test');
-      exit;
       // no callback but we have a route match.
       if(preg_match("/([a-z0-9_\-]+)/i", $this->service['route']['route'], $matches))
       {
         // try to create a default view based on the format, using a template based on it's name
         // if no template exists, it'll just get an exception thrown and a 404
         //debug($matches);
-        $view = View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
+        $this->service['view'] = View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
       }else{
         // no match, 404
         throw new Exception404('File not found.', 404);
       }
     }
     
-    if(!$view)
+    if(is_string($this->service['view']))
+    {
+      $this->service['view'] = View::HTML($this->service['view']);
+    }
+  }
+  
+  protected function renderView()
+  {
+    if(!$this->service['view'])
     {
       Log::write('View not found.', 'controller');
       $this->service['view'] = View::HTML('static/not_found');
@@ -106,7 +115,7 @@ class Controller
     {
       Log::write('View found.', 'controller');
       $this->service['view']->request = $this->service['request'];
-      $this->service['view']->data['content'] = $controller_content;
+      $this->service['view']->data['content'] = $this->controller_content;
       if(!$this->service['view']->template)
       {
         //$view->template = self::getAppName(debug_backtrace());
@@ -118,27 +127,30 @@ class Controller
     Log::write('Chose view: '.$this->service['view']->template, 'controller');
     
     Timer::write('View::render');
-    $content = $this->service['view']->render();
+    $this->content_for_response = $this->service['view']->render();
     Timer::write('View::render');
     Log::write('Rendered view.', 'controller');
-    
+  }
+  
+  protected function sendResponse()
+  {
     $this->service['response']->format = $this->service['request']->format;
     
-    echo $this->service['response']->send($content);
+    echo $this->service['response']->send($this->content_for_response);
     Log::write('Sent content.', 'controller');
+  }
+  
+  public function execute()
+  {
+    $this->findRoute();
+    $this->getView();
+    $this->renderView();
+    $this->sendResponse();
     
     // output debugging?
-    if(Config::get('bogart.debug'))
+    if(Config::enabled('debug'))
     {
       Exception::outputDebug();
     }
-    
-    // cleanup ... 
-  }
-  
-  public static function error_handler($errno, $errstr, $errfile, $errline)
-  {
-    echo 'tst';
-    exit;
   }
 }

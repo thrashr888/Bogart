@@ -3,7 +3,7 @@ app:
   asset:
     servers: ['/']
 db:
-  type: mongo
+  type: Mongo # we're Mongo only
   connection: 'localhost:27017'
   persistant: true
   dbname: Bogart
@@ -14,6 +14,7 @@ bogart:
     log: true
     user: true
     timer: true
+    renderer: mustache
   dir:
     bogart: <?php echo __DIR__."\n" ?>
     app: <?php echo realpath(__DIR__.'/../..')."\n" ?>
@@ -21,12 +22,5 @@ bogart:
     views: <?php echo realpath(__DIR__.'/../..').'/views'."\n" ?>
     vendor: <?php echo realpath(__DIR__.'/../..').'/vendor'."\n" ?>
     cache: <?php echo realpath(__DIR__.'/../..').'/cache'."\n" ?>
-  request:
-    format: html
-  view:
-    renderer: mustache
-store:
-  cfg:
-    boolean: true
 system:
   timezone: America/Los_Angeles

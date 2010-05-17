@@ -21,7 +21,7 @@ class Log
   
   public static function write($message = null, $type = 'general', $level = self::INFO)
   {
-    if(!Config::get('bogart.setting.log'))
+    if(!Config::enabled('log'))
     {
       return;
     }
@@ -94,7 +94,7 @@ class Log
 
   public static function pretty()
   {
-    if(!Config::get('bogart.setting.log'))
+    if(!Config::enabled('log'))
     {
       return;
     }

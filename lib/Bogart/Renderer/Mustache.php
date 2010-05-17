@@ -2,9 +2,6 @@
 
 namespace Bogart\Renderer;
 
-use Bogart\Renderer\Renderer;
-use Bogart\Config;
-
 include __DIR__.'/../vendor/mustache/Mustache.php';
 
 class Mustache extends Renderer

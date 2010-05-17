@@ -115,13 +115,23 @@ class Config
       self::set('bogart.setting.'.$arg, true);
     }
   }
-
+  
   public static function disable()
   {
     foreach(func_get_args() as $arg)
     {
       self::set('bogart.setting.'.$arg, false);
     }
+  }
+
+  public static function enabled($setting)
+  {
+    return (bool) self::get('bogart.setting.'.$setting);
+  }
+
+  public static function setting($setting, $value = null)
+  {
+    return $value ? self::set('bogart.setting.'.$setting, $value) : self::get('bogart.setting.'.$setting);
   }
   
   public static function merge($data)
@@ -147,7 +157,7 @@ class Config
         throw new Exception('Cannot load yaml file: '.$method);
       }
     }
-    elseif($method == 'store')
+    elseif($method == 'store' && Config::enabled('store'))
     {
       $find = array(
         'name' => self::get('app_name'),
@@ -167,7 +177,7 @@ class Config
   
   public static function save($method)
   {
-    if($method == 'store')
+    if($method == 'store' && Config::enabled('store'))
     {
       $insert = array(
         'name' => self::$data['app_name'],
@@ -176,25 +186,25 @@ class Config
       $find = array(
         'name' => self::$data['app_name'],
         );
-      Store::update('cfg', $find, $insert, true);
+      Log::write('Saved store.', 'config');
+      return Store::update('cfg', $find, $insert, true);
     }
     elseif(strstr($method, '.yml'))
     {
       $yml = sfYaml::dump(self::getAll(false));
-      file_put_contents($method, $yml);
+      Log::write('Saved store.', 'config');
+      return file_put_contents($method, $yml);
     }
-    Log::write('Saved store.', 'config');
   }
   
   public static function getStore($key, $default = null)
   {
-    return self::get('store.cfg.'.$key);
-    return isset(self::$data['store_cfg'][$key]) ?: $default;
+    return self::get('store.cfg.'.$key) ?: $default;
   }
   
   public static function setStore($key, $value)
   {
     self::set('store.cfg.'.$key, $value);
-    Config::save('store');
+    return Config::save('store');
   }
 }

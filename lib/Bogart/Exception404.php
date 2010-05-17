@@ -13,7 +13,7 @@ class Exception404 extends Exception
   {
     header('HTTP/1.0 404 Not Found');
     
-    $view = View::HTML('static/not_found', array('url' => Config::get('bogart.request.url')));
+    $view = View::HTML('not_found', array('url' => Config::get('bogart.request.url')));
     echo $view->render();
   }
 }

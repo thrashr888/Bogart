@@ -5,6 +5,3 @@ app:
 db:
   connection: 'localhost:27017'
   dbname: BogartTest
-bogart:
-  setting:
-    database: true

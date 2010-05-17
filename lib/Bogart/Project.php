@@ -22,8 +22,10 @@ class Project
     
     try
     {
+      ob_start();
       $controller = new Controller(self::getServices());
       $controller->execute();
+      ob_end_flush();
     }
     catch(\Exception $e)
     {
@@ -47,8 +49,8 @@ class Project
     Log::$request_id = microtime(true).rand(10000000, 99999999);
     Timer::write('project::init');
     
-    Config::set('bogart.env', $env);
-    Config::set('bogart.debug', $debug);
+    Config::setting('env', $env);
+    Config::setting('debug', $debug);
     
     Config::set('bogart.script.file', $script_file);
     Config::set('bogart.script.name', $script_name = self::parseAppName($script_file));
@@ -90,15 +92,17 @@ class Project
     Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
     
     // set to the user defined error handler
-    set_error_handler("error_handler");
-    //set_error_handler(array('Controller','error_handler'));
+    set_error_handler(array('Bogart\Exception', 'error_handler'));
     
     date_default_timezone_set(Config::get('system.timezone', 'America/Los_Angeles'));
     
-    session_name(Config::get('app.name'));
-    session_start();
-    if(!isset($_SESSION['hi'])) $_SESSION['hi'] = true;
-    Log::write($_SESSION);
+    if(Config::enabled('sessions'))
+    {
+      session_name(Config::get('app.name'));
+      session_start();
+      if(!isset($_SESSION['hi'])) $_SESSION['hi'] = true;
+      Log::write($_SESSION);
+    }
     
     Timer::write('project::setup');
   }
