@@ -24,21 +24,18 @@ class View
     
     if(!file_exists($template))
     {
-      throw new Exception404('Template ('.Config::get('bogart.view.template.file').') not found.');
+      $template = Config::get('bogart.dir.bogart').'/views/'.$this->template.'.'.$this->format;
+      if(!file_exists($template))
+      {
+        throw new Exception404('Template ('.Config::get('bogart.view.template.file').') not found.');
+      }
     }
     
-    if($options['renderer'])
-    {
-      $options['renderer'] = 'Bogart\Renderer\\'.ucfirst($options['renderer']);
-      try{
-        $this->renderer = new $options['renderer']($options);
-      }
-      catch(\Exception $e)
-      {
-        throw new Exception('Renderer `'.$options['renderer'].'` not callable.');
-      }
+    $options['renderer'] = 'Bogart\Renderer\\'.ucfirst($options['renderer']);
+    try{
+      $this->renderer = new $options['renderer']($options);
     }
-    else
+    catch(\Exception $e)
     {
       throw new Exception('Renderer `'.$options['renderer'].'` not found.');
     }
@@ -61,5 +58,10 @@ class View
     $view->format = 'html';
     Log::write($view, 'view');
     return $view;
+  }
+  
+  public static function JSON()
+  {
+    
   }
 }

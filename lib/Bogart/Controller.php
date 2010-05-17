@@ -150,7 +150,7 @@ class Controller
     // output debugging?
     if(Config::enabled('debug'))
     {
-      Exception::outputDebug();
+      Debug::outputDebug();
     }
   }
 }

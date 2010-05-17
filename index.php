@@ -23,14 +23,23 @@ Route::Get('/', function(Request $request, Response $response, User $user)
   return View::HTML('index', compact('posts', 'title'));
 });
 
+// http://local.bogart/post/submit2
+// just render the info page
 Route::Get('/post/submit2', 'info');
 
-// http://local.bogart/post/submit2?post[title]=test&post[body]=body
+// http://local.bogart/post/submit3
+// just render the info page
+Route::Get('/post/submit3', function(Request $request)
+{
+  return 'info';
+});
+
+// http://local.bogart/post/submit?post[title]=test&post[body]=body
 Route::Get('/post/submit', function(Request $request)
 {
   $posts = Store::get('Posts');
   $title ="Posts";
-  return 'index';
+  
   return View::HTML('index', compact('posts', 'title'));
 });
 
