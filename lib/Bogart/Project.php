@@ -14,10 +14,13 @@ use Bogart\Timer;
 
 class Project
 {
-  public static function run($script_name, $env, $debug = false)
+  public static
+    $version = '0.1';
+  
+  public function __construct($script_name, $env, $debug = false)
   {
+    Timer::write('Project::new', true);
     self::init($script_name, $env, $debug);
-    
     Log::write('Running.');
     
     try
@@ -33,6 +36,14 @@ class Project
       $e = Exception::createFromException($e);
       $e->printStackTrace();
     }
+    
+    Log::write('Ran.');
+    Timer::write('Project::new');
+  }
+  
+  public static function run($script_name, $env, $debug = false)
+  {
+    return new self($script_name, $env, $debug);
   }
   
   protected static function getServices()
@@ -47,7 +58,7 @@ class Project
   protected static function init($script_file, $env, $debug = false)
   {
     Log::$request_id = microtime(true).rand(10000000, 99999999);
-    Timer::write('project::init');
+    Timer::write('Project::init', true);
     
     Config::setting('env', $env);
     Config::setting('debug', $debug);
@@ -61,12 +72,12 @@ class Project
     self::setup();
     
     Log::write("Init project: name: '$script_name', env: '$env', debug: '$debug'");
-    Timer::write('project::init');
+    Timer::write('Project::init');
   }
   
   protected static function loadConfig()
   {
-    Timer::write('project::loadConfig');
+    Timer::write('Project::loadConfig', true);
     
     Config::set('bogart.dir.bogart', dirname(__FILE__));
     Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../..'));
@@ -81,12 +92,12 @@ class Project
     
     Config::load('store');
     
-    Timer::write('project::loadConfig');
+    Timer::write('Project::loadConfig');
   }
   
   protected static function setup()
   {
-    Timer::write('project::setup');
+    Timer::write('Project::setup', true);
     
     $server_pool = Config::get('app.asset.servers');
     Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
@@ -104,7 +115,7 @@ class Project
       Log::write($_SESSION);
     }
     
-    Timer::write('project::setup');
+    Timer::write('Project::setup');
   }
   
   protected static function parseAppName($file)

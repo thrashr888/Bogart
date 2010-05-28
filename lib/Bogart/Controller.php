@@ -9,7 +9,7 @@ use Bogart\Request;
 use Bogart\Response;
 use Bogart\User;
 use Bogart\Exception;
-use Bogart\Exception404;
+use Bogart\Error404Exception;
 use Bogart\Renderer\Mustache;
 
 class Controller
@@ -80,7 +80,7 @@ class Controller
     {
       // no match, 404
       debug($this->service['view']);
-      throw new Exception404('Route not found.', 404);
+      throw new Error404Exception('Route not found.', 404);
     }
     else
     {
@@ -93,7 +93,7 @@ class Controller
         $this->service['view'] = View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
       }else{
         // no match, 404
-        throw new Exception404('File not found.', 404);
+        throw new Error404Exception('File not found.', 404);
       }
     }
     
@@ -109,7 +109,7 @@ class Controller
     {
       Log::write('View not found.', 'controller');
       $this->service['view'] = View::HTML('static/not_found');
-      throw new Exception404('File not found.', 404);
+      throw new Error404Exception('File not found.', 404);
     }
     else
     {
@@ -126,7 +126,7 @@ class Controller
     
     Log::write('Chose view: '.$this->service['view']->template, 'controller');
     
-    Timer::write('View::render');
+    Timer::write('View::render', true);
     $this->content_for_response = $this->service['view']->render();
     Timer::write('View::render');
     Log::write('Rendered view.', 'controller');

@@ -7,7 +7,8 @@ use Bogart\Store;
 class Log
 {
   public static
-    $request_id, $count = 0;
+    $request_id,
+    $count = 0;
   
   const EMERG   = 0; // System is unusable
   const ALERT   = 1; // Immediate action required
@@ -18,8 +19,13 @@ class Log
   const INFO    = 6; // Informational
   const DEBUG   = 7; // Debug-level messages
   const SUCCESS = 8; // Good messages
+
+  public static function initCollection()
+  {
+    Store::db()->createCollection('log', true, 5*1024*1024, 100000);
+  }
   
-  public static function write($message = null, $type = 'general', $level = self::INFO)
+  public static function write($message = null, $type = 'general', $level = self::INFO, $meta = null)
   {
     if(!Config::enabled('log'))
     {
@@ -27,19 +33,24 @@ class Log
     }
     
     $backtrace = debug_backtrace();
-    Store::db()->createCollection('log', true, 5*1024*1024, 100000);
+    
     $log = array(
           'count' => ++self::$count,
           'message' => $message,
-          'time' => time(),
           'trace' => $backtrace[0],
           'request_id' => self::$request_id,
           'type' => $type,
           'level' => $level,
           'request_uri' => (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'],
-          'request_method' => $_SERVER['REQUEST_METHOD']
+          'request_method' => $_SERVER['REQUEST_METHOD'],
+          'meta' => $meta,
+          'time' => new \MongoDate(),
           );
-    Store::insert('log', $log);
+    
+    $log_setting = Config::setting('log');
+    Config::disable('log');
+    Store::insert('log', $log, false);
+    Config::setting('log', $log_setting);
   }
   
   public static function read($request_id)
@@ -96,14 +107,14 @@ class Log
   {
     if(!Config::enabled('log'))
     {
-      return;
+      return 'log disabled';
     }
     $output = '';
     
     $log = self::read(self::$request_id);
     foreach($log as $item)
     {
-      $time = new \DateTime("@".$item['time']);
+      $time = new \DateTime("@".$item['time']->sec);
       
       $output .= sprintf("<p style='font-family:verdana;font-size:10;color:%s'>#%s | %s | id:%s | {%s <a href='%s'>%s</a>} in class (%s) on line <b>%d</b> of file <b>%s</b><br />\n%s {%s}: <b style='color:black;font-size:12px;'>%s</b></p>\n",
         self::getLevelColor($item['level']),

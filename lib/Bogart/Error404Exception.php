@@ -7,7 +7,7 @@ use Bogart\Exception;
 // TODO: don't just kill the page, return a nice html page
 // TODO: upon error code 404, handle returning an 404 error
 
-class Exception404 extends Exception
+class Error404Exception extends Exception
 {
   protected function outputStackTrace()
   {

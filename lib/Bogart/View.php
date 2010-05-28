@@ -3,7 +3,7 @@
 namespace Bogart;
 
 use Bogart\Exception;
-use Bogart\Exception404;
+use Bogart\Error404Exception;
 
 class View
 {

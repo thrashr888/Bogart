@@ -9,7 +9,8 @@ include 'vendor/sfYaml/lib/sfYaml.php';
 class Config
 {
   public static
-    $data = array();
+    $data = array(),
+    $ready = false;
   
   public static function get($name, $default = null)
   {
@@ -127,6 +128,11 @@ class Config
   public static function enabled($setting)
   {
     return (bool) self::get('bogart.setting.'.$setting);
+  }
+  
+  public static function toggle($setting)
+  {
+    self::setting($setting, !self::setting($setting));
   }
 
   public static function setting($setting, $value = null)
