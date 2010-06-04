@@ -16,7 +16,7 @@ class Debug
          style=\"text-decoration:none; color: grey;\">&#x278A; log ($log_count)</a> | ";
    
    $timers = \sfTimerManager::getTimers();
-   $total_time = sprintf("%dms", $timers['Project::new']->getElapsedTime() * 1000);
+   $total_time = sprintf("%dms", $timers['App::new']->getElapsedTime() * 1000);
    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_timer_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
         style=\"text-decoration:none; color: grey;\">&#x278B; timer ($total_time)</a> | ";
     
@@ -127,9 +127,10 @@ class Debug
           <th>elapsed_time</th>
           <th>safe</th>
         </tr>
-        <?php foreach($queries as $query){ ?>
-          <?php $total_time += $query['elapsed_time']; ?>
-          <?php $total_queries[$query['type']] += 1; ?>
+        <?php foreach($queries as $query){
+          $total_time += $query['elapsed_time'];
+          $total_queries[$query['type']] += 1;
+          ?>
           <tr style="<?php echo $query['elapsed_time'] > 1000 ? 'color:red;' : null ?>">
             <td><?php echo date('h:i:s', $query['time']->sec); ?></td>
             <td><?php echo $query['type'] ?></td>
@@ -171,59 +172,62 @@ class Debug
   protected static function prettyPrint($array, $name = '')
   {
     echo "<div id=\"print-".$name."\" class=\"bogart-print-wrapper\">";
-    foreach($array as $key => $setting)
+    if($array)
     {
-      if(is_array($setting))
+      foreach($array as $key => $setting)
       {
-        echo sprintf("<b>%s</b><br />\n", strtoupper($key));
-        foreach($setting as $k2 => $s2)
+        if(is_array($setting))
         {
-          if(is_array($s2))
+          echo sprintf("<b>%s</b><br />\n", strtoupper($key));
+          foreach($setting as $k2 => $s2)
           {
-            echo sprintf("<b>&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k2);
-            foreach($s2 as $k3 => $s3)
+            if(is_array($s2))
             {
-              if(is_array($s3))
+              echo sprintf("<b>&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k2);
+              foreach($s2 as $k3 => $s3)
               {
-                echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k3);
-                foreach($s3 as $k4 => $s4)
+                if(is_array($s3))
                 {
-                  if(is_object($s3) || is_array($s3))
+                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k3);
+                  foreach($s3 as $k4 => $s4)
                   {
-                    echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, is_array($s3) ? stripslashes(json_encode($s3)) : "instance of ".get_class($s3));
-                    continue;
-                  }
-                  else
-                  {
-                    echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, $s4?:'<em>NULL</em>');
-                    continue;
+                    if(is_object($s3) || is_array($s3))
+                    {
+                      echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, is_array($s3) ? stripslashes(json_encode($s3)) : "instance of ".get_class($s3));
+                      continue;
+                    }
+                    else
+                    {
+                      echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, $s4?:'<em>NULL</em>');
+                      continue;
+                    }
                   }
                 }
-              }
-              elseif(is_object($s3) && !method_exists($s3, '__toString'))
-              {  
-                echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b><br />\n", $k4);
-                echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, "instance of class ".get_class($s3));
-                continue;
-              }
-              else
-              {
-                echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, $s3?:'<em>NULL</em>');
-                continue;
+                elseif(is_object($s3) && !method_exists($s3, '__toString'))
+                {  
+                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b><br />\n", $k4);
+                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, "instance of class ".get_class($s3));
+                  continue;
+                }
+                else
+                {
+                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, $s3?:'<em>NULL</em>');
+                  continue;
+                }
               }
             }
-          }
-          else
-          {
-            echo sprintf("<b>&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k2, $s2?:'<em>NULL</em>');
-            continue;
+            else
+            {
+              echo sprintf("<b>&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k2, $s2?:'<em>NULL</em>');
+              continue;
+            }
           }
         }
-      }
-      elseif(is_scalar($setting))
-      {
-        echo sprintf("<b>%s:</b> <code style=\"color:grey\">%s</code><br />\n", $key, $setting);
-        continue;
+        elseif(is_scalar($setting))
+        {
+          echo sprintf("<b>%s:</b> <code style=\"color:grey\">%s</code><br />\n", $key, $setting);
+          continue;
+        }
       }
     }
     echo "</div>";

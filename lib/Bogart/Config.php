@@ -53,31 +53,45 @@ class Config
     return (object) self::$data;
   }
   
-  public static function set($name, $value)
+  public static function set($name, $value = null)
   {
-    if(strstr($name, '.'))
+    $settings = array();
+    
+    if(is_array($name))
     {
-      $d = explode('.', $name);
-      $c = count($d);
-      switch($c)
-      {
-        case 1:
-          self::$data[$d[0]] = $value;
-          break;
-        case 2:
-          self::$data[$d[0]][$d[1]] = $value;
-          break;
-        case 3:
-          self::$data[$d[0]][$d[1]][$d[2]] = $value;
-          break;
-        case 4:
-          self::$data[$d[0]][$d[1]][$d[2]][$d[3]] = $value;
-          break;
-      }
+      $settings = $name;
     }
     else
     {
-      self::$data[$name] = $value;
+      $settings[$name] = $value;
+    }
+    
+    foreach($settings as $name => $value)
+    {
+      if(strstr($name, '.'))
+      {
+        $d = explode('.', $name);
+        $c = count($d);
+        switch($c)
+        {
+          case 1:
+            self::$data[$d[0]] = $value;
+            break;
+          case 2:
+            self::$data[$d[0]][$d[1]] = $value;
+            break;
+          case 3:
+            self::$data[$d[0]][$d[1]][$d[2]] = $value;
+            break;
+          case 4:
+            self::$data[$d[0]][$d[1]][$d[2]][$d[3]] = $value;
+            break;
+        }
+      }
+      else
+      {
+        self::$data[$name] = $value;
+      }
     }
   }
 

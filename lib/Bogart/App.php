@@ -12,14 +12,14 @@ use Bogart\Controller;
 use Bogart\Exception;
 use Bogart\Timer;
 
-class Project
+class App
 {
   public static
     $version = '0.1';
   
   public function __construct($script_name, $env, $debug = false)
   {
-    Timer::write('Project::new', true);
+    Timer::write('App::new', true);
     self::init($script_name, $env, $debug);
     Log::write('Running.');
     
@@ -38,7 +38,7 @@ class Project
     }
     
     Log::write('Ran.');
-    Timer::write('Project::new');
+    Timer::write('App::new');
   }
   
   public static function run($script_name, $env, $debug = false)
@@ -58,7 +58,7 @@ class Project
   protected static function init($script_file, $env, $debug = false)
   {
     Log::$request_id = microtime(true).rand(10000000, 99999999);
-    Timer::write('Project::init', true);
+    Timer::write('App::init', true);
     
     Config::setting('env', $env);
     Config::setting('debug', $debug);
@@ -72,12 +72,12 @@ class Project
     self::setup();
     
     Log::write("Init project: name: '$script_name', env: '$env', debug: '$debug'");
-    Timer::write('Project::init');
+    Timer::write('App::init');
   }
   
   protected static function loadConfig()
   {
-    Timer::write('Project::loadConfig', true);
+    Timer::write('App::loadConfig', true);
     
     Config::set('bogart.dir.bogart', dirname(__FILE__));
     Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../..'));
@@ -92,12 +92,12 @@ class Project
     
     Config::load('store');
     
-    Timer::write('Project::loadConfig');
+    Timer::write('App::loadConfig');
   }
   
   protected static function setup()
   {
-    Timer::write('Project::setup', true);
+    Timer::write('App::setup', true);
     
     $server_pool = Config::get('app.asset.servers');
     Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
@@ -115,14 +115,14 @@ class Project
       Log::write($_SESSION);
     }
     
-    Timer::write('Project::setup');
+    Timer::write('App::setup');
   }
   
   protected static function parseAppName($file)
   {
     if(!preg_match('/([^\/]+)\.(.*)/i', $file, $match))
     {
-      throw new Exception('Cannot find app name.');
+      throw new Exception('Cannot find App name.');
     }
     return $match[1];
   }

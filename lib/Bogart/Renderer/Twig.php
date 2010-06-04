@@ -6,6 +6,8 @@ use Bogart\Config;
 
 class Twig extends Renderer
 {
+  public $extention = 'php';
+  
   public function __construct(Array $options = array())
   {
     include Config::get('bogart.dir.bogart').'/vendor/Twig/lib/Twig/Autoloader.php';

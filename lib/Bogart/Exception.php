@@ -52,19 +52,24 @@ class Exception extends \Exception
   public function printStackTrace()
   {
     try{
-      $this->outputStackTrace();
+      if($this->wrappedException)
+      {
+        $this->wrappedException->outputStackTrace();
+      }else{
+        $this->outputStackTrace();
+      }
     }catch(\Exception $e){}; // ignore
 
     if(Config::enabled('debug'))
     {
       if($this->wrappedException)
       {
-        echo '<pre>'.$this->wrappedException->getMessage().'</pre>';
+        echo '<pre>'.get_class($this->wrappedException).': '.$this->wrappedException->getMessage().'</pre>';
         echo '<pre>'.$this->wrappedException->getTraceAsString().'</pre>';
       }
       else
       {
-        echo '<pre>'.$this->getMessage().'</pre>';
+        echo '<pre>'.get_class($this).': '.$this->getMessage().'</pre>';
         echo '<pre>'.$this->getTraceAsString().'</pre>';
       }
       Debug::outputDebug();
@@ -90,12 +95,37 @@ class Exception extends \Exception
     header('HTTP/1.0 500 Internal Server Error');
     
     $view = View::HTML('error', array('url' => Config::get('bogart.request.url')), array('renderer' => 'html'));
-    echo $view->render();
+    echo $view->do_render();
   }
   
   public static function error_handler($errno, $errstr, $errfile, $errline)
   {
-    $e = new self('<strong>'.$errstr.'</strong><br/>in <strong>'.$errfile.'</strong> on line <strong>'.$errline.'</strong>', $errno);
-    $e->printStackTrace();
+    switch ($errno) {
+      case E_NOTICE:
+      case E_USER_NOTICE:
+        $errors = "Notice";
+        break;
+      case E_WARNING:
+      case E_USER_WARNING:
+        $errors = "Warning";
+        break;
+      case E_ERROR:
+      case E_USER_ERROR:
+        $errors = "Fatal Error";
+        break;
+      default:
+        $errors = "Unknown";
+        break;
+    }
+    
+    error_log(sprintf("PHP %s:  %s in %s on line %d", $errors, $errstr, $errfile, $errline));
+
+    if(($errno == E_ERROR || $errno == E_USER_ERROR) && ini_get("display_errors"))
+    {
+      $e = new self('<strong>'.$errstr.'</strong><br/>'.$errors.' in <strong>'.$errfile.'</strong> on line <strong>'.$errline.'</strong>', $errno);
+      $e->printStackTrace();
+    }
+    
+    return true;
   }
 }

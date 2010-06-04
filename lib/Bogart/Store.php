@@ -55,80 +55,70 @@ class Store
     return self::getInstance($dbname, $config)->conn;
   }
 
-  public static function coll($name)
+  public static function coll($collection)
   {
-    return self::db()->$name;
+    return self::db()->$collection;
   }
 
-  public static function find($name, $query = null)
+  public static function find($collection, $query = null)
   {
     Timer::write('Store::find', true);
     $time = new \sfTimer();
-    $results = $query ? self::coll($name)->find($query) : self::coll($name)->find();
+    $results = $query ? self::coll($collection)->find($query) : self::coll($collection)->find();
     $time->addTime();
     Timer::write('Store::find');
     
-    Log::write('find:'.$name.':'.print_r($query, 1), 'database');
-    $insert = array(
-      'request_id' => Log::$request_id,
-      'type' => 'find',
-      'collection' => $name,
+    self::query_log('find', array(
+      'collection' => $collection,
       'query' => $query,
       'elapsed_time' => $time->getElapsedTime(),
-      'time' => new \MongoDate(),
-      );
-    Store::insert('query_log', $insert, false);
+      ));
     
     return $results ?: null;
   }
 
-  public static function findOne($name, $query = null)
+  public static function findOne($collection, $query = null)
   {
     Timer::write('Store::findOne', true);
     $time = new \sfTimer();
-    $result = $query ? self::coll($name)->findOne($query) : self::coll($name)->findOne();
+    $result = $query ? self::coll($collection)->findOne($query) : self::coll($collection)->findOne();
     $time->addTime();
     Timer::write('Store::findOne');
     
-    Log::write('findOne:'.$name.':'.print_r($query, 1), 'database');
-    $insert = array(
-      'request_id' => Log::$request_id,
-      'type' => 'findOne',
-      'collection' => $name,
+    self::query_log('findOne', array(
+      'collection' => $collection,
       'query' => $query,
       'elapsed_time' => $time->getElapsedTime(),
-      'time' => new \MongoDate(),
-      );
-    Store::insert('query_log', $insert, false);
+      ));
     
     return $result ?: null;
   }
   
-  public static function count($name, $query = null)
+  public static function count($collection, $query = null)
   {
     Timer::write('Store::count', true);
     $time = new \sfTimer();
-    $result = $query ? self::coll($name)->count($query) : self::coll($name)->count();
+    $result = $query ? self::coll($collection)->count($query) : self::coll($collection)->count();
     $time->addTime();
     Timer::write('Store::count');
-
-    Log::write('count:'.$name.':'.print_r($query, 1), 'database');
-    $insert = array(
-      'request_id' => Log::$request_id,
-      'type' => 'count',
-      'collection' => $name,
+    
+    self::query_log('count', array(
+      'collection' => $collection,
       'query' => $query,
       'elapsed_time' => $time->getElapsedTime(),
-      'time' => new \MongoDate(),
-      );
-    Store::insert('query_log', $insert, false);
+      ));
 
     return (int) $result ?: 0;
   }
   
-  public static function get($name, $query = null)
+  public static function exists($collection, $query = null)
   {
-    $cursor = self::find($name, $query);
+    return self::count($collection, $query) > 0 ? true : false;
+  }
+  
+  public static function get($collection, $query = null)
+  {
+    $cursor = self::find($collection, $query);
     $return = array();
     foreach ($cursor as $key => $val)
     {
@@ -137,27 +127,27 @@ class Store
     return $return;
   }
   
-  public static function getOne($name, $query = null, $key = null)
+  public static function getOne($collection, $query = null, $key = null)
   {
-    $cursor = self::findOne($name);
+    $cursor = self::findOne($collection);
     foreach ($cursor as $val)
     {
       return $key != null ? $val[$key] : $val;
     }
   }
   
-  public static function set($name, $value = null)
+  public static function set($collection, $value = null)
   {  
-    return self::insert($name, $value);
+    return self::insert($collection, $value);
   }
   
-  public static function insert($name, &$value = null, $safe = true)
+  public static function insert($collection, &$value = null, $safe = true)
   {
     try
     {
       Timer::write('Store::insert', true);
       $time = new \sfTimer();
-      $result = self::coll($name)->insert($value, $safe);
+      $result = self::coll($collection)->insert(&$value, $safe);
       $time->addTime();
       Timer::write('Store::insert');
     }
@@ -166,33 +156,26 @@ class Store
       throw StoreException::createFromException($e);
     }
     
-    Log::write('insert:'.$name.':'.print_r($value, 1).':safe?:'.(int) $safe, 'database');
-    if($name != 'query_log')
+    if($collection != 'query_log')
     {
-      $insert = array(
-        'request_id' => Log::$request_id,
-        'type' => 'insert',
-        'collection' => $name,
+      self::query_log('insert', array(
+        'collection' => $collection,
         'value' => $value,
         'safe' => $safe,
         'elapsed_time' => $time->getElapsedTime(),
-        'time' => new \MongoDate(),
-        );
-      Store::insert('query_log', $insert, false);
+        ));
     }
     
     return $result;
   }
   
-  public static function update($name, $query, &$value = null, $options = null)
+  public static function update($collection, $query, &$value = null, $options = null)
   {
-    Log::write('update:'.$name.':find:'.print_r($query, 1).':value:'.print_r($value, 1), 'database');
-    
     try
     {
       Timer::write('Store::update', true);
       $time = new \sfTimer();
-      $result = self::coll($name)->update($query, array('$set' => $value), $options);
+      $result = self::coll($collection)->update($query, array('$set' => $value), $options);
       $time->addTime();
       Timer::write('Store::update');
     }
@@ -201,18 +184,42 @@ class Store
       throw StoreException::createFromException($e);
     }
     
-    $insert = array(
-      'request_id' => Log::$request_id,
-      'type' => 'update',
-      'collection' => $name,
+    self::query_log('update', array(
+      'collection' => $collection,
       'query' => $query,
       'value' => $value,
       'options' => $options,
       'elapsed_time' => $time->getElapsedTime(),
-      'time' => new \MongoDate(),
-      );
-    Store::insert('query_log', $insert);
+      ));
     
     return $result;
+  }
+
+  public static function query_log($type, $data)
+  {
+    $insert = array_merge(array(
+      'type' => $type,
+      'request_id' => Log::$request_id,
+      'time' => new \MongoDate(),
+      ), $data);
+    self::insert('query_log', $insert, false);
+    
+    $log  = $type;
+    $log .= (isset($insert['collection']) ? ':'.$insert['collection'] : null);
+    $log .= (isset($insert['query']) ? ':'.print_r($insert['query'], true) : null);
+    $log .= (isset($insert['safe']) ? ':safe?'.(int)$insert['safe'] : null);
+    Log::write($log, 'database');
+  }
+  
+  public static function load_fixtures($file)
+  {
+    $data = \sfYaml::load($file);
+    foreach($data as $dbname => $entries)
+    {
+      foreach($entries as $entry)
+      {
+        Store::insert($dbname, $entry, false);
+      }
+    }
   }
 }

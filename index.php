@@ -6,7 +6,7 @@
 require 'lib/Bogart/ClassLoader.php';
 Bogart\ClassLoader::register();
 
-use Bogart\Project;
+use Bogart\App;
 use Bogart\Config;
 use Bogart\Store;
 use Bogart\Route;
@@ -14,13 +14,31 @@ use Bogart\View;
 use Bogart\Request;
 use Bogart\Response;
 use Bogart\User;
+use Bogart\Event;
+
+Route::Before(function(Request $request){
+  $title = 'Default';
+});
 
 Route::Get('/', function(Request $request, Response $response, User $user)
 {
-  $posts = Store::get('Posts');
+  $new_post = array(
+    'title' => 'Post '.rand(10, 99),
+    'body' => 'This is a great post!'
+    );
+  //Store::insert('Posts', $new_post);
+  
+  $posts = Store::find('Posts')->limit(10)->sort(array('_id' => -1));
   $user->setUserId(555);
   $title = 'Home';
-  return View::HTML('index', compact('posts', 'title'));
+  return View::HTML('posts', compact('posts', 'title', 'user'));
+});
+
+// http://local.bogart/post/new
+Route::Get('/post/new', function()
+{
+  $title = 'New Post';
+  return View::HTML('new', compact('title'));
 });
 
 // http://local.bogart/post/submit2
@@ -43,21 +61,33 @@ Route::Get('/post/submit', function(Request $request)
   return View::HTML('index', compact('posts', 'title'));
 });
 
-Route::Post('/post/submit', function(Request $request)
+Route::Post('/post/edit', function(Request $request, Response $response)
 {
   //Store::insert('Posts', array('title' => 'test', 'body' => '<p>body</p>')); // just a test
   
   //debug($request->params);
   $post =  $request->params['post'];
-  if(Store::insert('Posts', $post))
+  if(Store::insert('Posts', $post, true))
   {
     $message = 'Saved: '.$post['_id'];
+    $response->redirect('/post/'.$post['_id']);
   }
   
   $posts = Store::get('Posts');
   //debug(compact($posts, $message));
-  $title ="Submit a Post";
-  return View::HTML('index', compact('posts', 'message', 'title'));
+  $title ="Edit a Post";
+  return View::HTML('edit', compact('posts', 'message', 'title'));
+});
+
+Route::Get('/post/:id', function(Request $request, Response $response, Route $route)
+{  
+  debug($request);
+  debug($route);
+  exit;
+  if(!$post = Store::find('Posts', array('_id' => $request->params['id'])))
+  {
+    $response->error404('Post not found.');
+  }
 });
 
 Route::Get('/say/:hello/to/:world', function(Request $request, Response $response)
@@ -112,6 +142,25 @@ Route::Post('/save', function(){
   return 'index';
 });
 
+/*
+Event::Listen('custom_error', function(){
+  echo 'there was a problem!'."\n";
+});
+
+Event::Listen('error', function(){
+  echo 'a generic error!'."\n";
+});
+
+Event::Listen('error', function($message){
+  echo 'an error event: '.$message."\n";
+});
+Event::Raise('error', array('test'));
+
+Event::Listen('not_found', function(){
+  echo 'not found.'."\n";
+});
+*/
+
 //Store::coll('cfg')->drop();
 
-Project::run(__FILE__, 'dev', true);
+App::run(__FILE__, 'dev', true);

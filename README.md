@@ -32,6 +32,15 @@ Decisions So Far
 - No built in shit like blogs or comments or user or whatever.
 - Don't impose a user auth model. Use Twitter or Facebook for that.
 
+TODO
+----
+
+- Switch all routes to event handlers to allow things like filters, error handling, etc.
+- Make funcs for Error/NotFound.
+- halt
+- helpers
+- Tests with PHPUnit
+- Ability to *pass* within an action, let the next route handle it. Will need a route/controller reorg to a continuous loop. Possibly move Route::find to the controller.
 
 Example
 -------

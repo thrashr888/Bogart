@@ -23,20 +23,20 @@ class Request
   public function __construct()
   {
     $this->params = array_merge($_GET, $_POST);
-    $this->method = $_SERVER['REQUEST_METHOD'];
     $this->url = $this->generateUrl();
     $this->uri = $_SERVER['REQUEST_URI'];
     $this->parsed = parse_url($this->url);
     $this->method = $this->getMethod();
     
     // take a basic guess as to what file type it's asking for
-    if($format = preg_match('/\/.*\.[a-z]/i', $this->url))
+    if(preg_match('/.*\.([a-z0-9]+)/i', $this->parsed['path'], $format))
     {
       $this->format = $format[1];
     }
     
     Log::write('Request: '.$this->url, 'request');
     Log::write($_SERVER, 'request');
+    
     Config::set('bogart.request.url', $this->url);
     Config::set('bogart.request.method', $this->method);
     Config::set('bogart.request.format', $this->format);
@@ -50,14 +50,13 @@ class Request
   
   protected function generateUrl()
   {
-    return (isset($_SERVER['HTTPS'])?'https://':'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    return (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
   }
   
   protected function getMethod()
-  {  
-    if(isset($_GET)) return 'get';
-    if(isset($_POST) && isset($_POST['_method']) && $_POST['_method'] == 'delete') return 'delete';
-    if(isset($_POST) && isset($_POST['_method']) && $_POST['_method'] == 'put') return 'put';
-    if(isset($_POST)) return 'post';
+  {
+    if(isset($_POST) && isset($_POST['_method']) && strtolower($_POST['_method']) == 'delete') return 'DELETE';
+    if(isset($_POST) && isset($_POST['_method']) && strtolower($_POST['_method']) == 'put') return 'PUT';
+    return strtoupper($_SERVER['REQUEST_METHOD']);
   }
 }

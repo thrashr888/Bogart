@@ -19,7 +19,7 @@ class Controller
   
   protected
     $controller_content = '',
-    $content_for_response;
+    $view_content = '';
   
   public function __construct(Array $services = array())
   {
@@ -29,11 +29,83 @@ class Controller
     }
   }
   
+  public function execute()
+  {
+    $this->findRoute();
+    $this->getView();
+    $this->renderView();
+    $this->sendResponse();
+    
+    // output debugging?
+    if(Config::enabled('debug'))
+    {
+      Debug::outputDebug();
+    }
+  }
+  
   protected function findRoute()
   {
-    $this->service['route'] = Route::find($this->service['request'], $this->service['response']);
-    Config::set('bogart.route', $this->service['route']);
-    Log::write($this->service['route'], 'controller');
+    $match_path = $this->service['request']->getPath();
+    
+    // try to match a route, one by one
+    foreach(Route::getRoutes() as $route)
+    {  
+      Log::write('Checking route: '.$route['route'], 'route');
+      if($route['method'] != $this->service['request']->method)
+      {
+        continue;
+      }
+      
+      // this triggers regex
+      if(strpos('r/', $route['route']) === 0)
+      {
+        $route['type'] = 'regex';
+        $route['regex'] = $route['route'];
+      }
+      
+      // this checks for splats and :named params
+      if(strstr($route['route'], '*') || strstr($route['route'], ':'))
+      {
+        $route['type'] = strstr($route['route'], '*') ? 'splat' : 'named';
+        $search = array('/(\*)/', '/\:([a-z_]+)/i', '/\//');
+        $replace = array('(.+)', '(?<\1>[^/]+)', '\\\/');
+        $route_search = preg_replace($search, $replace, $route['route']);
+        $route['regex'] = '/^'.$route_search.'$/i';
+      }
+      else
+      {
+        // match as-is
+        $route['type'] = 'match';
+        $route_search = str_replace('/', '\/', $route['route']);
+        $route['regex'] = '/^'.$route_search.'$/i';
+      }
+      
+      // get for a regex route match to the requested url
+      if(preg_match($route['regex'], $match_path, $route['matches']))
+      {
+        // matched a route. set the params and return it.
+        
+        if($route['type'] == 'regex')
+        {
+          $this->service['request']->params['captures'] = $route['matches'];
+        }
+        if($route['type'] == 'splat')
+        {
+          $this->service['request']->params['splat'] = $route['matches'];
+        }
+        $this->service['request']->route = $route['route'];
+        
+        Log::write('Matched route: '.$route['route'], 'route');
+        
+        Config::set('bogart.route', $route);
+        Log::write($route, 'controller');
+        $this->service['route'] = $route;
+      }
+    }
+    
+    Config::set('bogart.route', $route);
+    Log::write($route, 'controller');
+    $this->service['route'] = null;
   }
   
   protected function getView()
@@ -45,12 +117,16 @@ class Controller
     {
       // compile the args for the closure
       $m = new \ReflectionMethod($this->service['route']['callback'], '__invoke');
+      $args = array();
       foreach($m->getParameters() as $param)
       {
         $param = $param->getName();
         $args[] = $this->service[$param]; // grab the actual service param
-      }  
-      Log::write($args, 'controller');
+      } 
+      if($args)
+      {
+        Log::write($args, 'controller');
+      }
 
       try
       {
@@ -79,7 +155,7 @@ class Controller
     elseif(null === $this->service['route'])
     {
       // no match, 404
-      debug($this->service['view']);
+      //debug($this->service['view']);
       throw new Error404Exception('Route not found.', 404);
     }
     else
@@ -127,7 +203,17 @@ class Controller
     Log::write('Chose view: '.$this->service['view']->template, 'controller');
     
     Timer::write('View::render', true);
-    $this->content_for_response = $this->service['view']->render();
+    
+    $cache_key = serialize($this->service['view']);
+    if(!$this->view_content = Cache::get($cache_key))
+    {
+      $this->view_content = $this->service['view']->do_render();
+      Cache::get($cache_key, $this->view_content);
+      Log::write('View cache MISS', 'controller');
+    }else{
+      Log::write('View cache HIT', 'controller', Log::WARN);
+    }
+    
     Timer::write('View::render');
     Log::write('Rendered view.', 'controller');
   }
@@ -136,21 +222,7 @@ class Controller
   {
     $this->service['response']->format = $this->service['request']->format;
     
-    echo $this->service['response']->send($this->content_for_response);
+    echo $this->service['response']->send($this->view_content);
     Log::write('Sent content.', 'controller');
-  }
-  
-  public function execute()
-  {
-    $this->findRoute();
-    $this->getView();
-    $this->renderView();
-    $this->sendResponse();
-    
-    // output debugging?
-    if(Config::enabled('debug'))
-    {
-      Debug::outputDebug();
-    }
   }
 }

@@ -13,122 +13,83 @@ class Route
     $callback;
   
   protected static
-    $routes;
+    $routes,
+    $filters;
   
-  public static function find(Request $request, Response $response)
+  public static function getRoutes()
   {
-    $match_path = $request->getPath();
-    
-    // try to match a route, one by one
-    foreach(Route::$routes as $route)
-    {  
-      Log::write('Checking route: '.$route['route'], 'route');
-      
-      if($route['method'] != $request->method)
-      {
-        continue;
-      }
-      
-      // this triggers regex
-      if(strpos('r/', $route['route']) === 0)
-      {
-        $route['type'] = 'regex';
-        $route['regex'] = $route['route'];
-      }
-      
-      // this checks for splats and :named params
-      if(strstr($route['route'], '*') || strstr($route['route'], ':'))
-      {
-        $route['type'] = 'splat';
-        $search = array('/(\*)/', '/\:([a-z_]+)/i', '/\//');
-        $replace = array('(.+)', '(?<\1>[^/]+)', '\\\/');
-        $route_search = preg_replace($search, $replace, $route['route']);
-        $route['regex'] = '/^'.$route_search.'$/i';
-      }
-      else
-      {
-        // match as-is
-        $route['type'] = 'match';
-        $route_search = str_replace('/', '\/', $route['route']);
-        $route['regex'] = '/^'.$route_search.'$/i';
-      }
-      
-      // get for a regex route match to the requested url
-      if(preg_match($route['regex'], $match_path, $route['matches']))
-      {
-        // matched a route. set the params and return it.
-        
-        if($route['type'] == 'regex')
-        {
-          $request->params['captures'] = $route['matches'];
-        }
-        if($route['type'] == 'splat')
-        {
-          $request->params['splat'] = $route['matches'];
-        }
-        $request->route = $route['route'];
-        
-        Log::write('Matched route: '.$route['route'], 'route');
-        
-        return $route;
-      }
-    }
-    return null;
+    return self::$routes;
   }
   
-  public static function Get($route, $callback = false)
+  public static function Before($callback)
   {
-    Route::$routes[] = array(
-      'method' => 'get',
+    self::$filters[] = array(
+      'filter' => 'before',
+      'callback' => $callback
+    );
+  }
+  
+  public static function After($callback)
+  {
+    self::$filters[] = array(
+      'filter' => 'after',
+      'callback' => $callback
+    );
+  }
+  
+  public static function Get($route, $callback = null)
+  {
+    self::$routes[] = array(
+      'method' => 'GET',
       'route' => $route,
       'callback' => $callback,
       );
   }
 
-  public static function Post($route, $callback = false)
+  public static function Post($route, $callback = null)
   {
-    Route::$routes[] = array(
-      'method' => 'post',
+    self::$routes[] = array(
+      'method' => 'POST',
       'route' => $route,
       'callback' => $callback,
       );
   }
 
-  public static function Put($route, $callback = false)
+  public static function Put($route, $callback = null)
   {
-    Route::$routes[] = array(
-      'method' => 'put',
+    self::$routes[] = array(
+      'method' => 'PUT',
       'route' => $route,
       'callback' => $callback,
       );
   }
 
-  public static function Delete($route, $callback = false)
+  public static function Delete($route, $callback = null)
   {
-    Route::$routes[] = array(
-      'method' => 'delete',
+    self::$routes[] = array(
+      'method' => 'DELETE',
       'route' => $route,
       'callback' => $callback,
       );
   }
 }
 
-function Get($route, $callback = false)
+function Get($route, $callback = null)
 {
-  return Route::Get($route, $callback);
+  return self::Get($route, $callback);
 }
 
-function Post($route, $callback = false)
+function Post($route, $callback = null)
 {
-  return Route::Post($route, $callback);
+  return self::Post($route, $callback);
 }
 
-function Put($route, $callback = false)
+function Put($route, $callback = null)
 {
-  return Route::Put($route, $callback);
+  return self::Put($route, $callback);
 }
 
-function Delete($route, $callback = false)
+function Delete($route, $callback = null)
 {
-  return Route::Delete($route, $callback);
+  return self::Delete($route, $callback);
 }
