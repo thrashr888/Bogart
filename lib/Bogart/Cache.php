@@ -2,9 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Store;
-use Bogart\Config;
-
 class Cache
 {
   public static function get($key)

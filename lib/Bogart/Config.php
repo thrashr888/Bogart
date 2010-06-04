@@ -2,10 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Exception;
-
-include 'vendor/sfYaml/lib/sfYaml.php';
-
 class Config
 {
   public static

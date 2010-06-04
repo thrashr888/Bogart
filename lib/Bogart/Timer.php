@@ -2,12 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Store;
-use Bogart\Log;
-
-include 'vendor/sfTimer/sfTimerManager.class.php';
-include 'vendor/sfTimer/sfTimer.class.php';
-
 // would like to switch to storing this in mongo
 // we can compile times on shutdown and log them
 

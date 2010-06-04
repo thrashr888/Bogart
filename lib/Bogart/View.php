@@ -2,11 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Exception;
-use Bogart\Error404Exception;
-use Bogart\Cache;
-use Bogart\Config;
-
 class View
 {
   public

@@ -2,9 +2,7 @@
 
 namespace Bogart;
 
-use Bogart\Config;
-
-class Route
+class Router
 {
   public
     $method,
@@ -72,24 +70,4 @@ class Route
       'callback' => $callback,
       );
   }
-}
-
-function Get($route, $callback = null)
-{
-  return self::Get($route, $callback);
-}
-
-function Post($route, $callback = null)
-{
-  return self::Post($route, $callback);
-}
-
-function Put($route, $callback = null)
-{
-  return self::Put($route, $callback);
-}
-
-function Delete($route, $callback = null)
-{
-  return self::Delete($route, $callback);
 }

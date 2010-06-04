@@ -1,26 +1,23 @@
 <?php
+
 /**
  * http://local.bogart/admin/
  * http://local.bogart/say/test/to/test2
  **/
+
+namespace Bogart;
+
 require 'lib/Bogart/ClassLoader.php';
-Bogart\ClassLoader::register();
+ClassLoader::register();
 
-use Bogart\App;
-use Bogart\Config;
-use Bogart\Store;
-use Bogart\Route;
-use Bogart\View;
-use Bogart\Request;
-use Bogart\Response;
-use Bogart\User;
-use Bogart\Event;
-
-Route::Before(function(Request $request){
+Before(function(Request $request){
   $title = 'Default';
+
+  $server_pool = Config::get('app.asset.servers');
+  Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
 });
 
-Route::Get('/', function(Request $request, Response $response, User $user)
+Get('/', function(Request $request, Response $response, User $user = null)
 {
   $new_post = array(
     'title' => 'Post '.rand(10, 99),
@@ -35,7 +32,7 @@ Route::Get('/', function(Request $request, Response $response, User $user)
 });
 
 // http://local.bogart/post/new
-Route::Get('/post/new', function()
+Get('/post/new', function()
 {
   $title = 'New Post';
   return View::HTML('new', compact('title'));
@@ -43,17 +40,17 @@ Route::Get('/post/new', function()
 
 // http://local.bogart/post/submit2
 // just render the info page
-Route::Get('/post/submit2', 'info');
+Get('/post/submit2', 'info');
 
 // http://local.bogart/post/submit3
 // just render the info page
-Route::Get('/post/submit3', function(Request $request)
+Get('/post/submit3', function(Request $request)
 {
   return 'info';
 });
 
 // http://local.bogart/post/submit?post[title]=test&post[body]=body
-Route::Get('/post/submit', function(Request $request)
+Get('/post/submit', function(Request $request)
 {
   $posts = Store::get('Posts');
   $title ="Posts";
@@ -61,7 +58,7 @@ Route::Get('/post/submit', function(Request $request)
   return View::HTML('index', compact('posts', 'title'));
 });
 
-Route::Post('/post/edit', function(Request $request, Response $response)
+Post('/post/edit', function(Request $request, Response $response)
 {
   //Store::insert('Posts', array('title' => 'test', 'body' => '<p>body</p>')); // just a test
   
@@ -75,22 +72,22 @@ Route::Post('/post/edit', function(Request $request, Response $response)
   
   $posts = Store::get('Posts');
   //debug(compact($posts, $message));
-  $title ="Edit a Post";
+  $title = "Edit a Post";
   return View::HTML('edit', compact('posts', 'message', 'title'));
 });
 
-Route::Get('/post/:id', function(Request $request, Response $response, Route $route)
-{  
-  debug($request);
-  debug($route);
-  exit;
-  if(!$post = Store::find('Posts', array('_id' => $request->params['id'])))
+// http://local.bogart/post/4c04b8478ead0ea029961200.json
+Get('/post/:id(.:format)?', function(Request $request, Response $response, Array $route)
+{
+  if(!$post = Store::find('Posts', array('_id' => $request->params['splat']['id'])))
   {
-    $response->error404('Post not found.');
+    //$response->error404('Post not found.');
   }
+  $title = "Post";
+  return View::HTML('view', compact('post', 'title'));
 });
 
-Route::Get('/say/:hello/to/:world', function(Request $request, Response $response)
+Get('/say/:hello/to/:world', function(Request $request, Response $response)
 {
   $test = $req->params['splat'];
   //debug($req);
@@ -100,7 +97,7 @@ Route::Get('/say/:hello/to/:world', function(Request $request, Response $respons
 });
 
 // splat routes
-Route::Get('/say/*/to/*', function(Request $request)
+Get('/say/*/to/*', function(Request $request)
 {
   $test = $req->params['splat'];
   debug($req);
@@ -110,7 +107,7 @@ Route::Get('/say/*/to/*', function(Request $request)
 });
 
 // regex route with .json format
-Route::Get('*.json', function(Request $request)
+Get('*.json', function(Request $request)
 {
   $this->content_type = 'text/json';
   $test = $this->params['test'];
@@ -119,7 +116,7 @@ Route::Get('*.json', function(Request $request)
 });
 
 // run all of the css files through less
-Route::Get('/stylesheets/*.css', function(Request $request)
+Get('/stylesheets/*.css', function(Request $request)
 {
   $this->content_type = 'text/css';
   $this->charset = 'utf-8';
@@ -129,15 +126,15 @@ Route::Get('/stylesheets/*.css', function(Request $request)
 });
 
 // homepage, no dynamic data
-Route::Get('/*');
+Get('/*');
 
 // a catch-all for posts
-Route::Post('/*', function(){
+Post('/*', function(){
   echo 'test';
   return 'index';
 });
 
-Route::Post('/save', function(){
+Post('/save', function(){
   echo 'test';
   return 'index';
 });

@@ -2,8 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Store;
-
 class Log
 {
   public static

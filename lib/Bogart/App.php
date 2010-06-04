@@ -2,16 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Config;
-use Bogart\Store;
-use Bogart\Log;
-use Bogart\Route;
-use Bogart\Request;
-use Bogart\Response;
-use Bogart\Controller;
-use Bogart\Exception;
-use Bogart\Timer;
-
 class App
 {
   public static
@@ -66,8 +56,6 @@ class App
     Config::set('bogart.script.file', $script_file);
     Config::set('bogart.script.name', $script_name = self::parseAppName($script_file));
     
-    include 'functions.php';
-    
     self::loadConfig();
     self::setup();
     
@@ -84,7 +72,7 @@ class App
     
     // Load the config.yml so we can init Store for Log
     Config::load(Config::get('bogart.dir.bogart').'/config.yml');
-
+    
     if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
     {
       Config::load(Config::get('bogart.dir.app').'/config.yml');
@@ -99,9 +87,6 @@ class App
   {
     Timer::write('App::setup', true);
     
-    $server_pool = Config::get('app.asset.servers');
-    Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
-    
     // set to the user defined error handler
     set_error_handler(array('Bogart\Exception', 'error_handler'));
     
@@ -111,7 +96,6 @@ class App
     {
       session_name(Config::get('app.name'));
       session_start();
-      if(!isset($_SESSION['hi'])) $_SESSION['hi'] = true;
       Log::write($_SESSION);
     }
     

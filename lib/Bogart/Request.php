@@ -2,8 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Log;
-
 class Request
 {
   public

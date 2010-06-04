@@ -3,6 +3,32 @@
 use Bogart\Config;
 use Bogart\Controller;
 use Bogart\Exception;
+use Bogart\Router;
+
+function Get($route, $callback = null)
+{
+  return Router::Get($route, $callback);
+}
+
+function Post($route, $callback = null)
+{
+  return Router::Post($route, $callback);
+}
+
+function Put($route, $callback = null)
+{
+  return Router::Put($route, $callback);
+}
+
+function Delete($route, $callback = null)
+{
+  return Router::Delete($route, $callback);
+}
+
+function Before($callback = null)
+{
+  return Router::Before($callback);
+}
 
 function GetAll()
 {

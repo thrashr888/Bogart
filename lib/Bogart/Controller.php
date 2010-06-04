@@ -2,16 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Store;
-use Bogart\Log;
-use Bogart\Route;
-use Bogart\Request;
-use Bogart\Response;
-use Bogart\User;
-use Bogart\Exception;
-use Bogart\Error404Exception;
-use Bogart\Renderer\Mustache;
-
 class Controller
 {
   public
@@ -45,10 +35,8 @@ class Controller
   
   protected function findRoute()
   {
-    $match_path = $this->service['request']->getPath();
-    
     // try to match a route, one by one
-    foreach(Route::getRoutes() as $route)
+    foreach(Router::getRoutes() as $route)
     {  
       Log::write('Checking route: '.$route['route'], 'route');
       if($route['method'] != $this->service['request']->method)
@@ -66,9 +54,9 @@ class Controller
       // this checks for splats and :named params
       if(strstr($route['route'], '*') || strstr($route['route'], ':'))
       {
-        $route['type'] = strstr($route['route'], '*') ? 'splat' : 'named';
-        $search = array('/(\*)/', '/\:([a-z_]+)/i', '/\//');
-        $replace = array('(.+)', '(?<\1>[^/]+)', '\\\/');
+        $route['type'] = 'splat';
+        $search = array('/(\*)/', '/\:([a-z_]+)/i', '/\//', '/\./');
+        $replace = array('(.+)', '(?<\1>[^/]+)', '\\\/', '\.');
         $route_search = preg_replace($search, $replace, $route['route']);
         $route['regex'] = '/^'.$route_search.'$/i';
       }
@@ -76,9 +64,11 @@ class Controller
       {
         // match as-is
         $route['type'] = 'match';
-        $route_search = str_replace('/', '\/', $route['route']);
+        $route_search = str_replace(array('/', '.'), array('\/', '\.'), $route['route']);
         $route['regex'] = '/^'.$route_search.'$/i';
       }
+      
+      $match_path = $this->service['request']->getPath();
       
       // get for a regex route match to the requested url
       if(preg_match($route['regex'], $match_path, $route['matches']))
@@ -88,10 +78,12 @@ class Controller
         if($route['type'] == 'regex')
         {
           $this->service['request']->params['captures'] = $route['matches'];
+          array_merge($this->service['request']->params, $route['matches']);
         }
         if($route['type'] == 'splat')
         {
           $this->service['request']->params['splat'] = $route['matches'];
+          array_merge($this->service['request']->params, $route['matches']);
         }
         $this->service['request']->route = $route['route'];
         
@@ -100,12 +92,14 @@ class Controller
         Config::set('bogart.route', $route);
         Log::write($route, 'controller');
         $this->service['route'] = $route;
+        return true;
       }
     }
     
     Config::set('bogart.route', $route);
     Log::write($route, 'controller');
     $this->service['route'] = null;
+    return false;
   }
   
   protected function getView()

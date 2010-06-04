@@ -2,8 +2,6 @@
 
 namespace Bogart;
 
-use Bogart\Exception;
-
 class Store
 {
   public static

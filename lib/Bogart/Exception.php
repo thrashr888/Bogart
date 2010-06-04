@@ -52,7 +52,7 @@ class Exception extends \Exception
   public function printStackTrace()
   {
     try{
-      if($this->wrappedException)
+      if($this->wrappedException && method_exists($this->wrappedException, 'outputStackTrace'))
       {
         $this->wrappedException->outputStackTrace();
       }else{
