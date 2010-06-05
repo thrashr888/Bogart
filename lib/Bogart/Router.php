@@ -19,10 +19,15 @@ class Router
     return self::$routes;
   }
   
+  public static function getFilters()
+  {
+    return self::$filters;
+  }
+  
   public static function Before($callback)
   {
     self::$filters[] = array(
-      'filter' => 'before',
+      'name' => 'before',
       'callback' => $callback
     );
   }
@@ -30,7 +35,7 @@ class Router
   public static function After($callback)
   {
     self::$filters[] = array(
-      'filter' => 'after',
+      'name' => 'after',
       'callback' => $callback
     );
   }

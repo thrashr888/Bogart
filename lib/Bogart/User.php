@@ -19,7 +19,6 @@ class User
     if(isset($_SESSION[self::$persist_name]) && $_SESSION[self::$persist_name])
     {
       $this->setUserId($_SESSION[self::$persist_name]);
-      $this->getProfile();
     }
   }
   
@@ -35,9 +34,11 @@ class User
   
   public function getProfile()
   {
-    if(!$this->profile) $this->profile = Store::getOne('User', array('_id' => new \MongoId($this->getUserId())));
-    //debug($this->profile);
-    //exit;
+    if(!$this->profile)
+    {
+      $this->profile = Store::getOne('User', array('_id' => new \MongoId($this->getUserId())));
+    }
+    
     return $this->profile ?: null;
   }
   

@@ -8,9 +8,31 @@ class View
     $format = 'html',
     $template = 'index',
     $data = array(),
-    $options = array(),
+    $options = array(
+      'cache' =>true,
+      ),
     $renderer = null,
     $layout = null;
+  
+  public function __construct($template, Array $data = array(), $renderer = null, Array $options = array())
+  {  
+    if(null != $renderer)
+    {
+      $this->renderer = $renderer;
+      $this->format = $this->renderer->extention;
+      $this->template = $template.'.'.$this->format;
+      $this->layout = 'layout.'.$this->format;
+    }
+    else
+    {
+      $this->format = substr($template, strpos($template, '.'));
+      $this->template = $template.'.'.$this->format;
+      $this->layout = 'layout.'.$this->format;
+    }
+    
+    $this->data = $data;
+    $this->options = array_merge($this->options, $options);
+  }
   
   public function __toString()
   {
@@ -65,60 +87,33 @@ class View
   
   public static function Twig($template, Array $data = array(), Array $options = array())
   {
-    $view = new self($options);
-    $view->data = $data;
-    $view->options = $options;
-    $view->renderer = new Renderer\Twig($options);
-    $view->format = $view->renderer->extention;
-    $view->template = $template.'.'.$view->format;
+    $view = new View($template, $data, new Renderer\Twig($options), $options);
     $view->layout = null;
     return $view;
   }
   
   public static function Mustache($template, Array $data = array(), Array $options = array())
   {
-    $view = new self($options);
-    $view->data = $data;
-    $view->options = $options;
-    $view->renderer = new Renderer\Mustache($options);
-    $view->format = $view->renderer->extention;
-    $view->template = $template.'.'.$view->format;
-    $view->layout = 'layout.'.$view->format;
-    return $view;
+    return new View($template, $data, new Renderer\Mustache($options), $options);
   }
   
   public static function PHP($template, Array $data = array(), Array $options = array())
   {
-    $view = new self($options);
-    $view->data = $data;
-    $view->options = $options;
-    $view->renderer = new Renderer\Php($options);
-    $view->format = $view->renderer->extention;
-    $view->template = $template.'.'.$view->format;
-    $view->layout = 'layout.'.$view->format;
-    return $view;
+    return new View($template, $data, new Renderer\Php($options), $options);
   }
   
   public static function HTML($template, Array $data = array(), Array $options = array())
   {
-    $view = new self($options);
-    $view->data = $data;
-    $view->options = $options;
-    $view->renderer = new Renderer\HTML($options);
-    $view->format = $view->renderer->extention;
-    $view->template = $template.'.'.$view->format;
-    $view->layout = 'layout.'.$view->format;
-    return $view;
+    return new View($template, $data, new Renderer\HTML($options), $options);
+  }
+  
+  public static function Less($template, Array $data = array(), Array $options = array())
+  {
+    return new View($template, $data, new Renderer\Less($options), $options);
   }
   
   public static function None($template, Array $data = array(), Array $options = array())
   {
-    $view = new self($options);
-    $view->data = $data;
-    $view->options = $options;
-    $view->format = substr($template, strpos($template, '.'));
-    $view->template = $template.'.'.$view->format;
-    $view->layout = 'layout.'.$view->format;
-    return $view;
+    return new View($template, $data, null, $options);
   }
 }

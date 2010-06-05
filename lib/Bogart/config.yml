@@ -12,6 +12,7 @@ bogart:
     sessions: true
     store: true
     dbinit: false
+    cache: true
     log: true
     user: true
     timer: true

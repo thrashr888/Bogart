@@ -6,7 +6,7 @@ class FileCache
 {
   public static function get($key)
   {
-    $data = file_exists($file) ? file_get_contents(self::getFilename($key)) : false;
+    $data = file_exists(self::getFilename($key)) ? file_get_contents(self::getFilename($key)) : false;
     return $data ? unserialize($data) :false;
   }
   

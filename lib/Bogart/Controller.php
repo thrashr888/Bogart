@@ -30,10 +30,14 @@ class Controller
     Config::set('bogart.route', $this->service['route']);
     Timer::write('Controller::getRoute');
     
+    $this->runFilters('before');
+    
     Timer::write('Controller::getView', true);
     $this->service['view'] = $this->getView();
     Config::set('bogart.view', $this->service['view']->toArray());
     Timer::write('Controller::getView');
+    
+    $this->runFilters('after');
     
     Log::write('Executed route. Got view.', 'controller');
     
@@ -46,6 +50,34 @@ class Controller
     Timer::write('Controller::sendResponse');
     
     Timer::write('Controller::execute');
+  }
+  
+  protected function runFilters($name)
+  {
+    foreach(Router::getFilters() as $filter)
+    {
+      if($filter['name'] != $name) continue;
+
+      Timer::write('Controller::runFilters::'.$name, true);
+      
+      // compile the args for the closure
+      $m = new \ReflectionMethod($filter['callback'], '__invoke');
+      $args = array();
+      foreach($m->getParameters() as $param)
+      {
+        //debug($param->getClass()->getName());
+        //debug($param->getName());
+        $args[] = $this->service[$param->getName()]; // grab the actual service param
+      }
+
+      // we return a certain type of view object (html, json, etc.) or null
+      // call the closure w/ it's requested args
+      ob_start();
+      call_user_func_array($filter['callback'], $args);
+      ob_end_clean();
+
+      Timer::write('Controller::runFilters::'.$name);
+    }
   }
   
   protected function getRoute()
@@ -101,29 +133,23 @@ class Controller
         //debug($param->getName());
         $args[] = $this->service[$param->getName()]; // grab the actual service param
       } 
+      
       if($args)
       {
         Log::write($m->getParameters(), 'controller');
       }
 
-      try
-      {
-        Timer::write('Controller::getView::callback', true);
-        
-        // we return a certain type of view object (html, json, etc.) or null
-        // call the closure w/ it's requested args
-        ob_start();
-        $view = call_user_func_array($this->service['route']->callback, $args);
-        $this->controller_content = ob_get_clean();
-        
-        Timer::write('Controller::getView::callback');
-        
-        return is_string($view) ? View::HTML($view) : $view;
-      }
-      catch(\Exception $e)
-      {
-        Log::write($e, 'controller', Log::ERR);
-      }
+      Timer::write('Controller::getView::callback', true);
+      
+      // we return a certain type of view object (html, json, etc.) or null
+      // call the closure w/ it's requested args
+      ob_start();
+      $view = call_user_func_array($this->service['route']->callback, $args);
+      $this->controller_content = ob_get_clean();
+      
+      Timer::write('Controller::getView::callback');
+      
+      return is_string($view) ? View::HTML($view) : $view;
     }
     elseif($this->service['route'] && $this->service['route']->isTemplate())
     {
@@ -176,20 +202,20 @@ class Controller
     
     Log::write('Chose view: '.$this->service['view']->template, 'controller');
     
-    Timer::write('View::render', true);
-    
-    $cache_key = md5(serialize($this->service['view']));
-    if(!$this->view_content = Cache::get($cache_key))
+    $cache_key = md5(serialize($this->service['view'])); // TODO: need a better key here
+    $cache_off = $this->service['view']->options['cache'] == false || !Config::enabled('cache');
+    if($cache_off || !$this->view_content = Cache::get($cache_key))
     {
+      Timer::write('View::render', true);
       $this->view_content = $this->service['view']->render();
+      Timer::write('View::render');
       Cache::set($cache_key, $this->view_content, DateTime::MINUTE*5);
       Log::write('View cache MISS', 'controller');
-    }else{
+    }
+    else
+    {
       Log::write('View cache HIT', 'controller', Log::NOTICE);
     }
-    
-    Timer::write('View::render');
-    Log::write('Rendered view.', 'controller');
   }
   
   protected function sendResponse()

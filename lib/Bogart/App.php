@@ -50,7 +50,7 @@ class App
     //$service = new Services();
     $service['request'] = new Request;
     $service['response'] = new Response;
-    $service['view'] = new View;
+    //$service['view'] = new View;
     $service['user'] = new User;
     return $service;
   }
@@ -96,16 +96,16 @@ class App
     
     // Load the config.yml so we can init Store for Log
     
-    Timer::write('App::loadConfig1', true);
+    Timer::write('App::loadConfig::default', true);
     Config::load(Config::get('bogart.dir.bogart').'/config.yml');
-    Timer::write('App::loadConfig1');
+    Timer::write('App::loadConfig::default');
     
-    Timer::write('App::loadConfig2', true);
+    Timer::write('App::loadConfig::user', true);
     if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
     {
       Config::load(Config::get('bogart.dir.app').'/config.yml');
     }
-    Timer::write('App::loadConfig2');
+    Timer::write('App::loadConfig::user');
     
     Timer::write('App::loadConfig');
   }
@@ -114,26 +114,40 @@ class App
   {
     Timer::write('App::setup', true);
     
-    // set to the user defined error handler
+    // set to the user defined error handler and timezone
+    Timer::write('App::setup::system', true);
     set_error_handler(array('Bogart\Exception', 'error_handler'));
-    
     date_default_timezone_set(Config::get('system.timezone', 'America/Los_Angeles'));
+    Timer::write('App::setup::system');
     
     if(Config::enabled('sessions'))
     {
+      Timer::write('App::setup::sessions', true);
       session_name(Config::get('app.name'));
       session_start();
+      Timer::write('App::setup::sessions');
     }
     
     if(Config::enabled('dbinit'))
     {
+      Timer::write('App::setup::dbinit', true);
+      
+      Store::db()->createCollection('log', true, 5*1024*1024, 100000);
+      Store::db()->createCollection('query_log', true, 5*1024*1024, 100000);
       Store::db()->createCollection('timer', true, 5*1024*1024, 100000);
-      Store::coll('User')->ensureIndex(array('_id' => 1), array('background' => true));
-      Store::coll('log')->ensureIndex(array('request_id' => 1), array('background' => true));
-      Store::coll('query_log')->ensureIndex(array('request_id' => 1), array('background' => true));
-      Store::coll('timer')->ensureIndex(array('request_id' => 1), array('background' => true));
-      Store::coll('cache')->ensureIndex(array('key' => 1, 'expires' => 1), array('background' => true));
-      Store::coll('cfg')->ensureIndex(array('name' => 1), array('background' => true));
+      
+      Store::coll('log')->ensureIndex(array('request_id' => 1), array('background' => true, 'safe' => false));
+      Store::coll('query_log')->ensureIndex(array('request_id' => 1), array('background' => true, 'safe' => false));
+      Store::coll('timer')->ensureIndex(array('request_id' => 1), array('background' => true, 'safe' => false));
+      
+      Store::coll('cache')->ensureIndex(array('key' => 1, 'expires' => 1), array('background' => true, 'safe' => false));
+      Store::coll('cfg')->ensureIndex(array('name' => 1), array('background' => true, 'safe' => false));
+      
+      Store::coll('User')->ensureIndex(array('_id' => 1), array('background' => true, 'safe' => false));
+      Store::coll('User')->ensureIndex(array('email' => 1), array('background' => true, 'safe' => false));
+      Store::coll('User')->ensureIndex(array('username' => 1), array('background' => true, 'safe' => false, 'unique' => true));
+      
+      Timer::write('App::setup::dbinit');
     }
     
     Timer::write('App::setup');

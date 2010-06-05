@@ -151,7 +151,7 @@ class Config
 
   public static function setting($setting, $value = null)
   {
-    return $value ? self::set('bogart.setting.'.$setting, $value) : self::get('bogart.setting.'.$setting);
+    return null !== $value ? self::set('bogart.setting.'.$setting, $value) : self::get('bogart.setting.'.$setting);
   }
   
   public static function merge($data)
@@ -169,11 +169,11 @@ class Config
     elseif(strstr($method, '.yml'))
     {
       $cache_key = $method;
-      $expired = filectime(FileCache::getFilename($cache_key)) < filectime($method);
+      $expired = file_exists(FileCache::getFilename($cache_key)) ? filectime(FileCache::getFilename($cache_key)) < filectime($method) : true;
       if($expired || !$load = FileCache::get($cache_key))
       {
         $load = \sfYaml::load($method);
-        FileCache::set($cache_key, $load);
+        FileCache::set($cache_key, $load, DateTime::MINUTE*5);
         Log::write('Config::load yaml file cache MISS');
       }
       else

@@ -7,18 +7,24 @@
 
 namespace Bogart;
 
-Before(function(Request $request){
-  $title = 'Default';
+Before(function(Request $request, Response $response){
+  $response->title = 'Default';
 
   $server_pool = Config::get('app.asset.servers');
   Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
   
-  Store::coll('Posts')->ensureIndex(array('_id' => -1), array('background' => true));
-  Store::coll('Posts')->ensureIndex(array('_id' => 1), array('background' => true));
+  if(Config::enabled('dbinit'))
+  {
+    Store::coll('Posts')->ensureIndex(array('_id' => -1), array('background' => true, 'safe' => false));
+    Store::coll('Posts')->ensureIndex(array('_id' => 1), array('background' => true, 'safe' => false));
+  }
 });
 
 Get('/', function(Request $request, Response $response, User $user = null)
 {
+  Config::disable('cache');
+  
+  Timer::write('route::posts', true);
   $new_post = array(
     'title' => 'Post '.rand(10, 99),
     'body' => 'This is a great post!'
@@ -30,7 +36,9 @@ Get('/', function(Request $request, Response $response, User $user = null)
   {
     $posts[] = $post;
   }
+  Timer::write('route::posts');
   
+  Timer::write('route::profile', true);
   if(!$user->getProfile())
   {
     $user_data = array(
@@ -40,6 +48,7 @@ Get('/', function(Request $request, Response $response, User $user = null)
       );
     $user->setProfile($user_data);
   }
+  Timer::write('route::profile');
   
   $title = 'Home';
   return View::Mustache('posts', compact('posts', 'title', 'user'));
@@ -103,13 +112,22 @@ Get('/post/:id', function(Request $request, Response $response, Route $route)
 });
 
 // run all of the css files through less
-Get('/css/*.less', function(Request $request)
+Get('/css/*.less', function(Request $request, Response $response)
 {
-  $request->content_type = 'text/css';
-  $request->charset = 'utf-8';
-  $test = $request->params['splat'][0];
+  $response->content_type = 'text/css';
+  $response->charset = 'utf-8';
+  
+  $expires = DateTime::YEAR;
+  
+  $response->setHeader('Pragma: public');
+  $response->setHeader('Content-Type: text/css');
+  $response->setHeader("Cache-Control: maxage=".$expires);
+  $response->setHeader('Expires: '.gmdate('D, d M Y H:i:s', time()+$expires) .' GMT');
+  //header('Content-Length: ' . filesize($target_file));
+  
+  $test = $request->params['splat'][1];
   // render whatever file it's trying to load from less
-  return View::Less($test, $test);
+  return View::Less('css/'.$test);
 });
 
 // run all of the js files
