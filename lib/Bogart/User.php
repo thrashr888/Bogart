@@ -62,7 +62,7 @@ class User
     $this->setUserId($id);
   }
   
-  public function login($username, $password)
+  public function login($username, $password = null)
   {
     $user = Store::getOne('User', array('username' => $username));
     

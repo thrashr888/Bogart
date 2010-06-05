@@ -31,7 +31,7 @@ class Html extends Renderer
       {
         $out = $this->strtr($string, $val, '{{ '.$key.'.');
       }
-      else
+      elseif(is_string($val))
       {
         //debug($start.$key.$end);
         //debug($val);

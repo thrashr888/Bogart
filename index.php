@@ -7,6 +7,8 @@
 
 namespace Bogart;
 
+Config::disable('cache');
+
 Before(function(Request $request, Response $response){
   $response->title = 'Default';
 
@@ -154,7 +156,7 @@ Get('*.json', function(Request $request)
 Get('/login');
 
 Post('/login', function(Request $request, User $user){
-  $user->login($request->params['user']);
+  $user->login($request->params['user']['username'], $request->params['user']['password']);
 });
 
 // named routes

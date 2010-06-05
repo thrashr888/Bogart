@@ -21,7 +21,7 @@ class Mustache extends Renderer
   }
   
   public function render($file, Array $data = array(), Array $options = array())
-  {  
+  {
     $template_contents = file_get_contents($file);
     $data['content'] = $this->instance->render($template_contents, $data);
     

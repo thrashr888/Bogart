@@ -2,20 +2,19 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <meta name="language" content="en" />
-  <title>{{ title }}</title>
+  <title>{{title}}</title>
   
-  <link rel="stylesheet" href="{{ cfg.asset.server }}/css/960/960.css" type="text/css" media="screen" title="no title" charset="utf-8">
-  <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+  <link rel="stylesheet" href="{{#cfg}}{{app_asset_server}}{{/cfg}}/css/960/960.css" type="text/css" media="screen" title="no title" charset="utf-8">
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
   
   <link rel="stylesheet" type="text/css" media="screen" href="/css/main.less" />
 </head>
 <body>
   <div id="header">
-    <h2><a href="/login">login</a></h2>
+    <p><a href="/login">login</a></p>
   </div>
   
-  {{& content }}
+  {{& content}}
   
   <div id="footer">
     <p>footer</p>

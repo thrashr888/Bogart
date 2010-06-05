@@ -34,7 +34,7 @@ class Controller
     
     Timer::write('Controller::getView', true);
     $this->service['view'] = $this->getView();
-    Config::set('bogart.view', $this->service['view']->toArray());
+    if($this->service['view']) Config::set('bogart.view', $this->service['view']->toArray());
     Timer::write('Controller::getView');
     
     $this->runFilters('after');
@@ -148,6 +148,19 @@ class Controller
       $this->controller_content = ob_get_clean();
       
       Timer::write('Controller::getView::callback');
+      
+      if(!$view)
+      {
+        if(preg_match("/([a-z0-9_\-]+)/i", $this->service['route']->name, $matches))
+        {
+          // try to create a default view based on the format, using a template based on it's name
+          // if no template exists, it'll just get an exception thrown and a 404
+          return View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
+        }else{
+          // no match, 404
+          throw new Error404Exception('File not found.', 404);
+        }
+      }
       
       return is_string($view) ? View::HTML($view) : $view;
     }
