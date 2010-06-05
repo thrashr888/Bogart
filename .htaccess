@@ -5,6 +5,8 @@ Options +FollowSymLinks +ExecCGI
   
   RewriteBase /
   
+  RewriteRule ^(.*)/$ $1 [R=302,QSA,L]
+  
   RewriteRule ^admin(.*)$ admin/ [L]
   
   # no, so we redirect to our front web controller

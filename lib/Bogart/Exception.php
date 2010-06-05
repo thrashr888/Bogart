@@ -51,14 +51,18 @@ class Exception extends \Exception
   
   public function printStackTrace()
   {
-    try{
+    try
+    {
       if($this->wrappedException && method_exists($this->wrappedException, 'outputStackTrace'))
       {
         $this->wrappedException->outputStackTrace();
-      }else{
+      }
+      else
+      {
         $this->outputStackTrace();
       }
-    }catch(\Exception $e){}; // ignore
+    }
+    catch(\Exception $e){}; // ignore
 
     if(Config::enabled('debug'))
     {
@@ -95,7 +99,7 @@ class Exception extends \Exception
     header('HTTP/1.0 500 Internal Server Error');
     
     $view = View::HTML('error', array('url' => Config::get('bogart.request.url')), array('renderer' => 'html'));
-    echo $view->do_render();
+    echo $view->render();
   }
   
   public static function error_handler($errno, $errstr, $errfile, $errline)
@@ -118,13 +122,12 @@ class Exception extends \Exception
         break;
     }
     
-    error_log(sprintf("PHP %s:  %s in %s on line %d", $errors, $errstr, $errfile, $errline));
+    error_log(sprintf("PHP %s: %s in %s on line %d", $errors, $errstr, $errfile, $errline));
 
-    if(($errno == E_ERROR || $errno == E_USER_ERROR) && ini_get("display_errors"))
-    {
+    //if(($errno == E_ERROR || $errno == E_USER_ERROR) && ini_get("display_errors")){
       $e = new self('<strong>'.$errstr.'</strong><br/>'.$errors.' in <strong>'.$errfile.'</strong> on line <strong>'.$errline.'</strong>', $errno);
       $e->printStackTrace();
-    }
+    //}
     
     return true;
   }

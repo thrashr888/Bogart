@@ -37,37 +37,37 @@ class Router
   
   public static function Get($route, $callback = null)
   {
-    self::$routes[] = array(
+    self::$routes[] = new Route(array(
       'method' => 'GET',
-      'route' => $route,
+      'name' => $route,
       'callback' => $callback,
-      );
+      ));
   }
 
   public static function Post($route, $callback = null)
   {
-    self::$routes[] = array(
+    self::$routes[] = new Route(array(
       'method' => 'POST',
-      'route' => $route,
+      'name' => $route,
       'callback' => $callback,
-      );
+      ));
   }
 
   public static function Put($route, $callback = null)
   {
-    self::$routes[] = array(
+    self::$routes[] = new Route(array(
       'method' => 'PUT',
-      'route' => $route,
+      'name' => $route,
       'callback' => $callback,
-      );
+      ));
   }
 
   public static function Delete($route, $callback = null)
   {
-    self::$routes[] = array(
+    self::$routes[] = new Route(array(
       'method' => 'DELETE',
-      'route' => $route,
+      'name' => $route,
       'callback' => $callback,
-      );
+      ));
   }
 }

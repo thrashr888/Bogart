@@ -82,6 +82,8 @@ class Config
           case 4:
             self::$data[$d[0]][$d[1]][$d[2]][$d[3]] = $value;
             break;
+          default:
+            self::$data[$name] = $value;
         }
       }
       else

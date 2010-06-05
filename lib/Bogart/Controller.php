@@ -21,8 +21,16 @@ class Controller
   
   public function execute()
   {
-    $this->findRoute();
-    $this->getView();
+    $this->service['route'] = $this->getRoute();
+    Config::set('bogart.route', $this->service['route']);
+    
+    $this->service['view'] = $this->getView();
+    Config::set('bogart.view', $this->service['view']->toArray());
+    
+    Log::write('Executed route.', 'controller');
+    Config::save('mongo'); // save in case it changed
+    Log::write('Saved config.', 'controller');
+    
     $this->renderView();
     $this->sendResponse();
     
@@ -33,73 +41,41 @@ class Controller
     }
   }
   
-  protected function findRoute()
+  protected function getRoute()
   {
     // try to match a route, one by one
     foreach(Router::getRoutes() as $route)
     {  
-      Log::write('Checking route: '.$route['route'], 'route');
-      if($route['method'] != $this->service['request']->method)
-      {
-        continue;
-      }
+      Log::write('Checking route: '.$route->name, 'route');
       
-      // this triggers regex
-      if(strpos('r/', $route['route']) === 0)
-      {
-        $route['type'] = 'regex';
-        $route['regex'] = $route['route'];
-      }
-      
-      // this checks for splats and :named params
-      if(strstr($route['route'], '*') || strstr($route['route'], ':'))
-      {
-        $route['type'] = 'splat';
-        $search = array('/(\*)/', '/\:([a-z_]+)/i', '/\//', '/\./');
-        $replace = array('(.+)', '(?<\1>[^/]+)', '\\\/', '\.');
-        $route_search = preg_replace($search, $replace, $route['route']);
-        $route['regex'] = '/^'.$route_search.'$/i';
-      }
-      else
-      {
-        // match as-is
-        $route['type'] = 'match';
-        $route_search = str_replace(array('/', '.'), array('\/', '\.'), $route['route']);
-        $route['regex'] = '/^'.$route_search.'$/i';
-      }
+      if(!$route->isMethod($this->service['request']->method)) continue;
       
       $match_path = $this->service['request']->getPath();
       
       // get for a regex route match to the requested url
-      if(preg_match($route['regex'], $match_path, $route['matches']))
+      if($route->matchPath($match_path))
       {
         // matched a route. set the params and return it.
         
-        if($route['type'] == 'regex')
+        if($route->type == 'regex')
         {
-          $this->service['request']->params['captures'] = $route['matches'];
-          array_merge($this->service['request']->params, $route['matches']);
+          $this->service['request']->params['captures'] = $route->matches;
         }
-        if($route['type'] == 'splat')
+        if($route->type == 'splat')
         {
-          $this->service['request']->params['splat'] = $route['matches'];
-          array_merge($this->service['request']->params, $route['matches']);
+          $this->service['request']->params['splat'] = $route->matches;
         }
-        $this->service['request']->route = $route['route'];
         
-        Log::write('Matched route: '.$route['route'], 'route');
+        $this->service['request']->params = array_merge($this->service['request']->params, $route->getParams());
+        $this->service['request']->route = $route->name;
         
-        Config::set('bogart.route', $route);
-        Log::write($route, 'controller');
-        $this->service['route'] = $route;
-        return true;
+        Log::write('Matched route: '.$route->name, 'route');
+        
+        return $route;
       }
     }
     
-    Config::set('bogart.route', $route);
-    Log::write($route, 'controller');
-    $this->service['route'] = null;
-    return false;
+    return null;
   }
   
   protected function getView()
@@ -107,15 +83,16 @@ class Controller
     // TODO: we'll need to account for static pages w/ no routing + a template
     // and having no template, just echo'd from within the controller
     
-    if(isset($this->service['route']['callback']) && is_a($this->service['route']['callback'], 'Closure'))
+    if($this->service['route'] && $this->service['route']->isCallable())
     {
       // compile the args for the closure
-      $m = new \ReflectionMethod($this->service['route']['callback'], '__invoke');
+      $m = new \ReflectionMethod($this->service['route']->callback, '__invoke');
       $args = array();
       foreach($m->getParameters() as $param)
       {
-        $param = $param->getName();
-        $args[] = $this->service[$param]; // grab the actual service param
+        //debug($param->getClass()->getName());
+        //debug($param->getName());
+        $args[] = $this->service[$param->getName()]; // grab the actual service param
       } 
       if($args)
       {
@@ -127,24 +104,21 @@ class Controller
         ob_start();
         // we return a certain type of view object (html, json, etc.) or null
         // call the closure w/ it's requested args
-        $this->service['view'] = call_user_func_array($this->service['route']['callback'], $args);
-        Log::write($this->service['view'], 'controller');
+        $view = call_user_func_array($this->service['route']->callback, $args);
 
         $this->controller_content = ob_get_clean();
+        
+        return is_string($view) ? View::HTML($view) : $view;
       }
       catch(\Exception $e)
       {
         Log::write($e, 'controller', Log::ERR);
       }
-
-      Log::write('Executed route.', 'controller');
-      Config::save('mongo'); // save in case it changed
-      Log::write('Saved config.', 'controller');
     }
-    elseif(isset($this->service['route']['callback']) && is_string($this->service['route']['callback']))
+    elseif($this->service['route'] && $this->service['route']->isTemplate())
     {
       // we're passed a template name. just serve up the html with the vars available via the url.
-      $this->service['view'] = View::HTML($this->service['route']['callback']);
+      return View::HTML($this->service['route']->callback);
     }
     elseif(null === $this->service['route'])
     {
@@ -155,21 +129,17 @@ class Controller
     else
     {
       // no callback but we have a route match.
-      if(preg_match("/([a-z0-9_\-]+)/i", $this->service['route']['route'], $matches))
+      if(preg_match("/([a-z0-9_\-]+)/i", $this->service['route']->name, $matches))
       {
         // try to create a default view based on the format, using a template based on it's name
         // if no template exists, it'll just get an exception thrown and a 404
         //debug($matches);
-        $this->service['view'] = View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
+        
+        return View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
       }else{
         // no match, 404
         throw new Error404Exception('File not found.', 404);
       }
-    }
-    
-    if(is_string($this->service['view']))
-    {
-      $this->service['view'] = View::HTML($this->service['view']);
     }
   }
   
@@ -179,7 +149,7 @@ class Controller
     {
       Log::write('View not found.', 'controller');
       $this->service['view'] = View::HTML('static/not_found');
-      throw new Error404Exception('File not found.', 404);
+      throw new Error404Exception('View template not found.', 404);
     }
     else
     {
@@ -188,7 +158,7 @@ class Controller
       $this->service['view']->data['content'] = $this->controller_content;
       if(!$this->service['view']->template)
       {
-        //$view->template = self::getAppName(debug_backtrace());
+        $view->template = Config::get('bogart.script.name');
       }
       //$view->format = $request->format;
       //$response->setContent($controller_content);
@@ -201,7 +171,7 @@ class Controller
     $cache_key = serialize($this->service['view']);
     if(!$this->view_content = Cache::get($cache_key))
     {
-      $this->view_content = $this->service['view']->do_render();
+      $this->view_content = $this->service['view']->render();
       Cache::get($cache_key, $this->view_content);
       Log::write('View cache MISS', 'controller');
     }else{

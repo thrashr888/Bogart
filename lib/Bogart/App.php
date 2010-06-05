@@ -9,14 +9,18 @@ class App
   
   public function __construct($script_name, $env, $debug = false)
   {
-    Timer::write('App::new', true);
-    self::init($script_name, $env, $debug);
+    $this->init($script_name, $env, $debug);
+  }
+  
+  public function run()
+  {  
     Log::write('Running.');
+    Timer::write('App::run', true);
     
     try
     {
       ob_start();
-      $controller = new Controller(self::getServices());
+      $controller = new Controller($this->getServices());
       $controller->execute();
       ob_end_flush();
     }
@@ -27,17 +31,14 @@ class App
       $e->printStackTrace();
     }
     
+    Timer::write('App::run');
     Log::write('Ran.');
-    Timer::write('App::new');
   }
   
-  public static function run($script_name, $env, $debug = false)
+  protected function getServices()
   {
-    return new self($script_name, $env, $debug);
-  }
-  
-  protected static function getServices()
-  {
+    // use http://components.symfony-project.org/dependency-injection/ instead?
+    //$service = new Services();
     $service['request'] = new Request;
     $service['response'] = new Response;
     $service['view'] = new View;
@@ -45,8 +46,10 @@ class App
     return $service;
   }
   
-  protected static function init($script_file, $env, $debug = false)
+  protected function init($script_file, $env, $debug = false)
   {
+    $this->loadLibs();
+    
     Log::$request_id = microtime(true).rand(10000000, 99999999);
     Timer::write('App::init', true);
     
@@ -56,14 +59,25 @@ class App
     Config::set('bogart.script.file', $script_file);
     Config::set('bogart.script.name', $script_name = self::parseAppName($script_file));
     
-    self::loadConfig();
-    self::setup();
+    $this->loadConfig();
+    $this->setup();
     
     Log::write("Init project: name: '$script_name', env: '$env', debug: '$debug'");
     Timer::write('App::init');
   }
   
-  protected static function loadConfig()
+  protected function loadLibs()
+  {
+    include 'vendor/fabpot-event-dispatcher-782a5ef/lib/sfEventDispatcher.php';
+    include 'vendor/fabpot-yaml-9e767c9/lib/sfYaml.php';
+    include 'vendor/sfTimer/sfTimerManager.class.php';
+    include 'vendor/sfTimer/sfTimer.class.php';
+    require 'vendor/fabpot-dependency-injection-07ff9ba/lib/sfServiceContainerAutoloader.php';
+    \sfServiceContainerAutoloader::register();
+    include 'functions.php';
+  }
+  
+  protected function loadConfig()
   {
     Timer::write('App::loadConfig', true);
     
@@ -83,7 +97,7 @@ class App
     Timer::write('App::loadConfig');
   }
   
-  protected static function setup()
+  protected function setup()
   {
     Timer::write('App::setup', true);
     
@@ -102,7 +116,7 @@ class App
     Timer::write('App::setup');
   }
   
-  protected static function parseAppName($file)
+  protected function parseAppName($file)
   {
     if(!preg_match('/([^\/]+)\.(.*)/i', $file, $match))
     {

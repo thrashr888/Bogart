@@ -128,10 +128,8 @@ class Store
   public static function getOne($collection, $query = null, $key = null)
   {
     $cursor = self::findOne($collection);
-    foreach ($cursor as $val)
-    {
-      return $key != null ? $val[$key] : $val;
-    }
+    
+    return $cursor ? $cursor : null;
   }
   
   public static function set($collection, $value = null)

@@ -12,7 +12,12 @@ class View
     $renderer = null,
     $layout = null;
   
-  public function do_render(Array $options = array())
+  public function __toString()
+  {
+    $this->render();
+  }
+  
+  public function render(Array $options = array())
   {
     $options = array_merge(array(
       'renderer' => Config::setting('renderer'),
@@ -26,7 +31,7 @@ class View
       $template = Config::get('bogart.dir.bogart').'/views/'.$this->template;
       if(!file_exists($template))
       {
-        throw new Error404Exception('Template ('.Config::get('bogart.view.template.file').') not found.');
+        throw new Error404Exception('Template ('.$this->template.') not found.');
       }
     }
     
@@ -39,7 +44,7 @@ class View
       }
     }
     
-    Config::set('bogart.view.template.file', $template);
+    Config::set('bogart.view.template_file', $template);
     Log::write('Using template: `'.$template.'`');
     
     if(!$this->renderer)
@@ -55,12 +60,23 @@ class View
         throw new Exception('Renderer `'.$options['renderer_class'].'` not found.');
       }
       
-      Config::set('bogart.view.template.renderer', $options['renderer_class']);
+      Config::set('bogart.view.template_renderer', $options['renderer_class']);
     }
     
     $this->data['cfg'] = Config::getAllFlat();
     
-    return $this->renderer->render(Config::get('bogart.view.template.file'), $this->data, $options);
+    return $this->renderer->render($template, $this->data, $options);
+  }
+  
+  public function toArray()
+  {
+    return array(
+        'format' => $this->format,
+        'template' => $this->template,
+        'options' => $this->options,
+        'renderer' => $this->renderer,
+        'layout' => $this->layout,
+      );
   }
   
   public static function HTML($template, Array $data = array(), Array $options = array())
@@ -115,7 +131,7 @@ class View
     return $view;
   }
   
-  public static function Render($template, Array $data = array(), Array $options = array())
+  public static function None($template, Array $data = array(), Array $options = array())
   {
     $view = new self($options);
     $view->data = $data;

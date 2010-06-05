@@ -25,10 +25,29 @@ Get('/', function(Request $request, Response $response, User $user = null)
     );
   //Store::insert('Posts', $new_post);
   
-  $posts = Store::find('Posts')->limit(10)->sort(array('_id' => -1));
-  $user->setUserId(555);
+  $posts = array();
+  foreach(Store::find('Posts')->limit(10)->sort(array('_id' => -1)) as $post)
+  {
+    $posts[] = $post;
+  }
+  
+  $user_data = array(
+    'username' => 'thrashr888',
+    'email' => 'thrashr888@gmail.com',
+    'password' => 'pshore01'
+    );
+  if(!$user->getProfile()){
+    $user->setProfile($user_data);
+  }
+  
   $title = 'Home';
-  return View::HTML('posts', compact('posts', 'title', 'user'));
+  return View::Mustache('posts', compact('posts', 'title', 'user'));
+});
+
+Get('/login');
+
+Post('/login', function(Request $request){
+  
 });
 
 // http://local.bogart/post/new
@@ -77,14 +96,15 @@ Post('/post/edit', function(Request $request, Response $response)
 });
 
 // http://local.bogart/post/4c04b8478ead0ea029961200.json
-Get('/post/:id(.:format)?', function(Request $request, Response $response, Array $route)
+Get('/post/:id', function(Request $request, Response $response, Route $route)
 {
-  if(!$post = Store::find('Posts', array('_id' => $request->params['splat']['id'])))
+  if(!$post = Store::find('Posts', array('_id' => new \MongoId($request->params['id'])))->limit(1)->getNext())
   {
     //$response->error404('Post not found.');
   }
+  
   $title = "Post";
-  return View::HTML('view', compact('post', 'title'));
+  return View::Mustache('post', compact('post', 'title'));
 });
 
 Get('/say/:hello/to/:world', function(Request $request, Response $response)
@@ -160,4 +180,5 @@ Event::Listen('not_found', function(){
 
 //Store::coll('cfg')->drop();
 
-App::run(__FILE__, 'dev', true);
+$app = new App(__FILE__, 'dev', true);
+$app->run();

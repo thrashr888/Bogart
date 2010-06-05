@@ -31,11 +31,7 @@ class ClassLoader
   protected function __construct()
   {
     $this->path = realpath(__DIR__.'/..');
-    include 'vendor/sfYaml/lib/sfYaml.php';
-    include 'vendor/sfTimer/sfTimerManager.class.php';
-    include 'vendor/sfTimer/sfTimer.class.php';
     include 'functions.php';
-    include 'Router.php';
   }
 
   public function autoload($class)

@@ -16,7 +16,7 @@ class Debug
          style=\"text-decoration:none; color: grey;\">&#x278A; log ($log_count)</a> | ";
    
    $timers = \sfTimerManager::getTimers();
-   $total_time = sprintf("%dms", $timers['App::new']->getElapsedTime() * 1000);
+   $total_time = sprintf("%dms", $timers['App::run']->getElapsedTime() * 1000);
    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_timer_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
         style=\"text-decoration:none; color: grey;\">&#x278B; timer ($total_time)</a> | ";
     
@@ -106,6 +106,8 @@ class Debug
     echo self::prettyPrint(Config::get('bogart.request'));
     echo "<h3>Route</h3>";
     echo self::prettyPrint(Config::get('bogart.route'));
+    echo "<h3>View</h3>";
+    echo self::prettyPrint(Config::get('bogart.view'));
     echo "</div>";
   }
   
