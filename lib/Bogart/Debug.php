@@ -6,17 +6,28 @@ class Debug
 {
   public static function outputDebug()
   {
-    $log = Log::pretty();
-    $color = strstr($log, 'Error') ? 'red' : '#ddd';
+    Timer::write('Debug::outputDebug', true);
+    
+    $log_output = Log::pretty();
+    $log_count = Log::$count;
+    $color = strstr($log_output, 'Error') ? 'red' : '#ddd';
+    $timers = \sfTimerManager::getTimers();
+    $total_time = sprintf("%dms", $timers['App']->getElapsedTime() * 1000);
+    
+    $query_count = Store::count('query_log', array(
+        'request_id' => Log::$request_id
+        ));
+    
+    $queries = Store::find('query_log', array(
+        'request_id' => Log::$request_id
+        ));
+    
     echo "<div id='bogart_debug_container' style=\"border-bottom: 2px solid {$color}; border-left: 2px solid {$color}; position: absolute; top: 0; right: 0; background-color: #eee; text-align: right; -webkit-border-bottom-left-radius: 10px; -moz-border-radius-bottomleft: 10px; border-bottom-left-radius: 10px; color: green; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; font-size: 14px;\"
       >&nbsp;&#x272A; ";
     
-    $log_count = Log::$count;
     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_log_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
          style=\"text-decoration:none; color: grey;\">&#x278A; log ($log_count)</a> | ";
    
-   $timers = \sfTimerManager::getTimers();
-   $total_time = sprintf("%dms", $timers['App::run']->getElapsedTime() * 1000);
    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_timer_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
         style=\"text-decoration:none; color: grey;\">&#x278B; timer ($total_time)</a> | ";
     
@@ -29,28 +40,27 @@ class Debug
     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_request_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
         style=\"text-decoration:none; color: grey;\">&#x278E; request</a> | ";
     
-    $query_count = Store::count('query_log', array(
-        'request_id' => Log::$request_id
-        ));
     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_store_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
         style=\"text-decoration:none; color: grey;\">&#x278F; store ($query_count)</a> | ";
     
     echo "<a href=\"javascript::void(0);\" onclick=\"el=document.getElementById('bogart_debug_container');document.body.removeChild(el);\" style=\"color: grey; text-decoration: none;\">&#x2716;</a>&nbsp;";
     
-    self::outputLog($log_count);
+    self::outputLog($log_output, $log_count);
     self::outputTimer($total_time);
     self::outputConfig();
     self::outputServer();
     self::outputRequest();
-    self::outputStore($query_count);
+    self::outputStore($queries, $query_count);
     
     echo "</div>";
+    
+    Timer::write('Debug::outputDebug');
   }
   
-  public static function outputLog($total = 0)
+  public static function outputLog($log_output, $total = 0)
   {
     echo "<div id='bogart_log_container' style=\"overflow-x: scroll; width: 1000px; display: none; padding: 0 0.5em 0 1em; text-align: left; border-top: 1px solid;\"><h3>Log ($total)</h3>";
-    echo Log::pretty();
+    echo $log_output;
     echo "</div>"; 
   }
   
@@ -111,17 +121,15 @@ class Debug
     echo "</div>";
   }
   
-  public static function outputStore($total = 0)
+  public static function outputStore($queries, $total = 0)
   {
     echo "<div id='bogart_store_container' style=\"display: none; padding: 0 0.5em 1em 1em; text-align: left; border-top: 1px solid;\"><h3>Store ($total)</h3>";
-    $queries = Store::find('query_log', array(
-        'request_id' => Log::$request_id
-        ));
     $total_time = 0;
     $total_queries = array('insert' => 0, 'find' => 0, 'update' => 0, 'findOne' => 0, 'count' => 0);
     ?>
       <table>
         <tr>
+          <th>#</th>
           <th>time</th>
           <th>type</th>
           <th>collection</th>
@@ -129,41 +137,43 @@ class Debug
           <th>elapsed_time</th>
           <th>safe</th>
         </tr>
-        <?php foreach($queries as $query){
+        <?php $i=0; foreach($queries as $query){
           $total_time += $query['elapsed_time'];
           $total_queries[$query['type']] += 1;
+          $i++;
           ?>
           <tr style="<?php echo $query['elapsed_time'] > 1000 ? 'color:red;' : null ?>">
-            <td><?php echo date('h:i:s', $query['time']->sec); ?></td>
+            <td><?php echo $i ?></td>
+            <td><?php echo date('h:i:s', $query['time']->sec) ?></td>
             <td><?php echo $query['type'] ?></td>
             <td><?php echo $query['collection'] ?></td>
             <td><?php echo isset($query['query']) ? '<pre>'.print_r($query['query'], true).'</pre>' : '-' ?></td>
             <td><?php echo sprintf('%0.5f', $query['elapsed_time']*1000) ?> ms</td>
-            <td><?php echo (int) (isset($query['safe']) ?: 0) ?></td>
+            <td><?php echo isset($query['safe']) ? (int) $query['safe'] : '-' ?></td>
           </tr>
         <?php } ?>
         <tr>
-          <td colspan="4" align="right">elapsed time</td>
-          <td><?php echo sprintf('%0.5f', $total_time*1000) ?> ms</td>
+          <td colspan="5" align="right" style="border-top: 1px solid green;">elapsed time</td>
+          <td colspan="2" style="border-top: 1px solid green;"><?php echo sprintf('%0.5f', $total_time*1000) ?> ms</td>
         </tr>
         <tr>
-          <td colspan="4" align="right">insert</td>
+          <td colspan="5" align="right">insert</td>
           <td><?php echo $total_queries['insert'] ?></td>
         </tr>
         <tr>
-          <td colspan="4" align="right">find</td>
+          <td colspan="5" align="right">find</td>
           <td><?php echo $total_queries['find'] ?></td>
         </tr>
         <tr>
-          <td colspan="4" align="right">findOne</td>
+          <td colspan="5" align="right">findOne</td>
           <td><?php echo $total_queries['findOne'] ?></td>
         </tr>
         <tr>
-          <td colspan="4" align="right">update</td>
+          <td colspan="5" align="right">update</td>
           <td><?php echo $total_queries['update'] ?></td>
         </tr>
         <tr>
-          <td colspan="4" align="right">count</td>
+          <td colspan="5" align="right">count</td>
           <td><?php echo $total_queries['count'] ?></td>
         </tr>
       </table>

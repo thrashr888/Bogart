@@ -7,14 +7,14 @@
 
 namespace Bogart;
 
-require 'lib/Bogart/ClassLoader.php';
-ClassLoader::register();
-
 Before(function(Request $request){
   $title = 'Default';
 
   $server_pool = Config::get('app.asset.servers');
   Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
+  
+  Store::coll('Posts')->ensureIndex(array('_id' => -1), array('background' => true));
+  Store::coll('Posts')->ensureIndex(array('_id' => 1), array('background' => true));
 });
 
 Get('/', function(Request $request, Response $response, User $user = null)
@@ -31,23 +31,18 @@ Get('/', function(Request $request, Response $response, User $user = null)
     $posts[] = $post;
   }
   
-  $user_data = array(
-    'username' => 'thrashr888',
-    'email' => 'thrashr888@gmail.com',
-    'password' => 'pshore01'
-    );
-  if(!$user->getProfile()){
+  if(!$user->getProfile())
+  {
+    $user_data = array(
+      'username' => 'thrashr888',
+      'email' => 'thrashr888@gmail.com',
+      'password' => 'pshore01'
+      );
     $user->setProfile($user_data);
   }
   
   $title = 'Home';
   return View::Mustache('posts', compact('posts', 'title', 'user'));
-});
-
-Get('/login');
-
-Post('/login', function(Request $request){
-  
 });
 
 // http://local.bogart/post/new
@@ -107,6 +102,44 @@ Get('/post/:id', function(Request $request, Response $response, Route $route)
   return View::Mustache('post', compact('post', 'title'));
 });
 
+// run all of the css files through less
+Get('/css/*.less', function(Request $request)
+{
+  $request->content_type = 'text/css';
+  $request->charset = 'utf-8';
+  $test = $request->params['splat'][0];
+  // render whatever file it's trying to load from less
+  return View::Less($test, $test);
+});
+
+// run all of the js files
+Get('/js/*.js', function(Request $request)
+{
+  $request->content_type = 'application/javascript';
+  $request->charset = 'utf-8';
+  $test = $request->params['splat'][0];
+  // render whatever file it's trying to load
+  return View::Less($test, $test);
+});
+
+// regex route with .json format
+Get('*.json', function(Request $request)
+{
+  $request->content_type = 'text/json';
+  $test = $request->params['test'];
+  //echo "[{test-$test}]";
+  echo json_encode($test);
+  //return View::HTML('json', array('content' => json_encode($test)));
+});
+
+
+Get('/login');
+
+Post('/login', function(Request $request, User $user){
+  $user->login($request->params['user']);
+});
+
+// named routes
 Get('/say/:hello/to/:world', function(Request $request, Response $response)
 {
   $test = $req->params['splat'];
@@ -120,29 +153,10 @@ Get('/say/:hello/to/:world', function(Request $request, Response $response)
 Get('/say/*/to/*', function(Request $request)
 {
   $test = $req->params['splat'];
-  debug($req);
+  debug($request);
   echo 'test-'.join(', ', $test);
 
   return View::HTML('index', $test);
-});
-
-// regex route with .json format
-Get('*.json', function(Request $request)
-{
-  $this->content_type = 'text/json';
-  $test = $this->params['test'];
-  //echo "[{test-$test}]";
-  return $this->json('index', $test);
-});
-
-// run all of the css files through less
-Get('/stylesheets/*.css', function(Request $request)
-{
-  $this->content_type = 'text/css';
-  $this->charset = 'utf-8';
-  $test = $this->params['splat'][0];
-  // render whatever file it's trying to load from sass
-  return $this->less($test, $test);
 });
 
 // homepage, no dynamic data
@@ -179,6 +193,3 @@ Event::Listen('not_found', function(){
 */
 
 //Store::coll('cfg')->drop();
-
-$app = new App(__FILE__, 'dev', true);
-$app->run();

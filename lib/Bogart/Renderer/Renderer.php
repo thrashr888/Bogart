@@ -4,7 +4,11 @@ namespace Bogart\Renderer;
 
 abstract class Renderer
 {
-  protected $instance;
+  public
+    $extention;
   
-  abstract public function render($file, Array $data = array(), Array $options = array());
+  protected
+    $instance = null;
+  
+  //abstract public function render($file, Array $data = array(), Array $options = array());
 }

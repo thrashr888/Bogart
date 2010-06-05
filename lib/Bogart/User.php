@@ -36,7 +36,7 @@ class User
   public function getProfile()
   {
     if(!$this->profile) $this->profile = Store::getOne('User', array('_id' => new \MongoId($this->getUserId())));
-    debug($this->profile);
+    //debug($this->profile);
     //exit;
     return $this->profile ?: null;
   }

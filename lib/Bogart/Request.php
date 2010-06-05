@@ -33,7 +33,6 @@ class Request
     }
     
     Log::write('Request: '.$this->url, 'request');
-    Log::write($_SERVER, 'request');
     
     Config::set('bogart.request.url', $this->url);
     Config::set('bogart.request.method', $this->method);

@@ -6,7 +6,8 @@ use Bogart\Config;
 
 class Twig extends Renderer
 {
-  public $extention = 'php';
+  public
+    $extention = 'php';
   
   public function __construct(Array $options = array())
   {

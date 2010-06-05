@@ -2,6 +2,8 @@
 
 namespace Bogart;
 
+include 'vendor/fabpot-event-dispatcher-782a5ef/lib/sfEventDispatcher.php';
+
 class Event
 {
   protected static

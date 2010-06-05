@@ -4,6 +4,13 @@ namespace Bogart;
 
 class DateTime extends \DateTime
 {
+  
+  const
+    MINUTE = 60,
+    HOUR = 3600,
+    DAY = 86400,
+    MONTH = 2592000,
+    YEAR = 31536000;
 
 	/**
 	 * Return Date in ISO8601 format

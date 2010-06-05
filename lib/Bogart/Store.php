@@ -5,7 +5,8 @@ namespace Bogart;
 class Store
 {
   public static
-    $instance = array();
+    $instance = array(),
+    $connected = false;
   
   public
     $mongo,
@@ -19,7 +20,7 @@ class Store
   
   public function connect($dbname = null, $config = array())
   {
-      if(Config::get('db.persistant'))
+      if(Config::get('db.persist'))
       {
         $config['persist'] = 'x';
       }
@@ -35,6 +36,7 @@ class Store
         //throw new \Exception('Cannot connect to the database.');
         die('Cannot connect to the database.');
       }
+      self::$connected = true;
   }
   
   public static function getInstance($dbname = null, $config = array())
@@ -66,8 +68,7 @@ class Store
     $time->addTime();
     Timer::write('Store::find');
     
-    self::query_log('find', array(
-      'collection' => $collection,
+    self::query_log('find', $collection, array(
       'query' => $query,
       'elapsed_time' => $time->getElapsedTime(),
       ));
@@ -83,8 +84,7 @@ class Store
     $time->addTime();
     Timer::write('Store::findOne');
     
-    self::query_log('findOne', array(
-      'collection' => $collection,
+    self::query_log('findOne', $collection, array(
       'query' => $query,
       'elapsed_time' => $time->getElapsedTime(),
       ));
@@ -100,8 +100,7 @@ class Store
     $time->addTime();
     Timer::write('Store::count');
     
-    self::query_log('count', array(
-      'collection' => $collection,
+    self::query_log('count', $collection, array(
       'query' => $query,
       'elapsed_time' => $time->getElapsedTime(),
       ));
@@ -152,15 +151,11 @@ class Store
       throw StoreException::createFromException($e);
     }
     
-    if($collection != 'query_log')
-    {
-      self::query_log('insert', array(
-        'collection' => $collection,
-        'value' => $value,
-        'safe' => $safe,
-        'elapsed_time' => $time->getElapsedTime(),
-        ));
-    }
+    self::query_log('insert', $collection, array(
+      'value' => $value,
+      'safe' => $safe,
+      'elapsed_time' => $time->getElapsedTime(),
+      ));
     
     return $result;
   }
@@ -180,8 +175,7 @@ class Store
       throw StoreException::createFromException($e);
     }
     
-    self::query_log('update', array(
-      'collection' => $collection,
+    self::query_log('update', $collection, array(
       'query' => $query,
       'value' => $value,
       'options' => $options,
@@ -191,10 +185,13 @@ class Store
     return $result;
   }
 
-  public static function query_log($type, $data)
-  {
+  public static function query_log($type, $collection, $data)
+  {  
+    if($collection == 'query_log' || $collection == 'timer' || $collection == 'log') return true;
+    
     $insert = array_merge(array(
       'type' => $type,
+      'collection' => $collection,
       'request_id' => Log::$request_id,
       'time' => new \MongoDate(),
       ), $data);

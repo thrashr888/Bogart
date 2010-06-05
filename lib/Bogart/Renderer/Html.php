@@ -4,7 +4,8 @@ namespace Bogart\Renderer;
 
 class Html extends Renderer
 {
-  public $extention = 'html';
+  public
+    $extention = 'html';
   
   public function render($file, Array $data = array(), Array $options = array())
   {

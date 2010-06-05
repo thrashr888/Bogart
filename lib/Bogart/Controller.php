@@ -13,32 +13,39 @@ class Controller
   
   public function __construct(Array $services = array())
   {
+    Timer::write('Controller::new', true);
     foreach($services as $name => $object)
     {
       $this->service[$name] = $object;
     }
+    Timer::write('Controller::new');
   }
   
   public function execute()
   {
+    Timer::write('Controller::execute', true);
+    
+    Timer::write('Controller::getRoute', true);
     $this->service['route'] = $this->getRoute();
     Config::set('bogart.route', $this->service['route']);
+    Timer::write('Controller::getRoute');
     
+    Timer::write('Controller::getView', true);
     $this->service['view'] = $this->getView();
     Config::set('bogart.view', $this->service['view']->toArray());
+    Timer::write('Controller::getView');
     
-    Log::write('Executed route.', 'controller');
-    Config::save('mongo'); // save in case it changed
-    Log::write('Saved config.', 'controller');
+    Log::write('Executed route. Got view.', 'controller');
     
+    Timer::write('Controller::renderView', true);
     $this->renderView();
-    $this->sendResponse();
+    Timer::write('Controller::renderView');
     
-    // output debugging?
-    if(Config::enabled('debug'))
-    {
-      Debug::outputDebug();
-    }
+    Timer::write('Controller::sendResponse', true);
+    $this->sendResponse();
+    Timer::write('Controller::sendResponse');
+    
+    Timer::write('Controller::execute');
   }
   
   protected function getRoute()
@@ -46,7 +53,7 @@ class Controller
     // try to match a route, one by one
     foreach(Router::getRoutes() as $route)
     {  
-      Log::write('Checking route: '.$route->name, 'route');
+      Log::write('Checking route: '.$route->method.': '.$route->name, 'route');
       
       if(!$route->isMethod($this->service['request']->method)) continue;
       
@@ -96,17 +103,20 @@ class Controller
       } 
       if($args)
       {
-        Log::write($args, 'controller');
+        Log::write($m->getParameters(), 'controller');
       }
 
       try
       {
-        ob_start();
+        Timer::write('Controller::getView::callback', true);
+        
         // we return a certain type of view object (html, json, etc.) or null
         // call the closure w/ it's requested args
+        ob_start();
         $view = call_user_func_array($this->service['route']->callback, $args);
-
         $this->controller_content = ob_get_clean();
+        
+        Timer::write('Controller::getView::callback');
         
         return is_string($view) ? View::HTML($view) : $view;
       }
@@ -168,14 +178,14 @@ class Controller
     
     Timer::write('View::render', true);
     
-    $cache_key = serialize($this->service['view']);
+    $cache_key = md5(serialize($this->service['view']));
     if(!$this->view_content = Cache::get($cache_key))
     {
       $this->view_content = $this->service['view']->render();
-      Cache::get($cache_key, $this->view_content);
+      Cache::set($cache_key, $this->view_content, DateTime::MINUTE*5);
       Log::write('View cache MISS', 'controller');
     }else{
-      Log::write('View cache HIT', 'controller', Log::WARN);
+      Log::write('View cache HIT', 'controller', Log::NOTICE);
     }
     
     Timer::write('View::render');

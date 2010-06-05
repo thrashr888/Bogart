@@ -6,7 +6,8 @@ include __DIR__.'/../vendor/mustache/Mustache.php';
 
 class Mustache extends Renderer
 {
-  public $extention = 'mustache';
+  public
+    $extention = 'mustache';
   
   public function __construct(Array $options = array())
   {
@@ -20,13 +21,14 @@ class Mustache extends Renderer
   }
   
   public function render($file, Array $data = array(), Array $options = array())
-  {
-    if(isset($options['layout']))
-    {
-      // take in a layout option
-    }
-    
+  {  
     $template_contents = file_get_contents($file);
+    $data['content'] = $this->instance->render($template_contents, $data);
+    
+    if(!isset($options['layout'])) return $data['content'];
+    
+    // take in a layout option
+    $template_contents = file_get_contents($options['layout']);
     return $this->instance->render($template_contents, $data);
   }
 }

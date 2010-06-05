@@ -2,6 +2,8 @@
 
 namespace Bogart;
 
+include 'vendor/fabpot-yaml-9e767c9/lib/sfYaml.php';
+
 class Config
 {
   public static
@@ -159,13 +161,26 @@ class Config
 
   public static function load($method)
   {
+    Timer::write('Config::load', true);
     if(is_array($method))
     {
       self::$data = array_replace_recursive(self::$data, $method);
     }
     elseif(strstr($method, '.yml'))
     {
-      $load = \sfYaml::load($method);
+      $cache_key = $method;
+      $expired = filectime(FileCache::getFilename($cache_key)) < filectime($method);
+      if($expired || !$load = FileCache::get($cache_key))
+      {
+        $load = \sfYaml::load($method);
+        FileCache::set($cache_key, $load);
+        Log::write('Config::load yaml file cache MISS');
+      }
+      else
+      {  
+        Log::write('Config::load yaml file cache HIT');
+      }
+      
       if($load)
       {
         self::load($load);
@@ -178,19 +193,20 @@ class Config
     elseif($method == 'store' && Config::enabled('store'))
     {
       $find = array(
-        'name' => self::get('app_name'),
+        'name' => self::get('app.name'),
         );
-      $data = Store::findOne('cfg', $find);
+      $store_config = Store::findOne('cfg', $find);
       if(is_array($data))
       {
-        self::$data['store']['cfg'] = array_replace_recursive(self::$data['store']['cfg'], $data['cfg']);
+        self::set('store.cfg', array_replace_recursive(self::get('store.cfg'), $store_config['cfg']));
       }
     }
     else
     {
       throw new Exception('Nothing to load.');
     }
-    Log::write('loaded store');
+    
+    Timer::write('Config::load');
   }
   
   public static function save($method)
@@ -198,11 +214,11 @@ class Config
     if($method == 'store' && Config::enabled('store'))
     {
       $insert = array(
-        'name' => self::$data['app_name'],
-        'cfg' => self::$data['store_cfg'],
+        'name' => self::get('app.name'),
+        'cfg' => self::get('store.cfg'),
         );
       $find = array(
-        'name' => self::$data['app_name'],
+        'name' => self::get('app.name'),
         );
       Log::write('Saved store.', 'config');
       return Store::update('cfg', $find, $insert, true);

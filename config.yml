@@ -1,5 +1,5 @@
 app:
-  name: Bogart Test App
+  name: Pauls Bogart App
   asset:
     servers: ['d1f7kn811ho9qg.cloudfront.net']
 db:

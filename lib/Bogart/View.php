@@ -20,8 +20,7 @@ class View
   public function render(Array $options = array())
   {
     $options = array_merge(array(
-      'renderer' => Config::setting('renderer'),
-      'layout' => null
+      'layout' => $this->layout
       ), $this->options, $options);
     
     $template = Config::get('bogart.dir.app').'/views/'.$this->template;
@@ -45,23 +44,8 @@ class View
     }
     
     Config::set('bogart.view.template_file', $template);
+    Config::set('bogart.view.options', $options);
     Log::write('Using template: `'.$template.'`');
-    
-    if(!$this->renderer)
-    {
-      $options['renderer_class'] = 'Bogart\Renderer\\'.ucfirst($options['renderer']);
-    
-      try
-      {
-        $this->renderer = new $options['renderer_class']($options);
-      }
-      catch(\Exception $e)
-      {
-        throw new Exception('Renderer `'.$options['renderer_class'].'` not found.');
-      }
-      
-      Config::set('bogart.view.template_renderer', $options['renderer_class']);
-    }
     
     $this->data['cfg'] = Config::getAllFlat();
     
@@ -79,19 +63,6 @@ class View
       );
   }
   
-  public static function HTML($template, Array $data = array(), Array $options = array())
-  {
-    $view = new self($options);
-    $view->data = $data;
-    $view->options = $options;
-    $view->renderer = new Renderer\HTML($options);
-    $view->format = $view->renderer->extention;
-    $view->template = $template.'.'.$view->format;
-    $view->layout = 'layout.'.$view->format;
-    Log::write($view, 'view');
-    return $view;
-  }
-  
   public static function Twig($template, Array $data = array(), Array $options = array())
   {
     $view = new self($options);
@@ -101,7 +72,6 @@ class View
     $view->format = $view->renderer->extention;
     $view->template = $template.'.'.$view->format;
     $view->layout = null;
-    Log::write($view, 'view');
     return $view;
   }
   
@@ -114,7 +84,6 @@ class View
     $view->format = $view->renderer->extention;
     $view->template = $template.'.'.$view->format;
     $view->layout = 'layout.'.$view->format;
-    Log::write($view, 'view');
     return $view;
   }
   
@@ -127,7 +96,18 @@ class View
     $view->format = $view->renderer->extention;
     $view->template = $template.'.'.$view->format;
     $view->layout = 'layout.'.$view->format;
-    Log::write($view, 'view');
+    return $view;
+  }
+  
+  public static function HTML($template, Array $data = array(), Array $options = array())
+  {
+    $view = new self($options);
+    $view->data = $data;
+    $view->options = $options;
+    $view->renderer = new Renderer\HTML($options);
+    $view->format = $view->renderer->extention;
+    $view->template = $template.'.'.$view->format;
+    $view->layout = 'layout.'.$view->format;
     return $view;
   }
   
@@ -139,7 +119,6 @@ class View
     $view->format = substr($template, strpos($template, '.'));
     $view->template = $template.'.'.$view->format;
     $view->layout = 'layout.'.$view->format;
-    Log::write($view, 'view');
     return $view;
   }
 }

@@ -2,18 +2,13 @@
 
 namespace Bogart;
 
-// would like to switch to storing this in mongo
-// we can compile times on shutdown and log them
+include 'vendor/sfTimer/sfTimerManager.class.php';
+include 'vendor/sfTimer/sfTimer.class.php';
 
 class Timer
 {
   protected static
     $timers = array();
-  
-  public static function initCollection()
-  {
-    Store::db()->createCollection('timer', true, 5*1024*1024, 100000);
-  }
   
   public static function write($name, $new = false)
   {
@@ -48,6 +43,7 @@ class Timer
     
     if ($timers = \sfTimerManager::getTimers())
     {
+      ksort($timers);
       foreach ($timers as $name => $timer)
       {
         if($timer->getElapsedTime()*1000 >= 1000){
@@ -57,14 +53,13 @@ class Timer
           $level = Log::INFO;
         }
 
-        $output .= sprintf("<p style='font-family:verdana;font-size:10;color:%s'>%s | calls: %d | time: %.5fs</p>\n",
+        $output .= sprintf("<p style='font-family:verdana;font-size:10;color:%s'>%s | calls: %d | time: %.2fms</p>\n",
           Log::getLevelColor($level),
           $name,
           $timer->getCalls(),
-          $timer->getElapsedTime()
+          $timer->getElapsedTime()*1000
           );
-
-        Store::db()->createCollection('timer', true, 5*1024*1024, 100000);
+        
         $insert = array(
           'request_id' => Log::$request_id,
           'level' => $level,
@@ -72,11 +67,9 @@ class Timer
           'time' => $timer->getElapsedTime(),
           'calls' => $timer->getCalls()
           );
-        Store::insert('timer', $insert);
+        Store::insert('timer', $insert, false);
       }
     }
-    return $output;
-
     return $output;
   }
 }

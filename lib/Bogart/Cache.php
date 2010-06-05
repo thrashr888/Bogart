@@ -6,7 +6,9 @@ class Cache
 {
   public static function get($key)
   {
-    $cache = Store::findOne('bogart.cache', array(
+    if(!Store::$connected) return false;
+    
+    $cache = Store::findOne('cache', array(
       'key' => $key,
       'expires' => array('$gt' => new \MongoDate(time()))
       ));
@@ -20,12 +22,12 @@ class Cache
       'value' => $value,
       'expires' => new \MongoDate(time() + $ttl)
       );
-    Store::insert('bogart.cache', $cache, false);
+    Store::insert('cache', $cache, false);
   }
   
   public static function delete($key)
   {
-    Store::delete('bogart.cache', array(
+    Store::delete('cache', array(
       'key' => $key,
       'expires' => array('$gt' => new \MongoDate(time()))
       ));
@@ -33,7 +35,9 @@ class Cache
   
   public static function has($key)
   {
-    return Store::exists('bogart.cache', array(
+    if(!Store::$connected) return false;
+    
+    return Store::exists('cache', array(
       'key' => $key,
       'expires' => array('$gt' => new \MongoDate(time()))
       ));
@@ -41,16 +45,16 @@ class Cache
   
   public static function gc()
   {
-    if(Cache::has('bogart.cache.gc'))
+    if(Cache::has('cache.gc'))
     {
       // cleared too recently
       return false;
     }
     
-    Cache::set('bogart.cache.gc', 1, 54000); // 15 mins
+    Cache::set('cache.gc', 1, 54000); // 15 mins
     
     // remove everything that's expired 1 sec ago
-    Store::delete('bogart.cache', array(
+    Store::delete('cache', array(
       'expires' => array('$lt' => new \MongoDate(time() - 1))
       ));
     

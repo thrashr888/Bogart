@@ -31,8 +31,17 @@ class App
       $e->printStackTrace();
     }
     
+    //Config::save('mongo'); // save in case it changed
+    
     Timer::write('App::run');
+    Timer::write('App');
     Log::write('Ran.');
+    
+    // output debugging?
+    if(Config::enabled('debug'))
+    {
+      Debug::outputDebug();
+    }
   }
   
   protected function getServices()
@@ -46,35 +55,32 @@ class App
     return $service;
   }
   
-  protected function init($script_file, $env, $debug = false)
+  protected function init($script_name, $env, $debug = false)
   {
-    $this->loadLibs();
-    
     Log::$request_id = microtime(true).rand(10000000, 99999999);
+    Timer::write('App', true);
     Timer::write('App::init', true);
     
     Config::setting('env', $env);
     Config::setting('debug', $debug);
     
-    Config::set('bogart.script.file', $script_file);
-    Config::set('bogart.script.name', $script_name = self::parseAppName($script_file));
-    
     $this->loadConfig();
+    
+    $script_file = Config::get('bogart.dir.app').'/'.$script_name.'.php';
+    if(!file_exists($script_file))
+    {
+      throw new Exception('Script file ( '.$script_file.' ) does not exist.');
+    }
+    
+    Config::set('bogart.script.name', $script_name);
+    Config::set('bogart.script.file', $script_file);
+    
+    include 'functions.php';
+    include $script_file;
     $this->setup();
     
     Log::write("Init project: name: '$script_name', env: '$env', debug: '$debug'");
     Timer::write('App::init');
-  }
-  
-  protected function loadLibs()
-  {
-    include 'vendor/fabpot-event-dispatcher-782a5ef/lib/sfEventDispatcher.php';
-    include 'vendor/fabpot-yaml-9e767c9/lib/sfYaml.php';
-    include 'vendor/sfTimer/sfTimerManager.class.php';
-    include 'vendor/sfTimer/sfTimer.class.php';
-    require 'vendor/fabpot-dependency-injection-07ff9ba/lib/sfServiceContainerAutoloader.php';
-    \sfServiceContainerAutoloader::register();
-    include 'functions.php';
   }
   
   protected function loadConfig()
@@ -83,16 +89,23 @@ class App
     
     Config::set('bogart.dir.bogart', dirname(__FILE__));
     Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../..'));
+    Config::set('bogart.dir.views', Config::get('bogart.dir.app').'/views');
+    Config::set('bogart.dir.vendor', Config::get('bogart.dir.bogart').'/vendor');
+    Config::set('bogart.dir.cache', Config::get('bogart.dir.app').'/cache');
+    Config::set('bogart.dir.public', Config::get('bogart.dir.app').'/public');
     
     // Load the config.yml so we can init Store for Log
-    Config::load(Config::get('bogart.dir.bogart').'/config.yml');
     
+    Timer::write('App::loadConfig1', true);
+    Config::load(Config::get('bogart.dir.bogart').'/config.yml');
+    Timer::write('App::loadConfig1');
+    
+    Timer::write('App::loadConfig2', true);
     if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
     {
       Config::load(Config::get('bogart.dir.app').'/config.yml');
     }
-    
-    Config::load('store');
+    Timer::write('App::loadConfig2');
     
     Timer::write('App::loadConfig');
   }
@@ -110,18 +123,19 @@ class App
     {
       session_name(Config::get('app.name'));
       session_start();
-      Log::write($_SESSION);
+    }
+    
+    if(Config::enabled('dbinit'))
+    {
+      Store::db()->createCollection('timer', true, 5*1024*1024, 100000);
+      Store::coll('User')->ensureIndex(array('_id' => 1), array('background' => true));
+      Store::coll('log')->ensureIndex(array('request_id' => 1), array('background' => true));
+      Store::coll('query_log')->ensureIndex(array('request_id' => 1), array('background' => true));
+      Store::coll('timer')->ensureIndex(array('request_id' => 1), array('background' => true));
+      Store::coll('cache')->ensureIndex(array('key' => 1, 'expires' => 1), array('background' => true));
+      Store::coll('cfg')->ensureIndex(array('name' => 1), array('background' => true));
     }
     
     Timer::write('App::setup');
-  }
-  
-  protected function parseAppName($file)
-  {
-    if(!preg_match('/([^\/]+)\.(.*)/i', $file, $match))
-    {
-      throw new Exception('Cannot find App name.');
-    }
-    return $match[1];
   }
 }

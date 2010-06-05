@@ -4,7 +4,8 @@ namespace Bogart\Renderer;
 
 class Php extends Renderer
 {
-  public $extention = 'php';
+  public
+    $extention = 'php';
   
   public function render($template_file, Array $template_data = array(), Array $template_options = array())
   {   
