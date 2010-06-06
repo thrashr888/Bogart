@@ -228,65 +228,66 @@ class Debug
   
   protected static function prettyPrint($array, $name = '')
   {
-    echo "<div id=\"print-".$name."\" class=\"bogart-print-wrapper\">";
+    $out = "<div id=\"print-".$name."\" class=\"bogart-print-wrapper\">";
     if($array)
     {
       foreach($array as $key => $setting)
       {
         if(is_array($setting))
         {
-          echo sprintf("<b>%s</b><br />\n", strtoupper($key));
+          $out .= sprintf("<b>%s</b><br />\n", strtoupper($key));
           foreach($setting as $k2 => $s2)
           {
             if(is_array($s2))
             {
-              echo sprintf("<b>&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k2);
+              $out .= sprintf("<b>&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k2);
               foreach($s2 as $k3 => $s3)
               {
                 if(is_array($s3))
                 {
-                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k3);
+                  $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k3);
                   foreach($s3 as $k4 => $s4)
                   {
                     if(is_object($s3) || is_array($s3))
                     {
-                      echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, is_array($s3) ? stripslashes(json_encode($s3)) : "instance of ".get_class($s3));
+                      $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, is_array($s3) ? stripslashes(json_encode($s3)) : "instance of ".get_class($s3));
                       continue;
                     }
                     else
                     {
-                      echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, $s4 ? htmlentities($s4) : '<em>NULL</em>');
+                      $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, $s4 ? htmlentities($s4) : '<em>NULL</em>');
                       continue;
                     }
                   }
                 }
                 elseif(is_object($s3) && !method_exists($s3, '__toString'))
                 {  
-                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b><br />\n", $k4);
-                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, "instance of class ".get_class($s3));
+                  $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b><br />\n", $k4);
+                  $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, "instance of class ".get_class($s3));
                   continue;
                 }
                 else
                 {
-                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, $s3 ? htmlentities($s3) : '<em>NULL</em>');
+                  $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, $s3 ? htmlentities($s3) : '<em>NULL</em>');
                   continue;
                 }
               }
             }
             else
             {
-              echo sprintf("<b>&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k2, $s2 ? htmlentities($s2) : '<em>NULL</em>');
+              $out .= sprintf("<b>&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k2, $s2 ? htmlentities($s2) : '<em>NULL</em>');
               continue;
             }
           }
         }
         elseif(is_scalar($setting))
         {
-          echo sprintf("<b>%s:</b> <code style=\"color:grey\">%s</code><br />\n", $key, htmlentities($setting));
+          $out .= sprintf("<b>%s:</b> <code style=\"color:grey\">%s</code><br />\n", $key, htmlentities($setting));
           continue;
         }
       }
     }
-    echo "</div>";
+    $out .= "</div>";
+    return $out;
   }
 }

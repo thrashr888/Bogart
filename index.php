@@ -7,7 +7,7 @@
 
 namespace Bogart;
 
-//Config::disable('cache');
+Config::disable('cache');
 //Config::enable('dbinit');
 
 Before(function(Request $request, Response $response)
@@ -37,8 +37,6 @@ After(function(Request $request)
 
 Get('/', function(Request $request, Response $response, User $user = null)
 {
-  Config::disable('cache');
-  
   Timer::write('route::posts', true);
   $rand = Request::$id;
   $new_post = array(

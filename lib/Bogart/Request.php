@@ -12,7 +12,8 @@ class Request
     $parsed = null,
     $format = 'html',
     $route = null,
-    $base = null;
+    $base = null,
+    $cache_key = null;
   
   public static
     $id = null;
@@ -30,6 +31,7 @@ class Request
     $this->parsed = parse_url($this->url);
     $this->base = $this->parsed['scheme'].'://'.$this->parsed['host'];
     $this->method = $this->getMethod();
+    $this->cache_key = $this->getCacheKey();
     
     // take a basic guess as to what file type it's asking for
     if(preg_match('/.*\.([a-z0-9]+)/i', $this->parsed['path'], $format))
@@ -55,5 +57,12 @@ class Request
     if(isset($_POST) && isset($_POST['_method']) && strtolower($_POST['_method']) == 'delete') return 'DELETE';
     if(isset($_POST) && isset($_POST['_method']) && strtolower($_POST['_method']) == 'put') return 'PUT';
     return strtoupper($_SERVER['REQUEST_METHOD']);
+  }
+  
+  public function getCacheKey()
+  {
+    $file = (substr($this->getPath(), -1) == '/') ? $this->getPath().'index' : $this->getPath();
+    $extention = strstr($this->getPath(), '.') ? '' : '.'.$this->format;
+    return $file.$extention;
   }
 }

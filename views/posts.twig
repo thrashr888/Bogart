@@ -1,13 +1,15 @@
-{{> header}}
+{% extends "layout.twig" %}
 
-<h1>Posts</h1>
+{% block content %}
+<h1>All Posts</h1>
 
-{{#posts}}
-  <h2><a href="/post/{{slug}}">{{ title }}</a></h2>
-  <p>{{ body }}</p>
-{{/posts}}
-{{^posts}}
+{% for item in posts %}
+  <h2><a href="/post/{{ item.slug }}">{{ item.title }}</a></h2>
+  <p>{{ item.body }}</p>
+{% endfor %}
+
+{% if not posts %}
   <p>No posts.</p>
-{{/posts}}
+{% endif %}
 
-{{> footer}}
+{% endblock %}

@@ -205,8 +205,9 @@ class Controller
     
     Log::write('Chose view: '.$this->service['view']->template, 'controller');
     
-    $cache_key = $this->getRequestCacheKey();
-    $cache_disabled = $this->service['view']->options['cache'] == false || !Config::enabled('cache');
+    $cache_key = $this->service['request']->getCacheKey();
+    $cache_disabled = $this->service['view']->options['cache'] === false || !Config::enabled('cache');
+    
     if($cache_disabled || !$this->view_content = Cache::get($cache_key))
     {
       Timer::write('View::render', true);
@@ -219,15 +220,6 @@ class Controller
     {
       Log::write('View cache HIT', 'controller', Log::NOTICE);
     }
-  }
-  
-  protected function getRequestCacheKey()
-  {
-    $file = (substr($this->service['request']->getPath(), -1) == '/') ? $this->service['request']->getPath().'/index' : $this->service['request']->getPath();
-    
-    $extention = strstr($this->service['request']->getPath(), '.') ? '' : '.html';
-    
-    return $file.$extention;
   }
   
   protected function sendResponse()

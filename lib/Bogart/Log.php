@@ -130,6 +130,6 @@ class Log
         );
     }
     
-    return $output;
+    return str_replace(Config::get('bogart.dir.app'), '', $output);
   }
 }

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="language" content="en" />
+  <title>{{title}}</title>
+  
+  <link rel="stylesheet" href="{{cfg.app_asset_server}}/css/960/960.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  
+  <link rel="stylesheet" type="text/css" media="screen" href="/css/main.less" />
+</head>
+<body>
+  <div id="header">
+    <p><a href="/login">login</a></p>
+  </div>
+  
+  <div id="content">{% block content %}{% endblock %}</div>
+  
+  <div id="footer">
+    <p>footer</p>
+  </div>
+</body>
+</html>
