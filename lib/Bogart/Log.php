@@ -5,7 +5,6 @@ namespace Bogart;
 class Log
 {
   public static
-    $request_id,
     $count = 0;
   
   const EMERG   = 0; // System is unusable
@@ -36,7 +35,7 @@ class Log
           'count' => ++self::$count,
           'message' => $message,
           'trace' => $backtrace[0],
-          'request_id' => self::$request_id,
+          'request_id' => Request::$id,
           'type' => $type,
           'level' => $level,
           'request_uri' => (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'],
@@ -109,7 +108,7 @@ class Log
     }
     $output = '';
     
-    $log = self::read(self::$request_id);
+    $log = self::read(Request::$id);
     foreach($log as $item)
     {
       $time = new \DateTime("@".$item['time']->sec);

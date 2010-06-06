@@ -7,9 +7,11 @@
 
 namespace Bogart;
 
-Config::disable('cache');
+//Config::disable('cache');
+//Config::enable('dbinit');
 
-Before(function(Request $request, Response $response){
+Before(function(Request $request, Response $response)
+{
   $response->title = 'Default';
 
   $server_pool = Config::get('app.asset.servers');
@@ -17,8 +19,19 @@ Before(function(Request $request, Response $response){
   
   if(Config::enabled('dbinit'))
   {
+    Store::coll('Posts')->ensureIndex(array('slug' => 1), array('background' => true, 'safe' => false));
     Store::coll('Posts')->ensureIndex(array('_id' => -1), array('background' => true, 'safe' => false));
-    Store::coll('Posts')->ensureIndex(array('_id' => 1), array('background' => true, 'safe' => false));
+  }
+});
+
+After(function(Request $request)
+{
+  $data = Store::db()->command(array('dbstats' => true));
+  //debug($data);
+  //exit;
+  if($request->format != 'html')
+  {
+    Config::disable('debug');
   }
 });
 
@@ -27,9 +40,11 @@ Get('/', function(Request $request, Response $response, User $user = null)
   Config::disable('cache');
   
   Timer::write('route::posts', true);
+  $rand = Request::$id;
   $new_post = array(
-    'title' => 'Post '.rand(10, 99),
-    'body' => 'This is a great post!'
+    'title' => 'Title '.$rand,
+    'body' => 'This is a great post about '.$rand.'!',
+    'slug' => 'title_'.$rand
     );
   //Store::insert('Posts', $new_post);
   
@@ -53,7 +68,7 @@ Get('/', function(Request $request, Response $response, User $user = null)
   Timer::write('route::profile');
   
   $title = 'Home';
-  return View::Mustache('posts', compact('posts', 'title', 'user'));
+  return View::Twig('posts', compact('posts', 'title', 'user'));
 });
 
 // http://local.bogart/post/new
@@ -102,11 +117,23 @@ Post('/post/edit', function(Request $request, Response $response)
 });
 
 // http://local.bogart/post/4c04b8478ead0ea029961200.json
-Get('/post/:id', function(Request $request, Response $response, Route $route)
+Get('/post/:slug.json', function(Request $request, Response $response, Route $route)
 {
-  if(!$post = Store::find('Posts', array('_id' => new \MongoId($request->params['id'])))->limit(1)->getNext())
+  if(!$post = Store::findOne('Posts', array('slug' => $request->params['slug'])))
   {
-    //$response->error404('Post not found.');
+    $response->error404('Post not found.');
+  }
+  
+  $response->setHeader('Content-Type: application/json');
+  echo json_encode($post);
+});
+
+// http://local.bogart/post/4c04b8478ead0ea029961200
+Get('/post/:slug', function(Request $request, Response $response, Route $route)
+{
+  if(!$post = Store::findOne('Posts', array('slug' => $request->params['slug'])))
+  {
+    $response->error404('Post not found.');
   }
   
   $title = "Post";

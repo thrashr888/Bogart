@@ -36,6 +36,12 @@ class Store
         //throw new \Exception('Cannot connect to the database.');
         die('Cannot connect to the database.');
       }
+      
+      if(Config::enabled('debug'))
+      {
+        $this->conn->setProfilingLevel(\MongoDB::PROFILING_ON);
+      }
+      
       self::$connected = true;
   }
   
@@ -184,15 +190,25 @@ class Store
     
     return $result;
   }
-
+  
+  public static function collstats($collection)
+  {
+    return self::db()->command(array('collstats' => $collection));
+  }
+  
+  public static function dbstats()
+  {
+    return self::db()->command(array('dbstats' => true));
+  }
+  
   public static function query_log($type, $collection, $data)
   {  
-    if($collection == 'query_log' || $collection == 'timer' || $collection == 'log') return true;
+    if($collection == 'query_log' || $collection == 'timer' || $collection == 'log' || $collection == 'system.profile') return true;
     
     $insert = array_merge(array(
       'type' => $type,
       'collection' => $collection,
-      'request_id' => Log::$request_id,
+      'request_id' => Request::$id,
       'time' => new \MongoDate(),
       ), $data);
     self::insert('query_log', $insert, false);

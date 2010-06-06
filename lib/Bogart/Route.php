@@ -11,6 +11,7 @@ class Route
     $callback = null,
     $type = null,
     $regex = null,
+    $matched_path = null,
     $matches = array();
   
   public function __construct($options = array())
@@ -65,10 +66,19 @@ class Route
     if($this->isSplat())
     {
       $this->type = 'splat';
-      $search = array('/\./', '/(\*)/', '/\:([a-zA-z_]+)/', '/\//');
-      $replace = array('\.', '(.+)', '(?<\1>[^/]+)', '\\\/');
-      $route_search = preg_replace($search, $replace, $this->name);
-      $this->regex = '/^'.$route_search.'$/i';
+      $route_search = $this->name;
+      //debug($this->name, 1);
+      
+      $search = array('/\:([a-zA-z_]+)/');
+      $replace = array('(?<\1>[^/.]+)');
+      $route_search = preg_replace($search, $replace, $route_search);
+      
+      $search = array('.', '*', '/');
+      $replace = array('\.', '(.+)', '\/');
+      $route_search = str_replace($search, $replace, $route_search);
+      
+      $this->regex = '|^'.$route_search.'$|i';
+      //debug($this->regex, 1);
     }
     else
     {

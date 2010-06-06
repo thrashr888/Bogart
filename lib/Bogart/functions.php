@@ -30,6 +30,11 @@ function Before($callback = null)
   return Router::Before($callback);
 }
 
+function After($callback = null)
+{
+  return Router::After($callback);
+}
+
 function GetAll()
 {
   return Config::getAll();

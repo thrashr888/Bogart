@@ -11,7 +11,11 @@ class Request
     $uri = null,
     $parsed = null,
     $format = 'html',
-    $route = null;
+    $route = null,
+    $base = null;
+  
+  public static
+    $id = null;
   
   public function __toString()
   {
@@ -24,6 +28,7 @@ class Request
     $this->url = $this->generateUrl();
     $this->uri = $_SERVER['REQUEST_URI'];
     $this->parsed = parse_url($this->url);
+    $this->base = $this->parsed['scheme'].'://'.$this->parsed['host'];
     $this->method = $this->getMethod();
     
     // take a basic guess as to what file type it's asking for
@@ -33,11 +38,6 @@ class Request
     }
     
     Log::write('Request: '.$this->url, 'request');
-    
-    Config::set('bogart.request.url', $this->url);
-    Config::set('bogart.request.method', $this->method);
-    Config::set('bogart.request.format', $this->format);
-    Config::set('bogart.request.params', $this->params);
   }
   
   public function getPath()

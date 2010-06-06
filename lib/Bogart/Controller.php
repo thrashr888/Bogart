@@ -5,20 +5,15 @@ namespace Bogart;
 class Controller
 {
   public
-    $services = array();
+    $service = null;
   
   protected
     $controller_content = '',
     $view_content = '';
   
-  public function __construct(Array $services = array())
+  public function __construct(Services $services = null)
   {
-    Timer::write('Controller::new', true);
-    foreach($services as $name => $object)
-    {
-      $this->service[$name] = $object;
-    }
-    Timer::write('Controller::new');
+    $this->service = $services;
   }
   
   public function execute()
@@ -29,6 +24,8 @@ class Controller
     $this->service['route'] = $this->getRoute();
     Config::set('bogart.route', $this->service['route']);
     Timer::write('Controller::getRoute');
+    
+    Config::set('bogart.request', $this->service['request']);
     
     $this->runFilters('before');
     
@@ -105,6 +102,7 @@ class Controller
           $this->service['request']->params['splat'] = $route->matches;
         }
         
+        $route->matched_path = $match_path;
         $this->service['request']->params = array_merge($this->service['request']->params, $route->getParams());
         $this->service['request']->route = $route->name;
         
@@ -151,15 +149,8 @@ class Controller
       
       if(!$view)
       {
-        if(preg_match("/([a-z0-9_\-]+)/i", $this->service['route']->name, $matches))
-        {
-          // try to create a default view based on the format, using a template based on it's name
-          // if no template exists, it'll just get an exception thrown and a 404
-          return View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
-        }else{
-          // no match, 404
-          throw new Error404Exception('File not found.', 404);
-        }
+        // just return the echo'd content within the closure
+        return View::None(array('content' => $this->controller_content));
       }
       
       return is_string($view) ? View::HTML($view) : $view;
@@ -183,7 +174,6 @@ class Controller
         // try to create a default view based on the format, using a template based on it's name
         // if no template exists, it'll just get an exception thrown and a 404
         //debug($matches);
-        
         return View::HTML(Config::get('bogart.script.name').'/'.$matches[1]);
       }else{
         // no match, 404
@@ -215,9 +205,9 @@ class Controller
     
     Log::write('Chose view: '.$this->service['view']->template, 'controller');
     
-    $cache_key = md5(serialize($this->service['view'])); // TODO: need a better key here
-    $cache_off = $this->service['view']->options['cache'] == false || !Config::enabled('cache');
-    if($cache_off || !$this->view_content = Cache::get($cache_key))
+    $cache_key = $this->getRequestCacheKey();
+    $cache_disabled = $this->service['view']->options['cache'] == false || !Config::enabled('cache');
+    if($cache_disabled || !$this->view_content = Cache::get($cache_key))
     {
       Timer::write('View::render', true);
       $this->view_content = $this->service['view']->render();
@@ -231,11 +221,19 @@ class Controller
     }
   }
   
+  protected function getRequestCacheKey()
+  {
+    $file = (substr($this->service['request']->getPath(), -1) == '/') ? $this->service['request']->getPath().'/index' : $this->service['request']->getPath();
+    
+    $extention = strstr($this->service['request']->getPath(), '.') ? '' : '.html';
+    
+    return $file.$extention;
+  }
+  
   protected function sendResponse()
   {
     $this->service['response']->format = $this->service['request']->format;
-    
-    echo $this->service['response']->send($this->view_content);
+    $this->service['response']->send($this->view_content);
     Log::write('Sent content.', 'controller');
   }
 }

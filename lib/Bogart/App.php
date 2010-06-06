@@ -46,18 +46,17 @@ class App
   
   protected function getServices()
   {
-    // use http://components.symfony-project.org/dependency-injection/ instead?
-    //$service = new Services();
+    $service = new Services();
     $service['request'] = new Request;
     $service['response'] = new Response;
-    //$service['view'] = new View;
     $service['user'] = new User;
     return $service;
   }
   
   protected function init($script_name, $env, $debug = false)
   {
-    Log::$request_id = microtime(true).rand(10000000, 99999999);
+    Request::$id = md5(microtime(true).$_SERVER['SERVER_NAME'].$_SERVER['HTTP_HOST']);
+    
     Timer::write('App', true);
     Timer::write('App::init', true);
     
@@ -140,7 +139,7 @@ class App
       Store::coll('query_log')->ensureIndex(array('request_id' => 1), array('background' => true, 'safe' => false));
       Store::coll('timer')->ensureIndex(array('request_id' => 1), array('background' => true, 'safe' => false));
       
-      Store::coll('cache')->ensureIndex(array('key' => 1, 'expires' => 1), array('background' => true, 'safe' => false));
+      Store::coll('cache')->ensureIndex(array('key' => 1, 'expires' => 1), array('background' => true, 'safe' => false, 'unique' => true));
       Store::coll('cfg')->ensureIndex(array('name' => 1), array('background' => true, 'safe' => false));
       
       Store::coll('User')->ensureIndex(array('_id' => 1), array('background' => true, 'safe' => false));

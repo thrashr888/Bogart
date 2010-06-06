@@ -17,7 +17,7 @@ class Config
       $return = self::$data;
       foreach(explode('.', $name) as $i => $depth)
       {
-        if(!isset($return[$depth]))
+        if(!is_array($return) || !isset($return[$depth]))
         {
           return null;
         }
@@ -170,6 +170,7 @@ class Config
     {
       $cache_key = $method;
       $expired = file_exists(FileCache::getFilename($cache_key)) ? filectime(FileCache::getFilename($cache_key)) < filectime($method) : true;
+      
       if($expired || !$load = FileCache::get($cache_key))
       {
         $load = \sfYaml::load($method);

@@ -15,12 +15,16 @@ class Debug
     $total_time = sprintf("%dms", $timers['App']->getElapsedTime() * 1000);
     
     $query_count = Store::count('query_log', array(
-        'request_id' => Log::$request_id
+        'request_id' => Request::$id
         ));
     
     $queries = Store::find('query_log', array(
-        'request_id' => Log::$request_id
+        'request_id' => Request::$id
         ));
+    
+    $profile_count = Store::count('system.profile', array('ts' => array('$gt' => new \MongoDate($_SERVER['REQUEST_TIME']))));
+    
+    $profile = Store::find('system.profile', array('ts' => array('$gt' => new \MongoDate($_SERVER['REQUEST_TIME']))));
     
     echo "<div id='bogart_debug_container' style=\"border-bottom: 2px solid {$color}; border-left: 2px solid {$color}; position: absolute; top: 0; right: 0; background-color: #eee; text-align: right; -webkit-border-bottom-left-radius: 10px; -moz-border-radius-bottomleft: 10px; border-bottom-left-radius: 10px; color: green; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; font-size: 14px;\"
       >&nbsp;&#x272A; ";
@@ -41,7 +45,7 @@ class Debug
         style=\"text-decoration:none; color: grey;\">&#x278E; request</a> | ";
     
     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_store_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
-        style=\"text-decoration:none; color: grey;\">&#x278F; store ($query_count)</a> | ";
+        style=\"text-decoration:none; color: grey;\">&#x278F; store ($query_count/$profile_count)</a> | ";
     
     echo "<a href=\"javascript::void(0);\" onclick=\"el=document.getElementById('bogart_debug_container');document.body.removeChild(el);\" style=\"color: grey; text-decoration: none;\">&#x2716;</a>&nbsp;";
     
@@ -50,7 +54,7 @@ class Debug
     self::outputConfig();
     self::outputServer();
     self::outputRequest();
-    self::outputStore($queries, $query_count);
+    self::outputStore($queries, $query_count, $profile, $profile_count);
     
     echo "</div>";
     
@@ -121,9 +125,15 @@ class Debug
     echo "</div>";
   }
   
-  public static function outputStore($queries, $total = 0)
+  public static function outputStore($queries, $queries_count = 0, $profile, $profile_count = 0)
   {
-    echo "<div id='bogart_store_container' style=\"display: none; padding: 0 0.5em 1em 1em; text-align: left; border-top: 1px solid;\"><h3>Store ($total)</h3>";
+    echo "<div id='bogart_store_container' style=\"display: none; padding: 0 0.5em 1em 1em; text-align: left; border-top: 1px solid;\"><h3>Store ($queries_count/$profile_count)</h3>";
+    
+    echo "<h3>Stats</h3>";
+    $data = Store::dbstats();
+    echo self::prettyPrint($data);
+    
+    echo "<h3>Query Log ($queries_count)</h3>";
     $total_time = 0;
     $total_queries = array('insert' => 0, 'find' => 0, 'update' => 0, 'findOne' => 0, 'count' => 0);
     ?>
@@ -178,6 +188,41 @@ class Debug
         </tr>
       </table>
     <?php
+    
+    echo "<h3>Profile ($profile_count)</h3>";
+    $total_time = 0;
+    $total_queries = 0;
+    ?>
+      <table>
+        <tr>
+          <th>#</th>
+          <th>time</th>
+          <th>info</th>
+          <th>elapsed_time</th>
+        </tr>
+        <?php $i=0; foreach($profile as $query){
+          $total_time += $query['millis'];
+          $total_queries++;
+          $i++;
+          ?>
+          <tr style="<?php echo $query['millis'] > 1000 ? 'color:red;' : null ?>">
+            <td><?php echo $i ?></td>
+            <td><?php echo date('h:i:s', $query['ts']->sec) ?></td>
+            <td><?php echo $query['info'] ?></td>
+            <td><?php echo $query['millis'] ?> ms</td>
+          </tr>
+        <?php } ?>
+        <tr>
+          <td colspan="5" align="right" style="border-top: 1px solid green;">elapsed time</td>
+          <td colspan="2" style="border-top: 1px solid green;"><?php echo $total_time ?> ms</td>
+        </tr>
+        <tr>
+          <td colspan="5" align="right">queries</td>
+          <td><?php echo $total_queries ?></td>
+        </tr>
+      </table>
+    <?php
+    
     echo "</div>";
   }
   
@@ -210,7 +255,7 @@ class Debug
                     }
                     else
                     {
-                      echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, $s4?:'<em>NULL</em>');
+                      echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, $s4 ? htmlentities($s4) : '<em>NULL</em>');
                       continue;
                     }
                   }
@@ -223,21 +268,21 @@ class Debug
                 }
                 else
                 {
-                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, $s3?:'<em>NULL</em>');
+                  echo sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, $s3 ? htmlentities($s3) : '<em>NULL</em>');
                   continue;
                 }
               }
             }
             else
             {
-              echo sprintf("<b>&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k2, $s2?:'<em>NULL</em>');
+              echo sprintf("<b>&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k2, $s2 ? htmlentities($s2) : '<em>NULL</em>');
               continue;
             }
           }
         }
         elseif(is_scalar($setting))
         {
-          echo sprintf("<b>%s:</b> <code style=\"color:grey\">%s</code><br />\n", $key, $setting);
+          echo sprintf("<b>%s:</b> <code style=\"color:grey\">%s</code><br />\n", $key, htmlentities($setting));
           continue;
         }
       }

@@ -109,11 +109,17 @@ class View
   
   public static function Less($template, Array $data = array(), Array $options = array())
   {
+    $options['cache'] = false;
     return new View($template, $data, new Renderer\Less($options), $options);
   }
   
-  public static function None($template, Array $data = array(), Array $options = array())
+  public static function Basic($template, Array $data = array(), Array $options = array())
   {
     return new View($template, $data, null, $options);
+  }
+  
+  public static function None(Array $data = array(), Array $options = array())
+  {
+    return new View(null, $data, new Renderer\None(), $options);
   }
 }

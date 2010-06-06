@@ -61,7 +61,7 @@ class Timer
           );
         
         $insert = array(
-          'request_id' => Log::$request_id,
+          'request_id' => Request::$id,
           'level' => $level,
           'name' => $name,
           'time' => $timer->getElapsedTime(),
