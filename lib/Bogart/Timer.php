@@ -2,6 +2,9 @@
 
 namespace Bogart;
 
+// just uses sfTimer but makes it a little easier to use for us
+// no need to pass the instances around everywhere
+
 include 'vendor/sfTimer/sfTimerManager.class.php';
 include 'vendor/sfTimer/sfTimer.class.php';
 
@@ -12,6 +15,8 @@ class Timer
   
   public static function write($name, $new = false)
   {
+    if(!Config::enabled('timer')) return;
+    
     if(isset(self::$timers[$name]) && !$new)
     {
       self::$timers[$name]->addTime();
@@ -34,10 +39,7 @@ class Timer
 
   public static function pretty()
   {
-    if(!Config::enabled('log'))
-    {
-      return;
-    }
+    if(!Config::enabled('timer')) return;
     
     $output = '';
     

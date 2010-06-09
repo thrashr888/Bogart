@@ -2,7 +2,7 @@
 
 namespace Bogart;
 
-include 'vendor/fabpot-yaml-9e767c9/lib/sfYaml.php';
+include dirname(__FILE__).'/vendor/fabpot-yaml-9e767c9/lib/sfYaml.php';
 
 class Config
 {
@@ -161,7 +161,7 @@ class Config
 
   public static function load($method)
   {
-    Timer::write('Config::load', true);
+    if(Config::enabled('timer')) Timer::write('Config::load', true);
     if(is_array($method))
     {
       self::$data = array_replace_recursive(self::$data, $method);
@@ -175,11 +175,11 @@ class Config
       {
         $load = \sfYaml::load($method);
         FileCache::set($cache_key, $load, DateTime::MINUTE*5);
-        Log::write('Config::load yaml file cache MISS');
+       if(Config::enabled('log'))  Log::write('Config::load yaml file cache MISS');
       }
       else
       {  
-        Log::write('Config::load yaml file cache HIT');
+        if(Config::enabled('log')) Log::write('Config::load yaml file cache HIT');
       }
       
       if($load)
@@ -207,7 +207,7 @@ class Config
       throw new Exception('Nothing to load.');
     }
     
-    Timer::write('Config::load');
+    if(Config::enabled('timer')) Timer::write('Config::load');
   }
   
   public static function save($method)

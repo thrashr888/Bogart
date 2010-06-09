@@ -6,34 +6,50 @@ class Debug
 {
   public static function outputDebug()
   {
-    Timer::write('Debug::outputDebug', true);
+    if(Config::enabled('timer')) Timer::write('Debug::outputDebug', true);
     
-    $log_output = Log::pretty();
-    $log_count = Log::$count;
-    $color = strstr($log_output, 'Error') ? 'red' : '#ddd';
-    $timers = \sfTimerManager::getTimers();
-    $total_time = sprintf("%dms", $timers['App']->getElapsedTime() * 1000);
+    if(Config::enabled('log'))
+    {
+      $log_output = Log::pretty();
+      $log_count = Log::$count;
+      $color = strstr($log_output, 'Error') ? 'red' : '#ddd';
+    }
     
-    $query_count = Store::count('query_log', array(
-        'request_id' => Request::$id
-        ));
+    if(Config::enabled('timer'))
+    {
+      $timers = \sfTimerManager::getTimers();
+      $total_time = $timers['App'] ? sprintf("%dms", $timers['App']->getElapsedTime() * 1000) : null;
+    }
     
-    $queries = Store::find('query_log', array(
-        'request_id' => Request::$id
-        ));
+    if(Config::enabled('log'))
+    {
+      $query_count = Store::count('query_log', array(
+          'request_id' => Request::$id
+          ));
     
-    $profile_count = Store::count('system.profile', array('ts' => array('$gt' => new \MongoDate($_SERVER['REQUEST_TIME']))));
+      $queries = Store::find('query_log', array(
+          'request_id' => Request::$id
+          ));
     
-    $profile = Store::find('system.profile', array('ts' => array('$gt' => new \MongoDate($_SERVER['REQUEST_TIME']))));
+      $profile_count = Store::count('system.profile', array('ts' => array('$gt' => new \MongoDate($_SERVER['REQUEST_TIME']))));
+    
+      $profile = Store::find('system.profile', array('ts' => array('$gt' => new \MongoDate($_SERVER['REQUEST_TIME']))));
+    }
     
     echo "<div id='bogart_debug_container' style=\"border-bottom: 2px solid {$color}; border-left: 2px solid {$color}; position: absolute; top: 0; right: 0; background-color: #eee; text-align: right; -webkit-border-bottom-left-radius: 10px; -moz-border-radius-bottomleft: 10px; border-bottom-left-radius: 10px; color: green; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; font-size: 14px;\"
       >&nbsp;&#x272A; ";
     
-    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_log_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
-         style=\"text-decoration:none; color: grey;\">&#x278A; log ($log_count)</a> | ";
-   
-   echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_timer_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
-        style=\"text-decoration:none; color: grey;\">&#x278B; timer ($total_time)</a> | ";
+    if(Config::enabled('log'))
+    {
+      echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_log_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
+           style=\"text-decoration:none; color: grey;\">&#x278A; log ($log_count)</a> | ";
+    }
+    
+    if(Config::enabled('timer'))
+    {
+     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_timer_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
+          style=\"text-decoration:none; color: grey;\">&#x278B; timer ($total_time)</a> | ";
+    }
     
     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_config_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
         style=\"text-decoration:none; color: grey;\">&#x278C; config</a> | ";
@@ -44,21 +60,24 @@ class Debug
     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_request_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
         style=\"text-decoration:none; color: grey;\">&#x278E; request</a> | ";
     
-    echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_store_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
-        style=\"text-decoration:none; color: grey;\">&#x278F; store ($query_count/$profile_count)</a> | ";
+    if(Config::enabled('log'))
+    {
+      echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_store_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
+          style=\"text-decoration:none; color: grey;\">&#x278F; store ($query_count/$profile_count)</a> | ";
+    }
     
     echo "<a href=\"javascript::void(0);\" onclick=\"el=document.getElementById('bogart_debug_container');document.body.removeChild(el);\" style=\"color: grey; text-decoration: none;\">&#x2716;</a>&nbsp;";
     
-    self::outputLog($log_output, $log_count);
-    self::outputTimer($total_time);
+    if(Config::enabled('log')) self::outputLog($log_output, $log_count);
+    if(Config::enabled('timer')) self::outputTimer($total_time);
     self::outputConfig();
     self::outputServer();
     self::outputRequest();
-    self::outputStore($queries, $query_count, $profile, $profile_count);
+    if(Config::enabled('log')) self::outputStore($queries, $query_count, $profile, $profile_count);
     
     echo "</div>";
     
-    Timer::write('Debug::outputDebug');
+    if(Config::enabled('timer')) Timer::write('Debug::outputDebug');
   }
   
   public static function outputLog($log_output, $total = 0)
@@ -116,7 +135,10 @@ class Debug
   
   public static function outputRequest()
   {
-    echo "<div id='bogart_request_container' style=\"display: none; padding: 0 0.5em 1em 1em; text-align: left; border-top: 1px solid;\"><h3>Request</h3>";
+    echo "<div id='bogart_request_container' style=\"display: none; padding: 0 0.5em 1em 1em; text-align: left; border-top: 1px solid;\">";
+    echo "<h3>User</h3>";
+    echo self::prettyPrint(Config::get('bogart.user'));
+    echo "<h3>Request</h3>";
     echo self::prettyPrint(Config::get('bogart.request'));
     echo "<h3>Route</h3>";
     echo self::prettyPrint(Config::get('bogart.route'));
@@ -134,8 +156,10 @@ class Debug
     echo self::prettyPrint($data);
     
     echo "<h3>Query Log ($queries_count)</h3>";
+    echo "<p><em>Not including logging.</em></p>";
+    
     $total_time = 0;
-    $total_queries = array('insert' => 0, 'find' => 0, 'update' => 0, 'findOne' => 0, 'count' => 0);
+    $total_queries = array('insert' => 0, 'find' => 0, 'update' => 0, 'findOne' => 0, 'count' => 0, 'remove' => 0);
     ?>
       <table>
         <tr>
@@ -186,10 +210,16 @@ class Debug
           <td colspan="5" align="right">count</td>
           <td><?php echo $total_queries['count'] ?></td>
         </tr>
+        <tr>
+          <td colspan="5" align="right">remove</td>
+          <td><?php echo $total_queries['remove'] ?></td>
+        </tr>
       </table>
     <?php
     
     echo "<h3>Profile ($profile_count)</h3>";
+    echo "<p><em>Since initial request time.</em></p>";
+    
     $total_time = 0;
     $total_queries = 0;
     ?>

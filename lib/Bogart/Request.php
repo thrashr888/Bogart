@@ -39,7 +39,7 @@ class Request
       $this->format = $format[1];
     }
     
-    Log::write('Request: '.$this->url, 'request');
+    if(Config::enabled('log')) Log::write('Request: '.$this->url, 'request');
   }
   
   public function getPath()

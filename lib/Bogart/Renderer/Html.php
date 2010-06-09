@@ -24,19 +24,16 @@ class Html extends Renderer
   
   protected function strtr($string, Array $data = array(), $start = '{{ ', $end = ' }}')
   {
-    $out = '';
+    $out = $string;
     foreach($data as $key => $val)
     {
       if(is_array($val))
       {
-        $out = $this->strtr($string, $val, '{{ '.$key.'.');
+        $out = $this->strtr($out, $val, '{{ '.$key.'.');
       }
       elseif(is_string($val))
       {
-        //debug($start.$key.$end);
-        //debug($val);
-        //debug($string);
-        $out = str_replace($start.$key.$end, $val, $string);
+        $out = str_replace($start.$key.$end, $val, $out);
       }
     }
     return $out;

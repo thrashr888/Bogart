@@ -68,11 +68,11 @@ class Store
 
   public static function find($collection, $query = null)
   {
-    Timer::write('Store::find', true);
+    if(Config::enabled('timer')) Timer::write('Store::find', true);
     $time = new \sfTimer();
     $results = $query ? self::coll($collection)->find($query) : self::coll($collection)->find();
     $time->addTime();
-    Timer::write('Store::find');
+    if(Config::enabled('timer')) Timer::write('Store::find');
     
     self::query_log('find', $collection, array(
       'query' => $query,
@@ -84,11 +84,11 @@ class Store
 
   public static function findOne($collection, $query = null)
   {
-    Timer::write('Store::findOne', true);
+    if(Config::enabled('timer')) Timer::write('Store::findOne', true);
     $time = new \sfTimer();
     $result = $query ? self::coll($collection)->findOne($query) : self::coll($collection)->findOne();
     $time->addTime();
-    Timer::write('Store::findOne');
+    if(Config::enabled('timer')) Timer::write('Store::findOne');
     
     self::query_log('findOne', $collection, array(
       'query' => $query,
@@ -100,11 +100,11 @@ class Store
   
   public static function count($collection, $query = null)
   {
-    Timer::write('Store::count', true);
+    if(Config::enabled('timer')) Timer::write('Store::count', true);
     $time = new \sfTimer();
     $result = $query ? self::coll($collection)->count($query) : self::coll($collection)->count();
     $time->addTime();
-    Timer::write('Store::count');
+    if(Config::enabled('timer')) Timer::write('Store::count');
     
     self::query_log('count', $collection, array(
       'query' => $query,
@@ -146,11 +146,11 @@ class Store
   {
     try
     {
-      Timer::write('Store::insert', true);
+      if(Config::enabled('timer')) Timer::write('Store::insert', true);
       $time = new \sfTimer();
       $result = self::coll($collection)->insert(&$value, $safe);
       $time->addTime();
-      Timer::write('Store::insert');
+      if(Config::enabled('timer')) Timer::write('Store::insert');
     }
     catch(Exception $e)
     {
@@ -170,11 +170,11 @@ class Store
   {
     try
     {
-      Timer::write('Store::update', true);
+      if(Config::enabled('timer')) Timer::write('Store::update', true);
       $time = new \sfTimer();
       $result = self::coll($collection)->update($query, array('$set' => $value), $options);
       $time->addTime();
-      Timer::write('Store::update');
+      if(Config::enabled('timer')) Timer::write('Store::update');
     }
     catch(Exception $e)
     {
@@ -184,6 +184,30 @@ class Store
     self::query_log('update', $collection, array(
       'query' => $query,
       'value' => $value,
+      'options' => $options,
+      'elapsed_time' => $time->getElapsedTime(),
+      ));
+    
+    return $result;
+  }
+  
+  public static function remove($collection, $query, $options = null)
+  {
+    try
+    {
+      if(Config::enabled('timer')) Timer::write('Store::remove', true);
+      $time = new \sfTimer();
+      $result = self::coll($collection)->remove($query, $options);
+      $time->addTime();
+      if(Config::enabled('timer')) Timer::write('Store::remove');
+    }
+    catch(Exception $e)
+    {
+      throw StoreException::createFromException($e);
+    }
+    
+    self::query_log('remove', $collection, array(
+      'query' => $query,
       'options' => $options,
       'elapsed_time' => $time->getElapsedTime(),
       ));
@@ -203,7 +227,7 @@ class Store
   
   public static function query_log($type, $collection, $data)
   {  
-    if($collection == 'query_log' || $collection == 'timer' || $collection == 'log' || $collection == 'system.profile') return true;
+    if(!Config::enabled('log') || !Config::enabled('debug') || $collection == 'query_log' || $collection == 'timer' || $collection == 'log' || $collection == 'system.profile') return;
     
     $insert = array_merge(array(
       'type' => $type,

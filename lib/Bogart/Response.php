@@ -85,7 +85,7 @@ class Response
   {
     header('HTTP/1.0 '.$code.' '.self::$status_codes[$code]);
     header("Location: ".$url);
-    exit;
+    exit();
   }
   
   public function setHeader($header)

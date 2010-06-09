@@ -4,21 +4,40 @@ namespace Bogart;
 
 class User
 {
+  const
+    FLASH_SUCCESS = 'success',
+    FLASH_NOTICE = 'notice',
+    FLASH_WARNING = 'warning',
+    FLASH_ERROR = 'error';
+  
   public static
     $hash_method = 'sha1',
-    $persist_name = 'user_id';
+    $persist_name = 'user_id',
+    $flash_name = 'bogart.flash';
   
   public
-    $user_id = null;
+    $user_id = null,
+    $options = array();
   
   protected
     $profile = null;
   
-  public function __construct()
+  public function __construct(Array $options = array())
+  {
+    $this->options = $options;
+    $this->init();
+  }
+  
+  public function init()
   {
     if(isset($_SESSION[self::$persist_name]) && $_SESSION[self::$persist_name])
     {
       $this->setUserId($_SESSION[self::$persist_name]);
+    }
+    
+    if($this->hasFlash())
+    {
+      $_SESSION[self::$flash_name.'.shutdown'] = true;
     }
   }
   
@@ -49,20 +68,30 @@ class User
   
   public function setUserId($user_id)
   {
-    $_SESSION[self::$persist_name] = $user_id;
+    $_SESSION[self::$persist_name] = (int) $user_id;
     $this->user_id = $user_id;
   }
   
-  public function setProfile(&$data)
+  public function setProfile(&$user)
   {  
-    $data['salt'] = rand(11111, 99999);
-    $data['hash_method'] = self::$hash_method;
-    $data['password'] =  $data['hash_method']($data['password'].$data['salt']);
-    $id = Store::insert('User', $data);
-    $this->setUserId($id);
+    $user['salt'] = rand(11111, 99999);
+    $user['hash_method'] = self::$hash_method;
+    $user['password'] =  $user['hash_method']($user['password'].$user['salt']);
+    
+    try
+    {
+      Store::insert('User', $user);
+      $this->setUserId((string) $user['_id']);
+      $this->profile = $user;
+      return true;
+    }
+    catch(\MongoException $e)
+    {
+      return false;
+    }
   }
   
-  public function login($username, $password = null)
+  public function login($username, $password)
   {
     $user = Store::getOne('User', array('username' => $username));
     
@@ -71,11 +100,13 @@ class User
         'password' => $user['hash_method']($password.$user['salt'])
         )))
     {
-      $this->setUserId($user['_id']);
+      $this->setUserId((string) $user['_id']);
+      $this->profile = $user;
       return true;
     }
     else
     {
+      $this->logout();
       return false;
     }
   }
@@ -83,10 +114,50 @@ class User
   public function logout()
   {
     $this->setUserId(null);
+    $this->profile = null;
+    session_destroy();
+    session_start();
+    return true;
   }
   
-  public function isLoggedIn()
+  public function isAuthenticated()
   {
     return (bool) $this->getUserId();
+  }
+  
+  // tip: use the type for a CSS class for the message's containing element
+  public function setFlash($message = NULL, $type = self::FLASH_NOTICE)
+  {
+    $_SESSION[self::$flash_name] = array($type, $message);
+    return true;
+  }
+  
+  /**
+   * if($user->hasFlash())
+   * {
+   *  list($type, $message) = $user->getFlash();
+   * }
+   */
+  public function getFlash()
+  {
+    if($this->hasFlash())
+    {
+      return $_SESSION[self::$flash_name];
+    }
+    return array(null, null);
+  }
+  
+  public function hasFlash()
+  {
+    return isset($_SESSION[self::$flash_name]);
+  }
+  
+  public function shutdown()
+  {
+    if(isset($_SESSION[self::$flash_name.'.shutdown']))
+    {
+      unset($_SESSION[self::$flash_name]);
+      unset($_SESSION[self::$flash_name.'.shutdown']);
+    }
   }
 }

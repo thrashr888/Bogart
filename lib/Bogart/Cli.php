@@ -3,12 +3,18 @@
 namespace Bogart;
 
 // A command-line test:
-// bogart test=1 one --help -abc --test=true
+// bogart index test=1 one --help -abc --test=true
+
+// soon this guy will run tasks that look like routes
+//
+// example:
+// Task('clear', function (Task $task, Cli $cli){ });
 
 class Cli
 {
   protected
-    $args = array();
+    $args = array(),
+    $service = array();
   
   public function __construct($args)
   {
@@ -17,15 +23,54 @@ class Cli
   
   public function run()
   {
+    $app = $this->args[0];
+    $task = $this->args[0];
+    
+    new App($app, 'cli', false);
+    include 'tasks.php';
+    
+    $this->getTask($task);
+    
+    $this->services['cli'] = $this;
+    
+    // compile the args for the closure
+    $m = new \ReflectionMethod($this->service['route']->callback, '__invoke');
+    $args = array();
+    foreach($m->getParameters() as $param)
+    {
+      $args[] = $this->service[$param->getName()]; // grab the actual service param
+    }
+    
+    ob_start();
+    $return = call_user_func_array($this->service['route']->callback, $args);
+    $content = ob_get_clean();
+    
+    exit(0);
+  }
+  
+  protected function getTask($task)
+  {
+    foreach(Router::getTasks() as $route)
+    {
+      if($route['callback'] == $task)
+      {
+        return $this->services['route'] = $route;
+      }
+    }
+    throw new CliException('Task not found.');
+  }
+  
+  public function demo()
+  {
     $this->output("\nWelcome to Bogart Cli\n");
-    
+
     $this->output('args: '.print_r($this->args, 1));
-    
+
     $resp = $this->ask('echo');
     $this->output('echo: '.$resp);
-    
+
     $this->interactive("yes?");
-    
+
     $this->interactive("no.", function($resp){
       echo $resp."\n";
       echo 'died!';

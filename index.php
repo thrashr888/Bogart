@@ -7,12 +7,24 @@
 
 namespace Bogart;
 
-Config::disable('cache');
+Config::disable('log');
+Config::disable('debug');
+Config::disable('timer');
+
+//Config::disable('cache');
+Config::disable('sessions');
 //Config::enable('dbinit');
+
+include 'post.php';
+include 'login.php';
+
+Task('demo', function(Cli $cli){
+  $cli->demo();
+});
 
 Before(function(Request $request, Response $response)
 {
-  $response->title = 'Default';
+  //$response->title = 'Default';
 
   $server_pool = Config::get('app.asset.servers');
   Config::set('app.asset.server', 'http://'.$server_pool[array_rand($server_pool)]);
@@ -26,7 +38,7 @@ Before(function(Request $request, Response $response)
 
 After(function(Request $request)
 {
-  $data = Store::db()->command(array('dbstats' => true));
+  //$data = Store::db()->command(array('dbstats' => true));
   //debug($data);
   //exit;
   if($request->format != 'html')
@@ -37,6 +49,7 @@ After(function(Request $request)
 
 Get('/', function(Request $request, Response $response, User $user = null)
 {
+  
   Timer::write('route::posts', true);
   $rand = Request::$id;
   $new_post = array(
@@ -46,6 +59,11 @@ Get('/', function(Request $request, Response $response, User $user = null)
     );
   //Store::insert('Posts', $new_post);
   
+  if($user->hasFlash())
+  {
+    list($type, $message) = $user->getFlash();
+  }
+  
   $posts = array();
   foreach(Store::find('Posts')->limit(10)->sort(array('_id' => -1)) as $post)
   {
@@ -53,93 +71,31 @@ Get('/', function(Request $request, Response $response, User $user = null)
   }
   Timer::write('route::posts');
   
-  Timer::write('route::profile', true);
-  if(!$user->getProfile())
-  {
-    $user_data = array(
-      'username' => 'thrashr888',
-      'email' => 'thrashr888@gmail.com',
-      'password' => 'pshore01'
-      );
-    $user->setProfile($user_data);
-  }
-  Timer::write('route::profile');
-  
   $title = 'Home';
-  return View::Twig('posts', compact('posts', 'title', 'user'));
-});
-
-// http://local.bogart/post/new
-Get('/post/new', function()
-{
-  $title = 'New Post';
-  return View::HTML('new', compact('title'));
-});
-
-// http://local.bogart/post/submit2
-// just render the info page
-Get('/post/submit2', 'info');
-
-// http://local.bogart/post/submit3
-// just render the info page
-Get('/post/submit3', function(Request $request)
-{
-  return 'info';
-});
-
-// http://local.bogart/post/submit?post[title]=test&post[body]=body
-Get('/post/submit', function(Request $request)
-{
-  $posts = Store::get('Posts');
-  $title ="Posts";
-  
-  return View::HTML('index', compact('posts', 'title'));
-});
-
-Post('/post/edit', function(Request $request, Response $response)
-{
-  //Store::insert('Posts', array('title' => 'test', 'body' => '<p>body</p>')); // just a test
-  
-  //debug($request->params);
-  $post =  $request->params['post'];
-  if(Store::insert('Posts', $post, true))
-  {
-    $message = 'Saved: '.$post['_id'];
-    $response->redirect('/post/'.$post['_id']);
-  }
-  
-  $posts = Store::get('Posts');
-  //debug(compact($posts, $message));
-  $title = "Edit a Post";
-  return View::HTML('edit', compact('posts', 'message', 'title'));
-});
-
-// http://local.bogart/post/4c04b8478ead0ea029961200.json
-Get('/post/:slug.json', function(Request $request, Response $response, Route $route)
-{
-  if(!$post = Store::findOne('Posts', array('slug' => $request->params['slug'])))
-  {
-    $response->error404('Post not found.');
-  }
-  
-  $response->setHeader('Content-Type: application/json');
-  echo json_encode($post);
-});
-
-// http://local.bogart/post/4c04b8478ead0ea029961200
-Get('/post/:slug', function(Request $request, Response $response, Route $route)
-{
-  if(!$post = Store::findOne('Posts', array('slug' => $request->params['slug'])))
-  {
-    $response->error404('Post not found.');
-  }
-  
-  $title = "Post";
-  return View::Mustache('post', compact('post', 'title'));
+  return Twig('posts', compact('posts', 'title', 'user', 'message', 'type'));
 });
 
 // run all of the css files through less
 Get('/css/*.less', function(Request $request, Response $response)
+{
+  $response->content_type = 'text/css';
+  $response->charset = 'utf-8';
+  
+  $expires = DateTime::YEAR;
+  
+  $response->setHeader('Pragma: public');
+  $response->setHeader('Content-Type: text/css');
+  $response->setHeader("Cache-Control: maxage=".$expires);
+  $response->setHeader('Expires: '.gmdate('D, d M Y H:i:s', time()+$expires) .' GMT');
+  //header('Content-Length: ' . filesize($target_file));
+  
+  $file = $request->params['splat'][1];
+  // render whatever file it's trying to load from less
+  return View::Less('css/'.$file);
+});
+
+// run all of the css files through less
+Get('/css/stylesheets.css', function(Request $request, Response $response)
 {
   $response->content_type = 'text/css';
   $response->charset = 'utf-8';
@@ -162,9 +118,9 @@ Get('/js/*.js', function(Request $request)
 {
   $request->content_type = 'application/javascript';
   $request->charset = 'utf-8';
-  $test = $request->params['splat'][0];
+  $file = $request->params['splat'][0];
   // render whatever file it's trying to load
-  return View::Less($test, $test);
+  return View::Less($test, $file);
 });
 
 // regex route with .json format
@@ -175,13 +131,6 @@ Get('*.json', function(Request $request)
   //echo "[{test-$test}]";
   echo json_encode($test);
   //return View::HTML('json', array('content' => json_encode($test)));
-});
-
-
-Get('/login');
-
-Post('/login', function(Request $request, User $user){
-  $user->login($request->params['user']['username'], $request->params['user']['password']);
 });
 
 // named routes
@@ -215,6 +164,19 @@ Post('/*', function(){
 
 Post('/save', function(){
   echo 'test';
+  
+  Timer::write('route::profile', true);
+  if(!$user->getProfile())
+  {
+    $user_data = array(
+      'username' => 'thrashr888',
+      'email' => 'thrashr888@gmail.com',
+      'password' => 'pshore01'
+      );
+    $user->setProfile($user_data);
+  }
+  Timer::write('route::profile');
+  
   return 'index';
 });
 

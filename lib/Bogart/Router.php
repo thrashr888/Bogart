@@ -12,7 +12,8 @@ class Router
   
   protected static
     $routes,
-    $filters;
+    $filters,
+    $tasks;
   
   public static function getRoutes()
   {
@@ -22,6 +23,19 @@ class Router
   public static function getFilters()
   {
     return self::$filters;
+  }
+  
+  public static function getTasks()
+  {
+    return self::$tasks;
+  }
+  
+  public static function Task($name, $callback)
+  {
+    self::$tasks[] = array(
+      'name' => $name,
+      'callback' => $callback
+    );
   }
   
   public static function Before($callback)

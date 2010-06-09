@@ -1,11 +1,13 @@
 #!/usr/bin/env php
 <?php
 
+namespace Bogart;
+
 // A command-line test:
 // bogart test=1 one --help -abc --test=true
 
 require realpath(__DIR__).'/ClassLoader.php';
-Bogart\ClassLoader::register();
+ClassLoader::register();
 
-$cli = new Bogart\Cli($argv);
+$cli = new Cli($argv);
 $cli->run();

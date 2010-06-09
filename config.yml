@@ -3,5 +3,5 @@ app:
   asset:
     servers: ['d1f7kn811ho9qg.cloudfront.net']
 db:
-  connection: 'localhost:27017'
+  connection: 'mongodb://localhost:27017,localhost:27018'
   dbname: Bogart

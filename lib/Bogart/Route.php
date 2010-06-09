@@ -59,7 +59,7 @@ class Route
     if($this->isRegex())
     {
       $this->type = 'regex';
-      $this->regex = $route->name;
+      $this->regex = substr($route->name, 1);
     }
     
     // this checks for splats and :named params

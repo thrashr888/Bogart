@@ -2,6 +2,8 @@ app:
   name: Bogart App
   asset:
     servers: ['/']
+cache:
+  ttl: 600 # 10 minutes
 db:
   type: Mongo # we're Mongo only
   connection: 'localhost:27017'
@@ -19,3 +21,6 @@ bogart:
     renderer: mustache
 system:
   timezone: America/Los_Angeles
+view:
+  cache:
+    ttl: 600 # 10 minutes

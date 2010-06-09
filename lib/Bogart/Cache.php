@@ -6,7 +6,7 @@ class Cache
 {
   public static function get($key)
   {
-    if(!Store::$connected) return false;
+    if(!Store::$connected || !Config::enabled('cache')) return false;
     
     $cache = Store::findOne('cache', array(
       'key' => $key,
@@ -22,12 +22,12 @@ class Cache
       'value' => $value,
       'expires' => new \MongoDate(time() + $ttl)
       );
-    Store::insert('cache', $cache, false);
+    Store::insert('cache', $cache);
   }
   
   public static function delete($key)
   {
-    Store::delete('cache', array(
+    Store::remove('cache', array(
       'key' => $key,
       'expires' => array('$gt' => new \MongoDate(time()))
       ));
@@ -45,7 +45,7 @@ class Cache
   
   public static function gc()
   {
-    if(Cache::has('cache.gc'))
+    if(!Config::enabled('cache') || Cache::has('cache.gc'))
     {
       // cleared too recently
       return false;
@@ -54,7 +54,7 @@ class Cache
     Cache::set('cache.gc', 1, 54000); // 15 mins
     
     // remove everything that's expired 1 sec ago
-    Store::delete('cache', array(
+    Store::remove('cache', array(
       'expires' => array('$lt' => new \MongoDate(time() - 1))
       ));
     

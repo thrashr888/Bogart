@@ -2,6 +2,8 @@
 
 namespace Bogart\Renderer;
 
+use Bogart\Config;
+
 class Php extends Renderer
 {
   public

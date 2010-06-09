@@ -9,7 +9,8 @@ class View
     $template = 'index',
     $data = array(),
     $options = array(
-      'cache' =>true,
+      'cache' => true,
+      'layout' => null,
       ),
     $renderer = null,
     $layout = null;
@@ -63,11 +64,13 @@ class View
       {
         $options['layout'] = $layout_file;
       }
+    }else{
+      unset($options['layout']);
     }
     
     Config::set('bogart.view.template_file', $template);
     Config::set('bogart.view.options', $options);
-    Log::write('Using template: `'.$template.'`');
+    if(Config::enabled('log')) Log::write('Using template: `'.$template.'`');
     
     $this->data['cfg'] = Config::getAllFlat();
     

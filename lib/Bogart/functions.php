@@ -1,9 +1,12 @@
 <?php
 
+namespace Bogart;
+
 use Bogart\Config;
 use Bogart\Controller;
 use Bogart\Exception;
 use Bogart\Router;
+use Bogart\View;
 
 function Get($route, $callback = null)
 {
@@ -35,6 +38,11 @@ function After($callback = null)
   return Router::After($callback);
 }
 
+function Task($name, $callback = null)
+{
+  return Router::Task($name, $callback);
+}
+
 function GetAll()
 {
   return Config::getAll();
@@ -59,6 +67,41 @@ function Disable()
   {
     Config::disable('bogart.setting.'.$arg);
   }
+}
+
+function Twig($template, Array $data = array(), Array $options = array())
+{
+  return View::Twig($template, $data, $options);
+}
+
+function Mustache($template, Array $data = array(), Array $options = array())
+{
+  return View::Mustache($template, $data, $options);
+}
+
+function PHP($template, Array $data = array(), Array $options = array())
+{
+  return View::PHP($template, $data, $options);
+}
+
+function HTML($template, Array $data = array(), Array $options = array())
+{
+  return View::HTML($template, $data, $options);
+}
+
+function Less($template, Array $data = array(), Array $options = array())
+{
+  return View::Less($template, $data, $options);
+}
+
+function Basic($template, Array $data = array(), Array $options = array())
+{
+  return View::Basic($template, $data, $options);
+}
+
+function None($template, Array $data = array(), Array $options = array())
+{
+  return View::None($template, $data, $options);
 }
 
 // for debugging
