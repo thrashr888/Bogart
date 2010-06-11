@@ -2,6 +2,8 @@
 
 namespace Bogart;
 
+// this sets up php sessions to use the Store class
+
 class Session
 {
   protected

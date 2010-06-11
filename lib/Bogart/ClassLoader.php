@@ -31,7 +31,7 @@ class ClassLoader
   protected function __construct()
   {
     $this->path = realpath(__DIR__.'/..');
-    //include 'functions.php';
+    include 'functions.php';
   }
 
   public function autoload($class)

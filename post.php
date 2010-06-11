@@ -38,6 +38,7 @@ Post('/post/edit', function(Request $request, Response $response)
   if(Store::insert('Posts', $post, true))
   {
     $message = 'Saved: '.$post['_id'];
+    Cache::remove('/index.html');
     $response->redirect('/post/'.$post['_id']);
   }
   

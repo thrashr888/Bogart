@@ -4,8 +4,8 @@ namespace Bogart;
 
 class App
 {
-  public static
-    $version = '0.1-ALPHA';
+  const
+    VERSION = '0.1-ALPHA';
   
   public
     $service,
@@ -16,38 +16,6 @@ class App
   public function __construct($script_name, $env, $debug = false, Array $options = array())
   {
     $this->init($script_name, $env, $debug, $options);
-    //$this->compile();
-  }
-  
-  protected function compile()
-  {
-    ClassCollectionLoader::load(array(
-      '\\Bogart\\Config',
-      '\\Bogart\\Cache',
-      '\\Bogart\\Cli',
-      '\\Bogart\\Controller',
-      '\\Bogart\\DateTime',
-      '\\Bogart\\Debug',
-      '\\Bogart\\Error404Exception',
-      '\\Bogart\\EventDispatcher',
-      '\\Bogart\\Event',
-      '\\Bogart\\Exception',
-      '\\Bogart\\FileCache',
-      '\\Bogart\\Log',
-      '\\Bogart\\Request',
-      '\\Bogart\\Response',
-      '\\Bogart\\Route',
-      '\\Bogart\\Router',
-      '\\Bogart\\Service',
-      '\\Bogart\\Session',
-      '\\Bogart\\Store',
-      '\\Bogart\\StoreException',
-      '\\Bogart\\String',
-      '\\Bogart\\Task',
-      '\\Bogart\\Timer',
-      '\\Bogart\\User',
-      '\\Bogart\\View',
-    ), realpath(dirname(__FILE__).'/../..').'/cache/', 'bootstrap', true);
   }
   
   protected function init($script_name, $env, $debug = false, Array $options = array())
@@ -56,35 +24,47 @@ class App
     
     $this->options = array_merge($this->options, $options);
     
-    if(Config::enabled('timer')) Timer::write('App', true);
-    if(Config::enabled('timer')) Timer::write('App::init', true);
+    Timer::write('App', true);
+    Timer::write('App::init', true);
     
     Config::setting('env', $env);
     Config::setting('debug', $debug);
     
     $this->loadConfig($env);
     
-    $script_file = Config::get('bogart.dir.app').'/'.$script_name.'.php';
-    if(!file_exists($script_file))
+    if(false !== $script_name)
     {
-      throw new Exception('Script file ( '.$script_file.' ) does not exist.');
+      $script_file = Config::get('bogart.dir.app').'/'.$script_name.'.php';
+      if(!file_exists($script_file))
+      {
+        throw new Exception('Script file ( '.$script_file.' ) does not exist.');
+      }
+      
+      // get the script to run
+      include $script_file;
     }
     
     Config::set('bogart.script.name', $script_name);
     Config::set('bogart.script.file', $script_file);
     
-    include 'functions.php';
-    include $script_file;
+    if(isset($options['setting']) && is_array($options['setting']))
+    {
+      foreach($options['setting'] as $key => $val)
+      {
+        Config::setting($key, $val);
+      }
+    }
+    
     $this->setup();
     
     Log::write("Init project: name: '$script_name', env: '$env', debug: '$debug'");
-    if(Config::enabled('timer')) Timer::write('App::init');
+    Timer::write('App::init');
   }
   
   public function run()
   {  
     Log::write('Running.');
-    if(Config::enabled('timer')) Timer::write('App::run', true);
+    Timer::write('App::run', true);
     
     try
     {
@@ -102,8 +82,8 @@ class App
     
     //Config::save('mongo'); // save in case it changed
     
-    if(Config::enabled('timer')) Timer::write('App::run');
-    if(Config::enabled('timer')) Timer::write('App');
+    Timer::write('App::run');
+    Timer::write('App');
     Log::write('Ran.');
     
     // output debugging?
@@ -115,7 +95,7 @@ class App
   
   protected function loadConfig()
   {
-    if(Config::enabled('timer')) Timer::write('App::loadConfig', true);
+    Timer::write('App::loadConfig', true);
     
     Config::set('bogart.dir.bogart', dirname(__FILE__));
     Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../..'));
@@ -126,18 +106,18 @@ class App
     
     // Load the config.yml so we can init Store for Log
     
-    if(Config::enabled('timer')) Timer::write('App::loadConfig::default', true);
+    Timer::write('App::loadConfig::default', true);
     Config::load(Config::get('bogart.dir.bogart').'/config.yml');
-    if(Config::enabled('timer')) Timer::write('App::loadConfig::default');
+    Timer::write('App::loadConfig::default');
     
-    if(Config::enabled('timer')) Timer::write('App::loadConfig::user', true);
+    Timer::write('App::loadConfig::user', true);
     if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
     {
       Config::load(Config::get('bogart.dir.app').'/config.yml');
     }
-    if(Config::enabled('timer')) Timer::write('App::loadConfig::user');
+    Timer::write('App::loadConfig::user');
     
-    if(Config::enabled('timer')) Timer::write('App::loadConfig');
+    Timer::write('App::loadConfig');
   }
   
   protected function setup()

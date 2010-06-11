@@ -4,19 +4,32 @@
   <meta name="language" content="en" />
   <title>{{title}}</title>
   
-  <link rel="stylesheet" href="{{cfg.app_asset_server}}/css/960/960.css" type="text/css" media="screen" title="no title" charset="utf-8">
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+  <script type="text/javascript" src="/js/main.js"></script>
+  <script type="text/javascript" src="http://use.typekit.com/tom2mpa.js"></script>
+  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
   
-  <link rel="stylesheet" type="text/css" media="screen" href="/css/main.less" />
+  <link rel="stylesheet" href="{{cfg.app_asset_server}}/css/960/960.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <link rel="stylesheet" type="text/css" media="screen" href="/css/main.css" />
 </head>
 <body>
-  <div id="header">
+  <div id="header" class="container_16">
     <p><a href="/login">login</a> {{ user.username }} {{ user.user_id }}</p>
   </div>
   
-  <div id="content">{% block content %}{% endblock %}</div>
+  <div id="content" class="container_16">
+    <div id="sidebar-left" class="sidebar grid_3">
+      {% block sidebar_left %}&nbsp;{% endblock %}
+    </div>
+    {% block content %}{% endblock %}
+    <div id="sidebar-right" class="sidebar grid_3">
+      {% block sidebar_right %}&nbsp;{% endblock %}
+    </div>
+  </div>
   
-  <div id="footer">
+  <br class="clear"/>
+  
+  <div id="footer" class="container_16">
     <p>footer</p>
   </div>
 </body>

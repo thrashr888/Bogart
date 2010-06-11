@@ -30,11 +30,17 @@ class Router
     return self::$tasks;
   }
   
-  public static function Task($name, $callback)
+  public static function clearTasks()
+  {
+    self::$tasks = null;
+  }
+  
+  public static function Task($name, $callback, $desc = null)
   {
     self::$tasks[] = array(
       'name' => $name,
-      'callback' => $callback
+      'callback' => $callback,
+      'desc' => $desc
     );
   }
   

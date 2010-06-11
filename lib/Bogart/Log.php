@@ -38,8 +38,8 @@ class Log
           'request_id' => Request::$id,
           'type' => $type,
           'level' => $level,
-          'request_uri' => (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'],
-          'request_method' => $_SERVER['REQUEST_METHOD'],
+          'request_uri' => isset($_SERVER['HTTP_HOST']) ? (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'] : NULL,
+          'request_method' => isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : NULL,
           'meta' => $meta,
           'time' => new \MongoDate(),
           );

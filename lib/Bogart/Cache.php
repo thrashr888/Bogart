@@ -17,25 +17,26 @@ class Cache
   
   public static function set($key, $value, $ttl)
   {
+    self::remove($key);
     $cache = array(
       'key' => $key,
       'value' => $value,
       'expires' => new \MongoDate(time() + $ttl)
       );
-    Store::insert('cache', $cache);
+    Store::insert('cache', $cache, false);
   }
   
-  public static function delete($key)
+  public static function remove($key)
   {
     Store::remove('cache', array(
       'key' => $key,
       'expires' => array('$gt' => new \MongoDate(time()))
-      ));
+      ), array('safe' => false));
   }
   
   public static function has($key)
   {
-    if(!Store::$connected) return false;
+    if(!Store::$connected || !Config::enabled('cache')) return false;
     
     return Store::exists('cache', array(
       'key' => $key,
@@ -45,7 +46,7 @@ class Cache
   
   public static function gc()
   {
-    if(!Config::enabled('cache') || Cache::has('cache.gc'))
+    if(!Store::$connected || !Config::enabled('cache') || Cache::has('cache.gc'))
     {
       // cleared too recently
       return false;

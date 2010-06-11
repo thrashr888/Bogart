@@ -7,20 +7,15 @@
 
 namespace Bogart;
 
-Config::disable('log');
-Config::disable('debug');
-Config::disable('timer');
+Config::disable('log');Config::disable('debug');Config::disable('timer');
+Cache::remove('/index.html');
 
 //Config::disable('cache');
-Config::disable('sessions');
+//Config::disable('sessions');
 //Config::enable('dbinit');
 
 include 'post.php';
 include 'login.php';
-
-Task('demo', function(Cli $cli){
-  $cli->demo();
-});
 
 Before(function(Request $request, Response $response)
 {
@@ -49,15 +44,16 @@ After(function(Request $request)
 
 Get('/', function(Request $request, Response $response, User $user = null)
 {
+  Config::disable('cache');
   
-  Timer::write('route::posts', true);
-  $rand = Request::$id;
-  $new_post = array(
+  //Timer::write('route::posts', true);
+  /*$new_post = array(
     'title' => 'Title '.$rand,
-    'body' => 'This is a great post about '.$rand.'!',
+    'body' => 'This is a great post about '.Request::$id.'!',
     'slug' => 'title_'.$rand
-    );
+    );*/
   //Store::insert('Posts', $new_post);
+  //Cache::remove('/index.html');
   
   if($user->hasFlash())
   {
@@ -69,19 +65,19 @@ Get('/', function(Request $request, Response $response, User $user = null)
   {
     $posts[] = $post;
   }
-  Timer::write('route::posts');
+  //Timer::write('route::posts');
   
   $title = 'Home';
   return Twig('posts', compact('posts', 'title', 'user', 'message', 'type'));
 });
 
 // run all of the css files through less
-Get('/css/*.less', function(Request $request, Response $response)
+Get('/css/*.css', function(Request $request, Response $response)
 {
   $response->content_type = 'text/css';
   $response->charset = 'utf-8';
   
-  $expires = DateTime::YEAR;
+  $expires = DateTime::DAY;
   
   $response->setHeader('Pragma: public');
   $response->setHeader('Content-Type: text/css');
@@ -100,7 +96,7 @@ Get('/css/stylesheets.css', function(Request $request, Response $response)
   $response->content_type = 'text/css';
   $response->charset = 'utf-8';
   
-  $expires = DateTime::YEAR;
+  $expires = DateTime::DAY;
   
   $response->setHeader('Pragma: public');
   $response->setHeader('Content-Type: text/css');
@@ -108,19 +104,27 @@ Get('/css/stylesheets.css', function(Request $request, Response $response)
   $response->setHeader('Expires: '.gmdate('D, d M Y H:i:s', time()+$expires) .' GMT');
   //header('Content-Length: ' . filesize($target_file));
   
-  $test = $request->params['splat'][1];
+  $file = $request->params['splat'][1];
   // render whatever file it's trying to load from less
-  return View::Less('css/'.$test);
+  return View::Less('css/'.$file);
 });
 
 // run all of the js files
-Get('/js/*.js', function(Request $request)
+Get('/js/*.js', function(Request $request, Response $response)
 {
-  $request->content_type = 'application/javascript';
-  $request->charset = 'utf-8';
-  $file = $request->params['splat'][0];
+  $response->content_type = 'application/javascript';
+  $response->charset = 'utf-8';
+  
+  $expires = DateTime::DAY;
+  
+  $response->setHeader('Pragma: public');
+  $response->setHeader('Content-Type: application/javascript');
+  $response->setHeader("Cache-Control: maxage=".$expires);
+  $response->setHeader('Expires: '.gmdate('D, d M Y H:i:s', time()+$expires) .' GMT');
+  
+  $file = $request->params['splat'][1];
   // render whatever file it's trying to load
-  return View::Less($test, $file);
+  return View::Minify('js/'.$file.'.js');
 });
 
 // regex route with .json format
@@ -151,6 +155,20 @@ Get('/say/*/to/*', function(Request $request)
   echo 'test-'.join(', ', $test);
 
   return View::HTML('index', $test);
+});
+
+// simple redirects
+Get('/signin', array('redirect' => '/login'));
+
+// stolen from Rails 3. need other syntax?
+Get('/users/:name', array('redirect' => '/#{params[:name]}'));
+Get('/:year', array('constraints' => array('year' => '/\d{4}/')));
+Get('/test1', array('constraints' => array('user_agent' => '/iphone/')));
+Get('/test2', array('constraints' => array('ip' => '/192\.168\.1\.\d{1,3}/')));
+
+// filters on request
+Get('/signin', array('user-agent' => 'FF3'), function(Request $request){
+  echo $request->getHeader('user-agent');
 });
 
 // homepage, no dynamic data

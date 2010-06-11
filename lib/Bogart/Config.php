@@ -31,8 +31,33 @@ class Config
     }
   }
   
-  public static function getAllFlat() {
-    return flatten(self::$data);
+  public static function getAllFlat()
+  {
+    return self::flatten(self::$data);
+  }
+  
+  protected static function flatten($val, $key='')
+  {
+      static $out = array();
+
+      if (is_array($val)) {
+          $vals = array();
+          foreach ($val as $k => $v) {
+              $k = $key == '' ? $k : $key.'_'.$k;
+              $flatten = self::flatten($v, $k);
+              list($k, $v) = each($flatten);
+              $vals[$k] = $v;
+          }
+          $val = $vals;       
+      } else if (is_scalar($val)) {
+          $out[$key] = $val;
+      }
+
+      if ($key == '') {
+          return $out;
+      } else {
+          return array($key => $val);
+      }
   }
   
   public static function has($name)
@@ -164,7 +189,14 @@ class Config
     if(Config::enabled('timer')) Timer::write('Config::load', true);
     if(is_array($method))
     {
-      self::$data = array_replace_recursive(self::$data, $method);
+      if(isset($method['all']))
+      {
+        self::$data = array_replace_recursive(self::$data, $method['all']);
+      }
+      if(isset($method[Config::setting('env')]))
+      {
+        self::$data = array_replace_recursive(self::$data, $method[Config::setting('env')]);
+      }
     }
     elseif(strstr($method, '.yml'))
     {

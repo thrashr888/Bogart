@@ -3,9 +3,6 @@
 
 namespace Bogart;
 
-// A command-line test:
-// bogart test=1 one --help -abc --test=true
-
 require realpath(__DIR__).'/ClassLoader.php';
 ClassLoader::register();
 

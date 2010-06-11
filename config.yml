@@ -1,7 +1,15 @@
-app:
-  name: Pauls Bogart App
-  asset:
-    servers: ['d1f7kn811ho9qg.cloudfront.net']
-db:
-  connection: 'mongodb://localhost:27017,localhost:27018'
-  dbname: Bogart
+all:
+  app:
+    name: Pauls Bogart App
+    asset:
+      servers: ['d1f7kn811ho9qg.cloudfront.net']
+  db:
+    connection: 'mongodb://localhost:27017,localhost:27018'
+    dbname: Bogart
+dev:
+  bogart:
+    setting:
+      dbinit: true
+      log: true
+      timer: true
+      debug: true

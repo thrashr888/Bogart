@@ -12,9 +12,12 @@ namespace Bogart;
 
 class Cli
 {
+  public
+    $args = array();
+  
   protected
-    $args = array(),
-    $service = array();
+    $service = array(),
+    $quiet = false;
   
   public function __construct($args)
   {
@@ -24,94 +27,191 @@ class Cli
   public function run()
   {
     $app = $this->args[0];
-    $task = $this->args[0];
+    $task = $this->args[1];
     
-    new App($app, 'cli', false);
-    include 'tasks.php';
+    $this->fieldOptions();
     
-    $this->getTask($task);
-    
-    $this->services['cli'] = $this;
-    
-    // compile the args for the closure
-    $m = new \ReflectionMethod($this->service['route']->callback, '__invoke');
-    $args = array();
-    foreach($m->getParameters() as $param)
+    // a shortcut
+    if($app == 'cc' && !$task)
     {
-      $args[] = $this->service[$param->getName()]; // grab the actual service param
+      $app = 'bogart';
+      $task = 'cc';
     }
     
-    ob_start();
-    $return = call_user_func_array($this->service['route']->callback, $args);
-    $content = ob_get_clean();
+    if(!$app || !$task)
+    {
+      $this->printHelp($app, $task);
+    }
     
-    exit(0);
+    $this->getApp($app);
+    $this->getTask($task);
+    
+    $this->service['cli'] = $this;
+    
+    $this->callTask($this->service['route']['callback']);
+    
+    exit(0); // okay
+  }
+  
+  protected function callTask($callback)
+  {
+    // compile the args for the closure
+    $m = new \ReflectionMethod($callback, '__invoke');
+    $args = array();
+    
+    if($m)
+    {
+      foreach($m->getParameters() as $param)
+      {
+        $args[] = $this->service[$param->getName()]; // grab the actual service param
+      }
+    }
+    
+    call_user_func_array($callback, $args);
+  }
+  
+  protected function printHelp($app, $task)
+  {  
+    $this->printUsage();
+    
+    $this->output('Available tasks:');
+    
+    $this->getApp('bogart');
+    
+    $this->output('bogart');
+    $this->listTasks();
+    
+    if(!$app || $app == 'bogart')
+    {
+      exit(1);
+    }
+    
+    if(!$task)
+    {
+      Router::clearTasks();
+      
+      $this->getApp($app);
+      
+      $this->output($app);
+      $this->listTasks();
+      
+      exit(1);
+    }
+  }
+  
+  protected function fieldOptions()
+  {
+    if($this->args['V'] == 1 || isset($this->args['version']))
+    {
+      $this->output("Bogart version ".App::VERSION." (".__DIR__.")");
+      exit(0);
+    }
+    
+    if($this->args['H'] == 1 || isset($this->args['help']))
+    {
+      $this->printHelp($this->args[0], $this->args[1]);
+    }
+    
+    if($this->args['q'] == 1 || isset($this->args['quiet']))
+    {
+      $this->quiet = true;
+    }
+  }
+  
+  protected function getApp($app)
+  {
+    if($app == 'bogart')
+    {
+      include 'tasks.php';
+      // loads up the store, config, etc.
+      new App(false, 'cli', false, array(
+          'setting' => array('sessions' => false)
+          ));
+    }
+    else
+    {
+      // loads up the store, config, etc.
+      new App($app, 'cli', false, array(
+          'setting' => array('sessions' => false)
+          ));
+    }
   }
   
   protected function getTask($task)
   {
-    foreach(Router::getTasks() as $route)
+    if($tasks = Router::getTasks())
     {
-      if($route['callback'] == $task)
+      foreach(Router::getTasks() as $route)
       {
-        return $this->services['route'] = $route;
+        if($route['name'] == $task)
+        {
+          return $this->service['route'] = $route;
+        }
       }
     }
     throw new CliException('Task not found.');
   }
   
-  public function demo()
+  protected function listTasks()
   {
-    $this->output("\nWelcome to Bogart Cli\n");
-
-    $this->output('args: '.print_r($this->args, 1));
-
-    $resp = $this->ask('echo');
-    $this->output('echo: '.$resp);
-
-    $this->interactive("yes?");
-
-    $this->interactive("no.", function($resp){
-      echo $resp."\n";
-      echo 'died!';
-      die(1);
-    });
+    if($tasks = Router::getTasks())
+    {
+      foreach($tasks as $task)
+      {
+        $this->output(sprintf("\t%-20s %s", $task['name'], $task['desc']));
+      }
+    }
   }
   
-  protected function interactive($prompt, $callback = false)
+  protected function printUsage()
+  {  
+    $this->output("Bogart version: ".App::VERSION."\nUsage:\n\tbogart [options] script task [arguments]");
+    $this->output("
+Options:
+\t--version        -V  Display the program version.
+\t--help           -H  Display this help message.
+\t--quiet          -q  Do not log messages to standard output..
+");
+  }
+  
+  public function interactive($prompt = "$ ", $callback, $options = null)
   {
-    if('q' == $resp = $this->ask("(`q` to quit)\n".$prompt))
+    $prompt_out = str_replace(
+      array('\t'),
+      array(time()),
+      $prompt);
+    
+    if('quit' == $resp = $this->ask($prompt_out))
     {
       return true;
     }
     
     if($callback)
     {
-      $callback($resp);
-    }
-    else
-    {
-      $this->action($resp);
+      $out = $callback($resp, $this, $options);
+      if(is_scalar($out)) $prompt = $out;
+      if(false === $out) return false;
     }
     
-    $this->interactive($prompt);
+    $this->interactive($prompt, $callback, $options);
   }
   
-  protected function action($resp)
+  public function action($resp)
   {
     $this->output('echo: '.$resp);
   }
   
-  protected function ask($question)
+  public function ask($question = '$ ')
   {
-    $this->output($question.': ', false);
+    $this->output($question, false);
     $handle = fopen ("php://stdin", "r");
     $line = fgets($handle);
     return trim($line);
   }
   
-  protected function output($text = '', $newline = true)
+  public function output($text = '', $newline = true)
   {
+    if($this->quiet) return true;
     echo $text.($newline ? "\n" : null);
   }
   

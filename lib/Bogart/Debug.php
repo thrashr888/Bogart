@@ -114,8 +114,11 @@ class Debug
     echo "<h3>FILES</h3>";
     echo self::prettyPrint($_FILES);
     
-    echo "<h3>Session</h3>";
-    echo self::prettyPrint($_SESSION);
+    if(Config::enabled('sessions'))
+    {
+      echo "<h3>Session</h3>";
+      echo self::prettyPrint($_SESSION);
+    }
     
     echo "<h3>Cookie</h3>";
     echo self::prettyPrint($_COOKIE);

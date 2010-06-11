@@ -2,6 +2,8 @@
 
 namespace Bogart;
 
+// an HTTP request
+
 class Request
 {
   public
@@ -26,17 +28,21 @@ class Request
   public function __construct()
   {
     $this->params = array_merge($_GET, $_POST);
-    $this->url = $this->generateUrl();
-    $this->uri = $_SERVER['REQUEST_URI'];
-    $this->parsed = parse_url($this->url);
-    $this->base = $this->parsed['scheme'].'://'.$this->parsed['host'];
-    $this->method = $this->getMethod();
-    $this->cache_key = $this->getCacheKey();
     
-    // take a basic guess as to what file type it's asking for
-    if(preg_match('/.*\.([a-z0-9]+)/i', $this->parsed['path'], $format))
+    if(isset($_SERVER['HTTP_HOST']))
     {
-      $this->format = $format[1];
+      $this->url = $this->generateUrl();
+      $this->uri = $_SERVER['REQUEST_URI']?:null;
+      $this->parsed = parse_url($this->url);
+      $this->base = $this->parsed['scheme'].'://'.$this->parsed['host'];
+      $this->method = $this->getMethod();
+      $this->cache_key = $this->getCacheKey();
+
+      // take a basic guess as to what file type it's asking for
+      if(preg_match('/.*\.([a-z0-9]+)/i', $this->parsed['path'], $format))
+      {
+        $this->format = $format[1];
+      }
     }
     
     if(Config::enabled('log')) Log::write('Request: '.$this->url, 'request');
@@ -49,7 +55,7 @@ class Request
   
   protected function generateUrl()
   {
-    return (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    return $_SERVER['HTTP_HOST'] ? (isset($_SERVER['HTTPS']) ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'] : null;
   }
   
   protected function getMethod()
@@ -61,6 +67,7 @@ class Request
   
   public function getCacheKey()
   {
+    // path.ext
     $file = (substr($this->getPath(), -1) == '/') ? $this->getPath().'index' : $this->getPath();
     $extention = strstr($this->getPath(), '.') ? '' : '.'.$this->format;
     return $file.$extention;

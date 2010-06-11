@@ -21,13 +21,13 @@ class View
     {
       $this->renderer = $renderer;
       $this->format = $this->renderer->extention;
-      $this->template = $template.'.'.$this->format;
+      $this->template = strstr($template, '.') ? $template : $template.'.'.$this->format;
       $this->layout = 'layout.'.$this->format;
     }
     else
     {
       $this->format = substr($template, strpos($template, '.'));
-      $this->template = $template.'.'.$this->format;
+      $this->template = strstr($template, '.') ? $template : $template.'.'.$this->format;
       $this->layout = 'layout.'.$this->format;
     }
     
@@ -113,7 +113,17 @@ class View
   public static function Less($template, Array $data = array(), Array $options = array())
   {
     $options['cache'] = false;
-    return new View($template, $data, new Renderer\Less($options), $options);
+    $view = new View($template, $data, new Renderer\Less($options), $options);
+    $view->layout = null;
+    return $view;
+  }
+  
+  public static function Minify($template, Array $data = array(), Array $options = array())
+  {
+    $options['cache'] = false;
+    $view = new View($template, $data, new Renderer\Minify($options), $options);
+    $view->layout = null;
+    return $view;
   }
   
   public static function Basic($template, Array $data = array(), Array $options = array())

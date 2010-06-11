@@ -15,8 +15,6 @@ class Timer
   
   public static function write($name, $new = false)
   {
-    if(!Config::enabled('timer')) return;
-    
     if(isset(self::$timers[$name]) && !$new)
     {
       self::$timers[$name]->addTime();
@@ -39,8 +37,6 @@ class Timer
 
   public static function pretty()
   {
-    if(!Config::enabled('timer')) return;
-    
     $output = '';
     
     if ($timers = \sfTimerManager::getTimers())

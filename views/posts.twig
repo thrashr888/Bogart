@@ -1,15 +1,22 @@
 {% extends "layout.twig" %}
 
 {% block content %}
-<h1>All Posts</h1>
+<div class="grid_10">
+  <h1>All Posts</h1>
 
-{% for item in posts %}
-  <h2><a href="/post/{{ item.slug }}">{{ item.title }}</a></h2>
-  <p>{{ item.body }}</p>
-{% endfor %}
+  {% for item in posts %}
+    <h2><a href="/post/{{ item.slug }}">{{ item.title }}</a></h2>
+    <p>{{ item.body }}</p>
+  {% endfor %}
 
-{% if not posts %}
-  <p>No posts.</p>
-{% endif %}
+  {% if not posts %}
+    <p>No posts.</p>
+  {% endif %}
+</div>
+{% endblock %}
 
+{% block sidebar_left %}
+<ul id="sidebar-nav">
+  <li><a href="/posts">posts</a></li>
+</ul>
 {% endblock %}

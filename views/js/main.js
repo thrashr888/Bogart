@@ -1,0 +1,5 @@
+
+alert('hi!');
+
+$('#content').hide();
+
