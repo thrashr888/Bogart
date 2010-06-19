@@ -5,16 +5,18 @@
   <title>{{title}}</title>
   
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-  <script type="text/javascript" src="/js/main.js"></script>
   <script type="text/javascript" src="http://use.typekit.com/tom2mpa.js"></script>
   <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
+  <script type="text/javascript" src="/js/main.js"></script>
   
-  <link rel="stylesheet" href="{{cfg.app_asset_server}}/css/960/960.css" type="text/css" media="screen" title="no title" charset="utf-8">
-  <link rel="stylesheet" type="text/css" media="screen" href="/css/main.css" />
+  <link rel="stylesheet" href="{{cfg.app_asset_server}}/css/960/960.css" type="text/css" media="screen" charset="utf-8">
+  <link rel="stylesheet" href="/css/main.css" type="text/css" media="screen" />
 </head>
 <body>
   <div id="header" class="container_16">
-    <p><a href="/login">login</a> {{ user.username }} {{ user.user_id }}</p>
+    <h2 id="logo" class="grid_10">Bogart</h2>
+    <nav class="grid_6"><a href="/login">login</a> {{ user.username }} {{ user.user_id }}</nav>
+    <br class="clear" />
   </div>
   
   <div id="content" class="container_16">
@@ -30,7 +32,7 @@
   <br class="clear"/>
   
   <div id="footer" class="container_16">
-    <p>footer</p>
+    <p>Bogart copyright 2010 Paul Thrasher</p>
   </div>
 </body>
 </html>

@@ -33,8 +33,7 @@ class Store
       }
       catch(\Exception $e)
       {
-        //throw new \Exception('Cannot connect to the database.');
-        die('Cannot connect to the database.');
+        throw new StoreException('Cannot connect to the database.');
       }
       
       if(Config::enabled('debug'))
@@ -227,7 +226,7 @@ class Store
   
   public static function query_log($type, $collection, $data)
   {  
-    if(!Config::enabled('log') || !Config::enabled('debug') || $collection == 'query_log' || $collection == 'timer' || $collection == 'log' || $collection == 'system.profile') return;
+    if(!Config::enabled('log') || !Config::enabled('debug') || $collection == 'query_log' || $collection == 'timer' || $collection == 'log' || $collection == 'system.profile' || $collection == 'session') return;
     
     $insert = array_merge(array(
       'type' => $type,

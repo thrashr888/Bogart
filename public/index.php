@@ -2,8 +2,14 @@
 
 namespace Bogart;
 
-require '../lib/Bogart/ClassLoader.php';
-ClassLoader::register();
+require '../lib/Bogart/App.php';
 
-$app = new App('index', 'prod', true);
+try
+{
+$app = new App('index', 'dev', true);
 $app->run();
+}
+catch(\Exception $e)
+{
+  print_r($e);
+}

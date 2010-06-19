@@ -2,7 +2,7 @@
 
 namespace Bogart;
 
-include dirname(__FILE__).'/vendor/fabpot-yaml-9e767c9/lib/sfYaml.php';
+include dirname(__FILE__).'/vendor/yaml/lib/sfYaml.php';
 
 class Config
 {
@@ -184,22 +184,26 @@ class Config
     self::$data = array_replace_recursive(self::$data, $data);
   }
 
-  public static function load($method)
+  public static function load($method, $env)
   {
     if(Config::enabled('timer')) Timer::write('Config::load', true);
+    
     if(is_array($method))
     {
+      // we add the given array
       if(isset($method['all']))
       {
         self::$data = array_replace_recursive(self::$data, $method['all']);
       }
-      if(isset($method[Config::setting('env')]))
+      if(isset($method[$env]))
       {
-        self::$data = array_replace_recursive(self::$data, $method[Config::setting('env')]);
+        self::$data = array_replace_recursive(self::$data, $method[$env]);
       }
     }
     elseif(strstr($method, '.yml'))
     {
+      // we're passed a yml file
+      
       $cache_key = $method;
       $expired = file_exists(FileCache::getFilename($cache_key)) ? filectime(FileCache::getFilename($cache_key)) < filectime($method) : true;
       
@@ -216,15 +220,17 @@ class Config
       
       if($load)
       {
-        self::load($load);
+        self::load($load, $env);
       }
       else
       {
-        throw new Exception('Cannot load yaml file: '.$method);
+        //throw new Exception('Cannot load yaml file: '.$method);
       }
     }
     elseif($method == 'store' && Config::enabled('store'))
     {
+      // load from the database
+      
       $find = array(
         'name' => self::get('app.name'),
         );
@@ -236,7 +242,7 @@ class Config
     }
     else
     {
-      throw new Exception('Nothing to load.');
+      //throw new Exception('Nothing to load.');
     }
     
     if(Config::enabled('timer')) Timer::write('Config::load');

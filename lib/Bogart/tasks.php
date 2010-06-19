@@ -5,7 +5,7 @@ namespace Bogart;
 // the default tasks provided by Bogart framework
 
 // $ bogart self cc
-Task('cc', function(Cli $cli)
+Task('cc', 'Clears the cache folder.', function($args, Cli $cli)
 {
   $files = glob(Config::get('bogart.dir.cache', '/tmp').'/*');
   foreach($files as $file)
@@ -13,10 +13,10 @@ Task('cc', function(Cli $cli)
     unlink($file);
     $cli->output('removed '.$file);
   }
-}, 'Clears the cache folder.');
+});
 
 // $ bogart self demo
-Task('demo', function(Cli $cli)
+Task('demo', 'A demo of the Bogart Cli', function($args, Cli $cli)
 {
   $cli->output("\nWelcome to Bogart Cli Demo\n");
 
@@ -43,10 +43,10 @@ Task('demo', function(Cli $cli)
   {
     return false;
   });
-}, 'A demo of the Bogart Cli');
+});
 
 // $ bogart self echo "hello world"
-Task('echo', function(Cli $cli)
+Task('echo', 'Just an echo echo echo.', function($args, Cli $cli)
 {
-  $cli->output($cli->args[2]);
-}, 'Just and echo echo echo.');
+  $cli->output($args[2]);
+});

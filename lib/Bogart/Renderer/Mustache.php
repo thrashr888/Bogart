@@ -2,8 +2,6 @@
 
 namespace Bogart\Renderer;
 
-include __DIR__.'/../vendor/mustache/Mustache.php';
-
 class Mustache extends Renderer
 {
   public
@@ -16,6 +14,8 @@ class Mustache extends Renderer
       'view' => null,
       'partials' => null,
       ),$options);
+    
+    include Config::get('bogart.dir.bogart').'/vendor/mustache/Mustache.php';
     
     $this->instance = new \Mustache($options['template'], $options['view'], $options['partials']);
   }

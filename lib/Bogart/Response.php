@@ -2,14 +2,21 @@
 
 namespace Bogart;
 
+// Rack::Response api:
+//[]   []=   close   delete_cookie   each   empty?   finish   new   redirect   set_cookie   to_a   write 
+//body header length status
+
 class Response
 {
   public
-    $format = 'html',
-    $content = NULL,
-    $headers = array(),
-    $view = NULL;
+    $header = array(),
+    $body = '',
+    $length = 0,
+    $status = 200,
+    $view = NULL,
+    $cookies = array();
   
+  // stolen from symfony 1.X ;)
   protected static
     $status_codes = array(
       '100' => 'Continue',
@@ -55,25 +62,64 @@ class Response
       '505' => 'HTTP Version Not Supported',
     );
   
-  public function send($content = NULL)
+  public function __construct($body = '', $status = 200, $header = array())
   {
-    if($content)
-    {
-      $this->content = $content;
-    }
+    $this->status = (int) $status;
+    $this->header = array_merge(array('Content-Type' => 'text/html'), $header);
+    $this->length = 0;
     
-    if(!headers_sent())
+    if(method_exists($body, '__toString'))
     {
-      $this->sendHeaders();
+      $this->write($body->__toString());
     }
-    
-    echo $this->content;
+    elseif(is_array($body))
+    {
+      foreach($body as $part)
+      {
+        $this->write($part);
+      }
+    }
+    else
+    {
+      $this->write($body);
+    }
   }
   
-  public function status($code, $name = null)
+  public function addHeader($key, $value)
   {
-    $status_text = null !== $name ? $name : self::$status_codes[$code];
-    $this->setHeader('HTTP/1.0 '.$code.' '.$status_text);
+    $this->header[$key] = $value;
+  }
+  
+  public function finish()
+  {
+    // cookies
+    foreach ($this->cookies as $cookie)
+    {
+      setrawcookie($cookie['name'], $cookie['value'], $cookie['expire'], $cookie['path'], $cookie['domain'], $cookie['secure'], $cookie['httpOnly']);
+    }
+    
+    // send headers
+    if(!headers_sent())
+    {
+      header('HTTP/1.0 '.$this->status.' '.self::$status_codes[$this->status]);
+
+      if($this->header)
+      {
+        foreach($this->header as $name => $value)
+        {
+          header($name.': '.$value);
+        }
+      }
+    }
+    
+    echo $this->body;
+  }
+  
+  public function write($content = '')
+  {
+    $this->body .= $content;
+    $this->length = strlen($this->body);
+    //$this->addHeader('Content-Length', $this->length);
   }
   
   public function error404($message)
@@ -81,26 +127,60 @@ class Response
     throw new Error404Exception($message);
   }
   
-  public function redirect($url, $code = 302)
+  public function redirect($url, $status = 302)
   {
-    header('HTTP/1.0 '.$code.' '.self::$status_codes[$code]);
-    header("Location: ".$url);
-    exit();
+    $this->status = $status;
+    $this->addHeader('Location', $url);
+    $this->finish();
   }
   
-  public function setHeader($header)
+  /**
+   * Sets a cookie.
+   *
+   * @param  string  $name      HTTP header name
+   * @param  string  $value     Value for the cookie
+   * @param  string  $expire    Cookie expiration period
+   * @param  string  $path      Path
+   * @param  string  $domain    Domain name
+   * @param  bool    $secure    If secure
+   * @param  bool    $httpOnly  If uses only HTTP
+   *
+   * @throws <b>Exception</b> If fails to set the cookie
+   */
+  public function setCookie($name, $value, $expire = null, $path = '/', $domain = '', $secure = false, $httpOnly = false)
   {
-    $this->headers[] = $header;
-  }
-  
-  public function sendHeaders()
-  {
-    if($this->headers)
+    if ($expire !== null)
     {
-      foreach($this->headers as $header)
+      if (is_numeric($expire))
       {
-        header($header);
+        $expire = (int) $expire;
+      }
+      else
+      {
+        $expire = strtotime($expire);
+        if ($expire === false || $expire == -1)
+        {
+          //throw new Exception('Your expire parameter is not valid.');
+        }
       }
     }
+    
+    $_COOKIE[$name] = $value; // make immediately available
+
+    $this->cookies[$name] = array(
+      'name'     => $name,
+      'value'    => $value,
+      'expire'   => $expire,
+      'path'     => $path,
+      'domain'   => $domain,
+      'secure'   => $secure ? true : false,
+      'httpOnly' => $httpOnly,
+    );
+  }
+  
+  public function deleteCookie($name, $path = '/', $domain = '')
+  {
+    unset($_COOKIE[$name]);
+    $this->setCookie($name, '', time()-1, $path, $domain);
   }
 }

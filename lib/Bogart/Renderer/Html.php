@@ -11,6 +11,7 @@ class Html extends Renderer
   {
     $content = file_get_contents($file);
     $content = $this->strtr($content, $data);
+    $content = preg_replace('/{{ \.* }}/', '', $content);
     
     if(isset($options['layout']))
     {

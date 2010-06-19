@@ -9,10 +9,12 @@ class Route
     $name = null,
     $route = null,
     $callback = null,
+    $filter = null,
     $type = null,
     $regex = null,
-    $matched_path = null,
-    $matches = array();
+    $path = null,
+    $matches = array(),
+    $params = array();
   
   public function __construct($options = array())
   {
@@ -89,19 +91,101 @@ class Route
     }
   }
   
-  public function matchPath($match_path)
-  {
-    // get for a regex route match to the requested url
-    if(preg_match($this->regex, $match_path, $this->matches))
+  public function matchRequest(Request $request)
+  {  
+    if($this->filter)
     {
-      // matched a route. return it.
-      return true;
+      //array('user-agent' => 'FF3()')
+      $safe = false;
+      
+      $argv = isset($request->server['argv'])?:null;
+      unset($request->server['argv']);
+      
+      foreach($this->filter as $filter_name => $filter_value)
+      {
+        if($filter_name == 'redirect' || $filter_name == 'constraints' || is_array($filter_value))
+        {  
+          $safe = true;
+          continue;
+        }
+        
+        $filter_value = '/'.$filter_value.'/';
+        
+        // to match user agent like sinatra
+        if($filter_name == 'agent' || $filter_name == 'user_agent')
+        {
+          if(preg_match($filter_value, $request->server['HTTP_USER_AGENT'], $matches))
+          {
+            $this->params = array_merge($this->params, array('agent' => $match));
+            $safe = true;
+            continue;
+          }
+        }
+        
+        // to match host name like sinatra
+        if($filter_name == 'host_name')
+        {
+          if(preg_match($filter_value, $request->server['HTTP_HOST'], $matches))
+          {
+            $this->params = array_merge($this->params, array('host_name' => $match));
+            $safe = true;
+            continue;
+          }
+        }
+        
+        // check http headers
+        if($match = preg_grep($filter_value, $request->headers))
+        {
+          $this->params = array_merge($this->params, $match);
+          $safe = true;
+          continue;
+        }
+        
+        // check server
+        if($match = preg_grep($filter_value, $request->server))
+        {
+          $this->params = array_merge($this->params, $match);
+          $safe = true;
+          continue;
+        }
+      }
+      if(!$safe) return false;
+      
+      $request->server['argv'] = $argv;
     }
-    return false;
+    
+    // get for a regex route match to the requested url
+    if(!preg_match($this->regex, $request->path, $this->matches)) return false;
+    
+    $this->params = $this->matchParams();
+    
+    $this->path = $request->path;
+    
+    //array('constraints' => array('year' => '/\d{4}/'))
+    if(isset($this->filter['constraints']))
+    {
+      foreach($this->filter['constraints'] as $name => $value)
+      {
+        if(!isset($this->params[$name])) return false;
+        if(!preg_match($this->params[$name], $value)) return false;
+      }
+    }
+    
+    return true;
   }
   
-  public function getParams()
+  protected function matchParams()
   {
+    if($this->type == 'regex')
+    {
+      return array('captures' => $this->matches);
+    }
+    
+    if($this->type == 'splat')
+    {
+      return array('splat' => $this->matches);
+    }
+    
     $out = array();
     foreach($this->matches as $key => $value)
     {

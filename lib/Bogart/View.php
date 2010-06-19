@@ -16,7 +16,7 @@ class View
     $layout = null;
   
   public function __construct($template, Array $data = array(), $renderer = null, Array $options = array())
-  {  
+  {
     if(null != $renderer)
     {
       $this->renderer = $renderer;
@@ -53,7 +53,7 @@ class View
       $template = Config::get('bogart.dir.bogart').'/views/'.$this->template;
       if(!file_exists($template))
       {
-        throw new Error404Exception('Template ('.$this->template.') not found.');
+        //throw new Error404Exception('Template ('.$this->template.') not found.');
       }
     }
     

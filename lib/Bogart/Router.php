@@ -4,20 +4,20 @@ namespace Bogart;
 
 class Router
 {
-  public
-    $method,
-    $type,
-    $regex,
-    $callback;
-  
   protected static
     $routes,
     $filters,
-    $tasks;
+    $tasks,
+    $templates;
   
   public static function getRoutes()
   {
     return self::$routes;
+  }
+  
+  public static function hasRoutes()
+  {
+    return count(self::$routes) > 0 ? true : false;
   }
   
   public static function getFilters()
@@ -35,13 +35,23 @@ class Router
     self::$tasks = null;
   }
   
-  public static function Task($name, $callback, $desc = null)
+  public static function getTemplates()
+  {
+    return self::$templates;
+  }
+  
+  public static function Task($name, $desc, $callback)
   {
     self::$tasks[] = array(
       'name' => $name,
       'callback' => $callback,
       'desc' => $desc
     );
+  }
+  
+  public static function Template($name, $callback)
+  {
+    self::$templates[$name] = $callback;
   }
   
   public static function Before($callback)
@@ -60,39 +70,96 @@ class Router
     );
   }
   
-  public static function Get($route, $callback = null)
+  /**
+   * @param $route The name of the route. String with splats, named routes or regex.
+   * @param $callback_or_filter The callback or a filter array
+   * @param $callback The callback if there's a filter
+   */
+  public static function Get($route, $callback_or_filter = null, $callback = null)
   {
+    if(is_array($callback_or_filter))
+    {
+      $filter = $callback_or_filter;
+    }else{
+      $callback = $callback_or_filter;
+      $filter = null;
+    }
     self::$routes[] = new Route(array(
       'method' => 'GET',
       'name' => $route,
       'callback' => $callback,
+      'filter' => $filter,
       ));
   }
-
-  public static function Post($route, $callback = null)
+  
+  /**
+   * @param $route The name of the route. String with splats, named routes or regex.
+   * @param $callback_or_filter The callback or a filter array
+   * @param $callback The callback if there's a filter
+   */
+  public static function Post($route, $callback_or_filter = null, $callback = null)
   {
+    if(is_array($callback_or_filter))
+    {
+      $filter = $callback_or_filter;
+    }else{
+      $callback = $callback_or_filter;
+      $filter = null;
+    }
     self::$routes[] = new Route(array(
       'method' => 'POST',
       'name' => $route,
       'callback' => $callback,
+      'filter' => $filter,
       ));
   }
-
-  public static function Put($route, $callback = null)
+  
+  /**
+   * @param $route The name of the route. String with splats, named routes or regex.
+   * @param $callback_or_filter The callback or a filter array
+   * @param $callback The callback if there's a filter
+   */
+  public static function Put($route, $callback_or_filter = null, $callback = null)
   {
+    if(is_array($callback_or_filter))
+    {
+      $filter = $callback_or_filter;
+    }else{
+      $callback = $callback_or_filter;
+      $filter = null;
+    }
     self::$routes[] = new Route(array(
       'method' => 'PUT',
       'name' => $route,
       'callback' => $callback,
+      'filter' => $filter,
       ));
   }
-
-  public static function Delete($route, $callback = null)
+  
+  /**
+   * @param $route The name of the route. String with splats, named routes or regex.
+   * @param $callback_or_filter The callback or a filter array
+   * @param $callback The callback if there's a filter
+   */
+  public static function Delete($route, $callback_or_filter = null, $callback = null)
   {
+    if(is_array($callback_or_filter))
+    {
+      $filter = $callback_or_filter;
+    }else{
+      $callback = $callback_or_filter;
+      $filter = null;
+    }
     self::$routes[] = new Route(array(
       'method' => 'DELETE',
       'name' => $route,
       'callback' => $callback,
+      'filter' => $filter,
       ));
+  }
+  
+  public static function pass()
+  {
+    throw new Exception('pass');
   }
 }

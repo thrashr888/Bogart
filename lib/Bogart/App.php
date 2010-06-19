@@ -8,21 +8,75 @@ class App
     VERSION = '0.1-ALPHA';
   
   public
+    $script_name,
+    $env,
+    $debug = false,
     $service,
+    $controller,
     $options = array(
       'user' => array()
       );
   
   public function __construct($script_name, $env, $debug = false, Array $options = array())
   {
+    $this->script_name = $script_name;
+    $this->env = $env;
+    $this->debug = $debug;
+    $this->options = array_merge($this->options, $options);
+    
+    $this->loadLibs(false, true);
+    
     $this->init($script_name, $env, $debug, $options);
+  }
+  
+  /**
+   * We load all the files ahead of time and cache the results.
+   */
+  protected function loadLibs($autoload = true)
+  {  
+    // it's faster to preload our files than autoload them. it's a small list.
+    
+    $dir = dirname(__file__);
+    
+    $lib_files = array(
+      'functions', 'Cache', 'Exception', 'CliException', 'Config', 'Controller', 'DateTime',
+      'Debug', 'Error404Exception', 'EventDispatcher', 'Event', 'FileCache', 'Log',
+      'Renderer/Renderer', 'Renderer/Html', 'Renderer/Less', 'Renderer/Minify',
+      'Renderer/Mustache', 'Renderer/None', 'Renderer/Php', 'Renderer/Twig',
+      'Request', 'Response', 'Route', 'Router', 'Service', 'Store', 'Session', 'StoreException',
+      'String', 'Timer', 'User', 'View'
+      );
+    
+    if($autoload)
+    {
+      $latest_time = 0;
+      foreach($lib_files as $file)
+      {
+        // get the latest file modified time
+        $file_time = filemtime($dir.'/'.$file);
+        $latest_time = $file_time > $latest_file ? $file_time : $latest_time;
+      }
+      
+      if($latest_time < filemtime($dir.'/compile.php'))
+      {
+        include $dir.'/compile.php';
+        return;
+      }
+    }
+    
+    $cache = '';
+    foreach($lib_files as $file)
+    {
+      $cache .= file_get_contents($dir.'/'.$file.'.php')."\n?>";
+    }
+    file_put_contents($dir.'/compile.php', $cache);
+    
+    include $dir.'/compile.php';
   }
   
   protected function init($script_name, $env, $debug = false, Array $options = array())
   {
     Request::$id = md5(microtime(true).$_SERVER['SERVER_NAME'].$_SERVER['HTTP_HOST']);
-    
-    $this->options = array_merge($this->options, $options);
     
     Timer::write('App', true);
     Timer::write('App::init', true);
@@ -37,7 +91,7 @@ class App
       $script_file = Config::get('bogart.dir.app').'/'.$script_name.'.php';
       if(!file_exists($script_file))
       {
-        throw new Exception('Script file ( '.$script_file.' ) does not exist.');
+        //throw new Exception('Script file ( '.$script_file.' ) does not exist.');
       }
       
       // get the script to run
@@ -47,6 +101,7 @@ class App
     Config::set('bogart.script.name', $script_name);
     Config::set('bogart.script.file', $script_file);
     
+    // additional settings that override config.yml
     if(isset($options['setting']) && is_array($options['setting']))
     {
       foreach($options['setting'] as $key => $val)
@@ -69,8 +124,8 @@ class App
     try
     {
       ob_start();
-      $controller = new Controller($this->service);
-      $controller->execute();
+      $this->controller = new Controller($this->service);
+      $this->controller->execute();
       ob_end_flush();
     }
     catch(\Exception $e)
@@ -93,7 +148,7 @@ class App
     }
   }
   
-  protected function loadConfig()
+  protected function loadConfig($env)
   {
     Timer::write('App::loadConfig', true);
     
@@ -107,13 +162,13 @@ class App
     // Load the config.yml so we can init Store for Log
     
     Timer::write('App::loadConfig::default', true);
-    Config::load(Config::get('bogart.dir.bogart').'/config.yml');
+    Config::load(Config::get('bogart.dir.bogart').'/config.yml', $env);
     Timer::write('App::loadConfig::default');
     
     Timer::write('App::loadConfig::user', true);
     if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
     {
-      Config::load(Config::get('bogart.dir.app').'/config.yml');
+      Config::load(Config::get('bogart.dir.app').'/config.yml', $env);
     }
     Timer::write('App::loadConfig::user');
     
@@ -145,7 +200,7 @@ class App
     }
     
     $this->service = new Service();
-    $this->service['request'] = new Request();
+    $this->service['request'] = new Request($this->env);
     $this->service['response'] = new Response();
     $this->service['user'] = new User($this->options['user']);
     $this->service['event_dispatcher'] = new EventDispatcher();
@@ -171,7 +226,7 @@ class App
     Store::coll('cfg')->ensureIndex(array('name' => 1), array('background' => true, 'safe' => false));
     
     Store::coll('session')->ensureIndex(array('session_id' => 1), array('background' => true, 'safe' => false, 'unique' => true));
-    Store::coll('session')->ensureIndex(array('time' => 1), array('background' => true, 'safe' => false));
+    Store::coll('session')->ensureIndex(array('session_time' => 1), array('background' => true, 'safe' => false));
     
     Store::coll('User')->ensureIndex(array('_id' => 1), array('background' => true, 'safe' => false));
     Store::coll('User')->ensureIndex(array('email' => 1), array('background' => true, 'safe' => false));

@@ -1,14 +1,14 @@
 
 <h1>Login Page</h1>
 
-<form action="/login">
+<form action="/login" method="POST">
   <p>{{ message }}</p>
   
   <p><label>Username</label><br/>
   <input type="text" name="user[username]"></p>
   
   <p><label>Password</label><br/>
-  <input type="text" name="user[password]"></p>
+  <input type="password" name="user[password]"></p>
   
   <p><input type="submit"></p>
 </form>

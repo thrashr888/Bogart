@@ -23,7 +23,11 @@ class Cache
       'value' => $value,
       'expires' => new \MongoDate(time() + $ttl)
       );
-    Store::insert('cache', $cache, false);
+      
+    return (bool) Store::update('cache', array(
+      'key' => $key,
+      'expires' => array('$gt' => new \MongoDate(time()))
+      ), $cache, array('upsert' => true, 'multiple' => false, 'safe' => false));
   }
   
   public static function remove($key)

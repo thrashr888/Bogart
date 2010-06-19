@@ -18,6 +18,9 @@ function debug($var = null, $showHtml = false, $return=false) {
 	}
 	
 	$var = $trace.$var;
+	
+	error_log($var);
+	
 	if(!$return){
 		print "\n<pre class=\"debug\">\n{$var}\n</pre>\n";
 	}else{
@@ -103,24 +106,24 @@ function None($template, Array $data = array(), Array $options = array())
  * Router funcs
  */
 
-function Get($route, $callback_or_options = null, $callback = null)
+function Get($route, $callback_or_filter = null, $callback = null)
 {
-  return Router::Get($route, $callback_or_options, $callback);
+  return Router::Get($route, $callback_or_filter, $callback);
 }
 
-function Post($route, $callback_or_options = null, $callback = null)
+function Post($route, $callback_or_filter = null, $callback = null)
 {
-  return Router::Post($route, $callback_or_options, $callback);
+  return Router::Post($route, $callback_or_filter, $callback);
 }
 
-function Put($route, $callback_or_options = null, $callback = null)
+function Put($route, $callback_or_filter = null, $callback = null)
 {
-  return Router::Put($route, $callback_or_options, $callback);
+  return Router::Put($route, $callback_or_filter, $callback);
 }
 
-function Delete($route, $callback_or_options = null, $callback = null)
+function Delete($route, $callback_or_filter = null, $callback = null)
 {
-  return Router::Delete($route, $callback_or_options, $callback);
+  return Router::Delete($route, $callback_or_filter, $callback);
 }
 
 function Before($callback = null)
@@ -136,6 +139,11 @@ function After($callback = null)
 function Task($name, $callback, $desc = null)
 {
   return Router::Task($name, $callback, $desc);
+}
+
+function Template($name, $callback)
+{
+  return Router::Template($name, $callback);
 }
 
 /**

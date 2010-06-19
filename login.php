@@ -2,10 +2,16 @@
 
 namespace Bogart;
 
-Get('/login');
+Get('/login', function()
+{
+  $message = '';
+  $title = 'login';
+  return View::HTML('login', compact('message', 'title'));
+});
 
 Post('/login', function(Request $request, User $user, Response $response)
-{
+{  
+  $title = 'login';
   if(!$user->login($request->params['user']['username'], $request->params['user']['password']))
   {
     $message = 'Did not work.';

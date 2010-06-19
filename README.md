@@ -2,40 +2,49 @@
 Bogart: Sinatra for PHP
 =======================
 
-Here's the main idea for this framework:
-Be minimal. Don't be everything. Just make decisions.
+This is Bogart, Sinatra for PHP. We can't get as consise as Ruby, but can at least try.
+
+Example
+-------
+
+``Get('/hello', function(){
+  echo 'hello world';
+});``
+
+``Get('/hello/:name', function($request)
+{
+  # matches "GET /hello/foo" and "GET /hello/bar"
+  # params[name] is 'foo' or 'bar'
+  echo 'Hello '.$request->params['name'].'!';
+});``
 
 Requires
 --------
 
 - PHP 5.3
 - MongoDB
-- mod_rewrite
 
 Decisions So Far
 ----------------
 
 - Sinatra is awesome. Copy it.
 - MongoDB only, no ORM, no models. # use jwage's ODM?
-- KISS. Refactor if things get complictated.
+- KISS. Refactor if things get complictated. # we're getting there
 - PHP 5.3 only. Don't be afraid.
-- Git, GitHub, OSS, MIT License.
+- Git, GitHub, MIT License.
 - Closures for actions.
 - Splats (*), regex and :named routes.
-- No plugins. Just extend + use that if you need to.
+- No plugins. Just extend + use that if you need to. # would be nice to architect this in
 - Config in yaml.
 - Include all the PHP libs we need ourselves. But rely on good existing 3rd party libs where reasonable.
-- Requires mod_rewrite to keep static urls in templates reasonable. # any other reason?
-- Try to stay away from helpers. Simple templates are better.
-- Files are only on S3 (maybe this doesn't matter). # probably not
-- Asset servers are round-robin. # how?
-- Templates are mustache.php only. # not any more!
-- Keep the file structure mostly flat. Not too many classes.
-- Functions are cool when namespaced.
+- Use mod_rewrite to keep static urls in templates reasonable. # any other reason?
+- Try to stay away from view helpers. Simple templates are better.
+- Supply the basic template rendering methods. # not any more!
+- Keep the file structure mostly flat. Not too many classes. # sinatra is 2 files!
 - Minimal file-based cache, only where absolutely required. Commit to MongoDB as much as possible.
 - No built in shit like blogs or comments or user or whatever. # added user. working on email.
 - Don't impose a user auth model. Use Twitter or Facebook for that. # too late!
-- PHP is better when public folder doesn't include libs but shared servers don't play nice. Pick one. # shared server unfriendly, apparently
+- PHP is better when public folder doesn't include libs but shared servers don't play nice. Pick one. # shared server unfriendly so far, apparently
 - Would like i18n. Need to find a way to support/integrate that.
 
 Change Log
@@ -47,23 +56,17 @@ Version 0.1-ALPHA
 TODO
 ----
 
-- Switch all routes to event handlers to allow things like filters, error handling, etc.
+- Switch all routes to event handlers to allow things like filters, error handling, etc. # really?
 - Make funcs for Error/NotFound.
 - halt
 - helpers
 - Tests with PHPUnit
-- Ability to *pass* within an action, let the next route handle it. Will need a route/controller reorg to a continuous loop. Possibly move Route::find to the controller.
 - execute another route from within an action.
-- message queue system
+- message queue system # maybe ignore this
 - email class (SwiftMailer?)
-- add user agent, etc. to routing setup
 - add sass css renderer
 - what to do with javascript? new string renderer or does HTML work?
-
-Example
--------
-
-It lives in index.php. Check it out.
+- allow strings to be passed to templates instead of filenames
 
 License
 -------

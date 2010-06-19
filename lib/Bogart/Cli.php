@@ -58,6 +58,7 @@ class Cli
     // compile the args for the closure
     $m = new \ReflectionMethod($callback, '__invoke');
     $args = array();
+    $args[] = $this->args;
     
     if($m)
     {
@@ -213,6 +214,13 @@ Options:
   {
     if($this->quiet) return true;
     echo $text.($newline ? "\n" : null);
+  }
+  
+  public function exec($cmd, $args)
+  {  
+    $this->output($cmd.' '.escapeshellarg($args));
+    system($cmd.' '.escapeshellarg($args), $output);
+    $this->output($output);
   }
   
   // http://php.net/manual/en/features.commandline.php

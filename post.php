@@ -56,7 +56,7 @@ Get('/post/:slug.json', function(Request $request, Response $response, Route $ro
     $response->error404('Post not found.');
   }
   
-  $response->setHeader('Content-Type: application/json');
+  $response->addHeader('Content-Type: application/json');
   echo json_encode($post);
 });
 

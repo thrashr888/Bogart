@@ -7,19 +7,23 @@ namespace Bogart;
 class Session
 {
   protected
-    $options,
-    $ttl = 3600; // 30 minutes
+    $options = array();
   
   public function __construct(Array $options = array())
   {
-    $this->options = $options;
-    $this->ttl = isset($options['ttl']) ? $options['ttl'] : $this->ttl;
+    $this->options = array_merge(array(
+      'db_id_col'   => 'session_id',
+      'db_data_col' => 'session_data',
+      'db_time_col' => 'session_time',
+      'ttl' => 3600 // 30 minutes
+    ), $options);
+    
     $this->init();
   }
   
   public function init()
   {
-    session_name(Config::get('app.name'));
+    //session_name(Config::get('app.name'));
     session_set_save_handler(
       array($this, 'open'),
       array($this, 'close'),
@@ -28,7 +32,7 @@ class Session
       array($this, 'destroy'),
       array($this, 'gc'));
     session_start();
-    register_shutdown_function('session_write_close');
+    //register_shutdown_function('session_write_close');
   }
   
   public function open($save_path, $session_name)
@@ -43,31 +47,31 @@ class Session
 
   public function read($id)
   {
-    $session = Store::findOne('session', array('session_id' => $id));
-    return isset($session['value'])?:false;
+    $data = Store::findOne('session', array($this->options['db_id_col'] => $id));
+    return isset($data[$this->options['db_data_col']]) ?: false;
   }
 
   public function write($id, $sess_data)
   {
     $session = array(
-      'session_id' => $id,
-      'value' => $sess_data,
-      'time' => new \MongoDate(time())
+      $this->options['db_id_col'] => $id,
+      $this->options['db_data_col'] => $sess_data,
+      $this->options['db_time_col'] => new \MongoDate(time())
       );
-    return (bool) Store::insert('session', $session);
+    return (bool) Store::update('session', array($this->options['db_id_col'] => $id), $session, array('upsert' => true, 'multiple' => false, 'safe' => false));
   }
 
   public function destroy($id)
   {
     return Store::remove('session', array(
-      'session_id' => $id
+      $this->options['db_id_col'] => $id
       ), array('safe' => false, 'justOne' => true));
   }
 
   public function gc($maxlifetime)
   {
     return Store::remove('session', array(
-      'time' => array('$lt' => new \MongoDate(time() - $maxlifetime))
+      $this->options['db_time_col'] => array('$lt' => new \MongoDate(time() - $this->options['ttl']))
       ), array('safe' => false));
   }
   

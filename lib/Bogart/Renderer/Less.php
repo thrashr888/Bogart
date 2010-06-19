@@ -7,15 +7,14 @@ use \Bogart\FileCache;
 use \Bogart\DateTime;
 use \Bogart\Log;
 
-include __DIR__.'/../vendor/leafo-lessphp-06b5446/lessc.inc.php';
-
 class Less
 {
   public
     $extention = 'less';
   
   public function __construct()
-  {
+  {  
+    include Config::get('bogart.dir.bogart').'/vendor/lessphp/lessc.inc.php';
     $this->instance = new \lessc();
   }
   

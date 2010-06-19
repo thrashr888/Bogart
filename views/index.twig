@@ -1,0 +1,22 @@
+{% extends "layout.twig" %}
+
+{% block content %}
+<div class="grid_10">
+  <h1>Simple.</h1>
+  
+  <code><pre>
+    Get('/hello', function(){
+      echo 'hello world';
+    });
+  </pre></code>
+</div>
+{% endblock %}
+
+{% block sidebar_right %}
+<ul id="sidebar-nav">
+  <li><a href="/readme">readme</a></li>
+  <li><a href="/documentation">documentation</a></li>
+  <li><a href="/code">code</a></li>
+  <li><a href="/about">about</a></li>
+</ul>
+{% endblock %}

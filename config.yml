@@ -9,7 +9,7 @@ all:
 dev:
   bogart:
     setting:
-      dbinit: true
+      dbinit: false
       log: true
       timer: true
       debug: true

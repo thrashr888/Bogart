@@ -7,14 +7,17 @@ use \Bogart\FileCache;
 use \Bogart\DateTime;
 use \Bogart\Log;
 
-// Minify libs require include_path
-set_include_path(__DIR__.'/../vendor/minify_2.1.3/min/lib/' . PATH_SEPARATOR . get_include_path());
-require __DIR__.'/../vendor/minify_2.1.3/min/lib/Minify.php';
-
 class Minify
 {
   public
     $extention = 'min';
+  
+  public function __construct(Array $options = array())
+  {
+    // Minify libs require include_path
+    set_include_path(Config::get('bogart.dir.bogart').'/vendor/minify_2.1.3/min/lib/' . PATH_SEPARATOR . get_include_path());
+    include Config::get('bogart.dir.bogart').'/vendor/minify_2.1.3/min/lib/Minify.php';
+  }
   
   public function render($file)
   {

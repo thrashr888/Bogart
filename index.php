@@ -7,15 +7,17 @@
 
 namespace Bogart;
 
-Config::disable('log');Config::disable('debug');Config::disable('timer');
-Cache::remove('/index.html');
+//Config::disable('log');Config::disable('debug');Config::disable('timer');
+//Cache::remove('/index.html');
 
-//Config::disable('cache');
+Config::disable('cache');
 //Config::disable('sessions');
 //Config::enable('dbinit');
 
+include 'hello.php';
 include 'post.php';
 include 'login.php';
+include 'assets.php';
 
 Before(function(Request $request, Response $response)
 {
@@ -42,9 +44,20 @@ After(function(Request $request)
   }
 });
 
+Get('/', function()
+{
+  return Twig('index');
+});
+
+Get('/', array('Accept-Encoding' => 'gzip'), function()
+{
+  echo 'gzip is accepted!';
+  Router::pass();
+});
+
 Get('/', function(Request $request, Response $response, User $user = null)
 {
-  Config::disable('cache');
+  //Config::disable('cache');
   
   //Timer::write('route::posts', true);
   /*$new_post = array(
@@ -71,92 +84,6 @@ Get('/', function(Request $request, Response $response, User $user = null)
   return Twig('posts', compact('posts', 'title', 'user', 'message', 'type'));
 });
 
-// run all of the css files through less
-Get('/css/*.css', function(Request $request, Response $response)
-{
-  $response->content_type = 'text/css';
-  $response->charset = 'utf-8';
-  
-  $expires = DateTime::DAY;
-  
-  $response->setHeader('Pragma: public');
-  $response->setHeader('Content-Type: text/css');
-  $response->setHeader("Cache-Control: maxage=".$expires);
-  $response->setHeader('Expires: '.gmdate('D, d M Y H:i:s', time()+$expires) .' GMT');
-  //header('Content-Length: ' . filesize($target_file));
-  
-  $file = $request->params['splat'][1];
-  // render whatever file it's trying to load from less
-  return View::Less('css/'.$file);
-});
-
-// run all of the css files through less
-Get('/css/stylesheets.css', function(Request $request, Response $response)
-{
-  $response->content_type = 'text/css';
-  $response->charset = 'utf-8';
-  
-  $expires = DateTime::DAY;
-  
-  $response->setHeader('Pragma: public');
-  $response->setHeader('Content-Type: text/css');
-  $response->setHeader("Cache-Control: maxage=".$expires);
-  $response->setHeader('Expires: '.gmdate('D, d M Y H:i:s', time()+$expires) .' GMT');
-  //header('Content-Length: ' . filesize($target_file));
-  
-  $file = $request->params['splat'][1];
-  // render whatever file it's trying to load from less
-  return View::Less('css/'.$file);
-});
-
-// run all of the js files
-Get('/js/*.js', function(Request $request, Response $response)
-{
-  $response->content_type = 'application/javascript';
-  $response->charset = 'utf-8';
-  
-  $expires = DateTime::DAY;
-  
-  $response->setHeader('Pragma: public');
-  $response->setHeader('Content-Type: application/javascript');
-  $response->setHeader("Cache-Control: maxage=".$expires);
-  $response->setHeader('Expires: '.gmdate('D, d M Y H:i:s', time()+$expires) .' GMT');
-  
-  $file = $request->params['splat'][1];
-  // render whatever file it's trying to load
-  return View::Minify('js/'.$file.'.js');
-});
-
-// regex route with .json format
-Get('*.json', function(Request $request)
-{
-  $request->content_type = 'text/json';
-  $test = $request->params['test'];
-  //echo "[{test-$test}]";
-  echo json_encode($test);
-  //return View::HTML('json', array('content' => json_encode($test)));
-});
-
-// named routes
-Get('/say/:hello/to/:world', function(Request $request, Response $response)
-{
-  $test = $req->params['splat'];
-  //debug($req);
-  echo 'test-'.join(', ', $test);
-
-  return View::HTML('other', $test);
-});
-
-// splat routes
-Get('/say/*/to/*', function(Request $request)
-{
-  $test = $req->params['splat'];
-  debug($request);
-  echo 'test-'.join(', ', $test);
-
-  return View::HTML('index', $test);
-});
-
 // simple redirects
 Get('/signin', array('redirect' => '/login'));
 
@@ -172,12 +99,24 @@ Get('/signin', array('user-agent' => 'FF3'), function(Request $request){
 });
 
 // homepage, no dynamic data
-Get('/*');
-
-// a catch-all for posts
-Post('/*', function(){
+Get('/*', function()
+{
   echo 'test';
   return 'index';
+});
+
+// a catch-all for posts
+Post('/*', function()
+{
+  echo 'test';
+  return 'index';
+});
+
+// regex matching
+Get('r/download/([\w_\-%]+)\.(\w+)/i', function(Request $request)
+{  
+  # matches /download/path/to/file.xml
+  echo 'Filename is '.$request->captures; # => Array("path/to/file", "xml")
 });
 
 Post('/save', function(){
@@ -189,13 +128,23 @@ Post('/save', function(){
     $user_data = array(
       'username' => 'thrashr888',
       'email' => 'thrashr888@gmail.com',
-      'password' => 'pshore01'
+      'password' => 'password'
       );
     $user->setProfile($user_data);
   }
   Timer::write('route::profile');
   
   return 'index';
+});
+
+Template('index', function($data)
+{
+  return "<div id='title'>Hello world!</div>";
+});
+
+Template('layout', function()
+{
+  return '<html>{{ yield }}</html>';
 });
 
 /*

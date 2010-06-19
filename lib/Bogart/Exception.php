@@ -4,6 +4,7 @@ namespace Bogart;
 
 // TODO: don't just kill the page, return a nice html page
 // TODO: upon error code 404, handle returning an 404 error
+// TODO: use the Response class instead
 
 class Exception extends \Exception
 {
@@ -63,7 +64,7 @@ class Exception extends \Exception
       }
     }
     catch(\Exception $e){}; // ignore
-
+    
     if(Config::enabled('debug'))
     {
       if($this->wrappedException)
@@ -96,10 +97,10 @@ class Exception extends \Exception
     
     ob_start();
     
-    header('HTTP/1.0 500 Internal Server Error');
+    $view = View::HTML('error', array('url' => Config::get('bogart.request.url')), array('skip_layout' => true));
     
-    $view = View::HTML('error', array('url' => Config::get('bogart.request.url')), array('renderer' => 'html'));
-    echo $view->render();
+    $response = new Response($view->render(), 500);
+    $response->finish();
   }
   
   public static function error_handler($errno, $errstr, $errfile, $errline)
