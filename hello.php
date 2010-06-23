@@ -20,10 +20,8 @@ Get('/say/:hello/to/:world', function(Request $request, Response $response)
 Get('/say/*/to/*', function(Request $request)
 {
   $test = $req->params['splat'];
-  debug($request);
-  echo 'test-'.join(', ', $test);
 
-  return View::HTML('index', $test);
+  return View::HTML('index', compact('test'));
 });
 
 // $ bogart hello echo "hello world"

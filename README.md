@@ -28,11 +28,11 @@ Decisions So Far
 ----------------
 
 - Sinatra is awesome. Copy it.
-- MongoDB only, no ORM, no models. # use jwage's ODM?
+- MongoDB required, no ORM, no models. # use jwage's ODM?
 - KISS. Refactor if things get complictated. # we're getting there
 - PHP 5.3 only. Don't be afraid.
 - Git, GitHub, MIT License.
-- Closures for actions.
+- Anonymous functions for actions.
 - Splats (*), regex and :named routes.
 - No plugins. Just extend + use that if you need to. # would be nice to architect this in
 - Config in yaml.
@@ -56,6 +56,7 @@ Version 0.1-ALPHA
 TODO
 ----
 
+- Get Bogart working with no DB access
 - Switch all routes to event handlers to allow things like filters, error handling, etc. # really?
 - Make funcs for Error/NotFound.
 - halt
