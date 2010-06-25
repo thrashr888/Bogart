@@ -4,19 +4,21 @@ Bogart: Sinatra for PHP
 
 This is Bogart, Sinatra for PHP. We can't get as consise as Ruby, but can at least try.
 
-Example
+Examples
 -------
 
-``Get('/hello', function(){
-  echo 'hello world';
-});``
+    <?php
+    
+    Get('/hello', function(){
+      echo 'hello world';
+    });
 
-``Get('/hello/:name', function($request)
-{
-  # matches "GET /hello/foo" and "GET /hello/bar"
-  # params[name] is 'foo' or 'bar'
-  echo 'Hello '.$request->params['name'].'!';
-});``
+    Get('/hello/:name', function($request)
+    {
+      # matches "GET /hello/foo" and "GET /hello/bar"
+      # params[name] is 'foo' or 'bar'
+      echo 'Hello '.$request->params['name'].'!';
+    });
 
 Requires
 --------

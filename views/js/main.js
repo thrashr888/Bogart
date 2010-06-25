@@ -1,5 +1,0 @@
-
-alert('hi!');
-
-$('#content').hide();
-
