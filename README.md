@@ -2,7 +2,7 @@
 Bogart: Sinatra for PHP
 =======================
 
-This is Bogart, Sinatra for PHP. We can't get as consise as Ruby, but can at least try.
+This is Bogart, Sinatra for PHP. We can't be as consise as Ruby, but can at least try.
 
 Examples
 -------
@@ -19,6 +19,9 @@ Examples
       # params[name] is 'foo' or 'bar'
       echo 'Hello '.$request->params['name'].'!';
     });
+
+You can try out the sandbox app here:  
+[http://github.com/thrashr888/Bogart-sandbox](http://github.com/thrashr888/Bogart-sandbox)
 
 Requires
 --------
