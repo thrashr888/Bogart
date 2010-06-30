@@ -16,7 +16,7 @@ Task('cc', 'Clears the cache folder.', function($args, Cli $cli)
 });
 
 // $ bogart self demo
-Task('demo', 'A demo of the Bogart Cli', function($args, Cli $cli)
+Task('demo', 'A demo of the Bogart Cli.', function($args, Cli $cli)
 {
   $cli->output("\nWelcome to Bogart Cli Demo\n");
 
@@ -51,7 +51,8 @@ Task('echo', 'Just an echo echo echo.', function($args, Cli $cli)
   $cli->output($args[2]);
 });
 
-Task('init', 'Make a new project', function($args, Cli $cli)
+// $ bogart self init project_name
+Task('init', 'Make a new project.', function($args, Cli $cli)
 {
   $cli->cmd('mkdir', $args[1]);
   $cli->cmd('cd', $args[1]);
