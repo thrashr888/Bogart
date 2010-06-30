@@ -19,14 +19,11 @@ class App
   
   public function __construct($script_name, $env, $debug = false, Array $options = array())
   {
-    $this->script_name = $script_name;
-    $this->env = $env;
-    $this->debug = $debug;
     $this->options = array_merge($this->options, $options);
     
     try
     {
-      $this->loadLibs(false, true);
+      $this->compile(false);
       $this->init($script_name, $env, $debug, $options);
     }
     catch(\Exception $e)
@@ -51,7 +48,7 @@ class App
   /**
    * We load all the files ahead of time and cache the results.
    */
-  protected function loadLibs($autoload = true)
+  protected function compile($autoload = true)
   {  
     // it's faster to preload our files than autoload them. it's a small list.
     // we'll autoload plugin classes elsewhere.
@@ -108,10 +105,13 @@ class App
     
     if(false !== $script_name)
     {
-      $script_file = Config::get('bogart.dir.app').'/'.$script_name.'.php';
+      // if not passed a file, guess one.
+      $script_file = !strstr($script_name, '.php') ? Config::get('bogart.dir.app').'/'.$script_name.'.php' : $script_name;
+      
       if(!file_exists($script_file))
       {
         //throw new Exception('Script file ( '.$script_file.' ) does not exist.');
+        Log::write('Script file ( '.$script_file.' ) does not exist.');
       }
       
       // get the script to run
@@ -173,7 +173,8 @@ class App
     Timer::write('App::loadConfig', true);
     
     Config::set('bogart.dir.bogart', dirname(__FILE__));
-    Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../..'));
+    // project_folder/vendor/Bogart/lib/Bogart
+    Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../../../..'));
     Config::set('bogart.dir.views', Config::get('bogart.dir.app').'/views');
     Config::set('bogart.dir.vendor', Config::get('bogart.dir.bogart').'/vendor');
     Config::set('bogart.dir.cache', Config::get('bogart.dir.app').'/cache');
@@ -220,7 +221,7 @@ class App
     }
     
     $this->service = new Service();
-    $this->service['request'] = new Request($this->env);
+    $this->service['request'] = new Request(Config::setting('env'));
     $this->service['response'] = new Response();
     $this->service['user'] = new User($this->options['user']);
     $this->service['event_dispatcher'] = new EventDispatcher();
