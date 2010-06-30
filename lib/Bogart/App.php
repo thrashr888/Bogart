@@ -24,9 +24,28 @@ class App
     $this->debug = $debug;
     $this->options = array_merge($this->options, $options);
     
-    $this->loadLibs(false, true);
-    
-    $this->init($script_name, $env, $debug, $options);
+    try
+    {
+      $this->loadLibs(false, true);
+      $this->init($script_name, $env, $debug, $options);
+    }
+    catch(\Exception $e)
+    {
+      // if init fails, we only show the simple exception message.
+      
+      while (ob_get_level())
+      {
+        if (!ob_end_clean())
+        {
+          break;
+        }
+      }
+      
+      header('HTTP/1.0 500 Internal Server Error');
+      echo $e;
+      
+      die(1);
+    }
   }
   
   /**
@@ -35,6 +54,7 @@ class App
   protected function loadLibs($autoload = true)
   {  
     // it's faster to preload our files than autoload them. it's a small list.
+    // we'll autoload plugin classes elsewhere.
     
     $dir = dirname(__file__);
     

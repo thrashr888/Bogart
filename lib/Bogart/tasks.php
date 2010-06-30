@@ -50,3 +50,24 @@ Task('echo', 'Just an echo echo echo.', function($args, Cli $cli)
 {
   $cli->output($args[2]);
 });
+
+Task('init', 'Make a new project', function($args, Cli $cli)
+{
+  $cli->cmd('mkdir', $args[1]);
+  $cli->cmd('cd', $args[1]);
+  $cli->cmd('mkdir', 'public');
+  $cli->cmd('mkdir', 'views');
+  $cli->cmd('mkdir', 'cache');
+  $cli->cmd('chmod', '777 cache');
+  $cli->cmd('echo', '"<?php
+
+namespace Bogart;
+
+Get('/', function()
+{
+  
+});
+
+" index.php');
+  $cli->cmd('mkdir', 'public');
+});
