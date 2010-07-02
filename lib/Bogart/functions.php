@@ -146,6 +146,11 @@ function Template($name, $callback)
   return Router::Template($name, $callback);
 }
 
+function pass()
+{
+  return Router::pass();
+}
+
 /**
  * Config funcs
  */

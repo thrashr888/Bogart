@@ -71,7 +71,7 @@ class Config
     return $object ? (object) self::$data : self::$data;
   }
   
-  public static function g()
+  public static function object()
   {
     return (object) self::$data;
   }

@@ -13,7 +13,9 @@ class View
       'layout' => null,
       ),
     $renderer = null,
-    $layout = null;
+    $layout = null,
+    $service = array()
+    ;
   
   public function __construct($template, Array $data = array(), $renderer = null, Array $options = array())
   {

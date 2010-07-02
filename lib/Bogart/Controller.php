@@ -75,7 +75,7 @@ class Controller
   {
     if(!Router::hasRoutes())
     {
-      //throw new Exception('No routes available.');
+      throw new Exception('No routes available.');
     }
     
     // try to match a route, one by one
@@ -231,7 +231,13 @@ class Controller
     if($cache_disabled || !$this->view_content = Cache::get($cache_key))
     {
       if(Config::enabled('timer')) Timer::write('View::render', true);
+      
+      // add our services to it
+      $this->service['view']->service = $this->service;
+      
+      // render it
       $this->view_content = $this->service['view']->render();
+      
       if(Config::enabled('timer')) Timer::write('View::render');
       
       if(Config::enabled('cache')) Cache::set($cache_key, $this->view_content, Config::get('view.cache.ttl'));
