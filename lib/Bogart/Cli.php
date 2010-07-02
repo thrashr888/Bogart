@@ -123,11 +123,11 @@ class Cli
   {
     if($app == 'bogart')
     {
-      include 'tasks.php';
       // loads up the store, config, etc.
       new App(false, 'cli', false, array(
           'setting' => array('sessions' => false)
           ));
+      include 'tasks.php';
     }
     else
     {

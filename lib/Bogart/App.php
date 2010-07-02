@@ -174,7 +174,7 @@ class App
     
     Config::set('bogart.dir.bogart', dirname(__FILE__));
     // project_folder/vendor/Bogart/lib/Bogart
-    Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../../../..'));
+    Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../..'));
     Config::set('bogart.dir.views', Config::get('bogart.dir.app').'/views');
     Config::set('bogart.dir.vendor', Config::get('bogart.dir.bogart').'/vendor');
     Config::set('bogart.dir.cache', Config::get('bogart.dir.app').'/cache');
