@@ -2,46 +2,39 @@
 
 namespace Bogart;
 
+include 'functions.php';
+
 class App
 {
   const
     VERSION = '0.1-ALPHA';
   
   public
-    $script_name,
-    $env,
-    $debug = false,
     $service,
     $controller,
     $options = array(
       'user' => array()
       );
   
-  public function __construct($script_name, $env, $debug = false, Array $options = array())
+  public function __construct($script = false, Array $options = array())
   {
     $this->options = array_merge($this->options, $options);
+    
+    if(!$script)
+    {
+      $bt = debug_backtrace();
+      $script = $bt[0]['file'];
+    }
     
     try
     {
       $this->compile(false);
-      $this->init($script_name, $env, $debug, $options);
+      $this->init($script);
     }
     catch(\Exception $e)
     {
-      // if init fails, we only show the simple exception message.
-      
-      while (ob_get_level())
-      {
-        if (!ob_end_clean())
-        {
-          break;
-        }
-      }
-      
-      header('HTTP/1.0 500 Internal Server Error');
-      echo $e;
-      
-      die(1);
+      $exception = Exception::createFromException($e);
+      $exception->printStackTrace();
     }
   }
   
@@ -51,96 +44,42 @@ class App
   protected function compile($autoload = true)
   {  
     // it's faster to preload our files than autoload them. it's a small list.
-    // we'll autoload plugin classes elsewhere.
+    // we'll autoload plugin classes/files elsewhere.
     
-    $dir = dirname(__file__);
-    
-    $lib_files = array(
-      'functions', 'Cache', 'Exception', 'CliException', 'Config', 'Controller', 'DateTime',
+    foreach(array(
+      'Cache', 'Exception', 'CliException', 'Config', 'Controller', 'DateTime',
       'Debug', 'Error404Exception', 'EventDispatcher', 'Event', 'FileCache', 'Log',
       'Renderer/Renderer', 'Renderer/Html', 'Renderer/Less', 'Renderer/Minify',
       'Renderer/Mustache', 'Renderer/None', 'Renderer/Php', 'Renderer/Twig',
       'Request', 'Response', 'Route', 'Router', 'Service', 'Store', 'Session', 'StoreException',
       'String', 'Timer', 'User', 'View'
-      );
-    
-    // just the includes for now
-    // TODO: get the compiler working
-    foreach($lib_files as $file)
+      ) as $file)
     {
-        include $dir.'/'.$file.'.php';
+        require __DIR__.'/'.$file.'.php';
     }
-    return true;
-    
-    if($autoload)
-    {
-      $latest_time = 0;
-      foreach($lib_files as $file)
-      {
-        // get the latest file modified time
-        $file_time = filemtime($dir.'/'.$file.'.php');
-        $latest_time = $file_time > $latest_file ? $file_time : $latest_time;
-      }
-      
-      if($latest_time < filemtime($dir.'/compile.php'))
-      {
-        include $dir.'/compile.php';
-        return;
-      }
-    }
-    
-    $cache = '';
-    foreach($lib_files as $file)
-    {
-      $cache .= file_get_contents($dir.'/'.$file.'.php')."\n?>";
-    }
-    file_put_contents($dir.'/compile.php', $cache);
-    
-    include $dir.'/compile.php';
   }
   
-  protected function init($script_name, $env, $debug = false, Array $options = array())
+  protected function init($script, Array $options = array())
   {
-    Request::$id = md5(microtime(true).$_SERVER['SERVER_NAME'].$_SERVER['HTTP_HOST']);
+    Request::$id = sha1(microtime(true).$_SERVER['SERVER_NAME'].$_SERVER['HTTP_HOST']);
     
     Timer::write('App', true);
     Timer::write('App::init', true);
     
-    Config::setting('env', $env);
-    Config::setting('debug', $debug);
+    $this->config($script);
     
-    $this->loadConfig($env);
-    
-    if(false !== $script_name)
+    // it might be pointing to itself, who's already loaded
+    if($_SERVER['SCRIPT_FILENAME'] != $script)
     {
-      // if not passed a file, guess one.
-      $script_file = !strstr($script_name, '.php') ? Config::get('bogart.dir.app').'/'.$script_name.'.php' : $script_name;
-      
-      if(!file_exists($script_file))
+      if(!file_exists(Config::get('app.file')) || !include_once(Config::get('app.file')))
       {
-        //throw new Exception('Script file ( '.$script_file.' ) does not exist.');
-        Log::write('Script file ( '.$script_file.' ) does not exist.');
-      }
-      
-      // get the script to run
-      include $script_file;
-    }
-    
-    Config::set('bogart.script.name', $script_name);
-    Config::set('bogart.script.file', $script_file);
-    
-    // additional settings that override config.yml
-    if(isset($options['setting']) && is_array($options['setting']))
-    {
-      foreach($options['setting'] as $key => $val)
-      {
-        Config::setting($key, $val);
+        Log::write('Script file ( '.Config::get('app.file').' ) does not exist.');
       }
     }
     
     $this->setup();
     
-    Log::write("Init project: name: '$script_name', env: '$env', debug: '$debug'");
+    Log::write("Init project: script: '".Config::get('app.file')."'");
     Timer::write('App::init');
   }
   
@@ -176,43 +115,41 @@ class App
     }
   }
   
-  protected function loadConfig($env)
+  protected function config($script)
   {
-    Timer::write('App::loadConfig', true);
+    Timer::write('App::config', true);
     
-    Config::set('bogart.dir.bogart', dirname(__FILE__));
-    // project_folder/vendor/Bogart/lib/Bogart
-    Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../../../..'));
-    Config::set('bogart.dir.views', Config::get('bogart.dir.app').'/views');
-    Config::set('bogart.dir.vendor', Config::get('bogart.dir.bogart').'/vendor');
-    Config::set('bogart.dir.cache', Config::get('bogart.dir.bogart').'/../../cache');
-    Config::set('bogart.dir.public', Config::get('bogart.dir.app').'/public');
+    // default Bogart path: project_folder/vendor/Bogart/lib/Bogart
     
+    Config::set('app.file', realpath($script));
+    Config::set('app.path', realpath(dirname($script)));
+    Config::set('app.name', basename($script, '.php'));
+    
+    Config::set('bogart.dir.bogart', __DIR__);
+    Config::set('bogart.dir.app', Config::get('app.path'));
+    Config::set('bogart.dir.public', $_SERVER['DOCUMENT_ROOT']);
+    Config::set('bogart.dir.cache', Config::get('app.path').'/cache');
+    Config::set('bogart.dir.views', Config::get('app.path').'/views');
+    
+    Timer::write('App::config.yml', true);
     // Load the config.yml so we can init Store for Log
-    
-    Timer::write('App::loadConfig::default', true);
-    Config::load(Config::get('bogart.dir.bogart').'/config.yml', $env);
-    Timer::write('App::loadConfig::default');
-    
-    Timer::write('App::loadConfig::user', true);
+    Config::load(Config::get('bogart.dir.bogart').'/config.yml');
     if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
     {
-      Config::load(Config::get('bogart.dir.app').'/config.yml', $env);
+      Config::load(Config::get('bogart.dir.app').'/config.yml');
     }
-    Timer::write('App::loadConfig::user');
+    Timer::write('App::config.yml');
     
-    Timer::write('App::loadConfig');
+    // set to the user defined error handler and timezone
+    set_error_handler(array('Bogart\Exception', 'error_handler'));
+    date_default_timezone_set(Config::get('system.timezone', 'America/Los_Angeles'));
+    
+    Timer::write('App::config');
   }
   
   protected function setup()
   {
     if(Config::enabled('timer')) Timer::write('App::setup', true);
-    
-    // set to the user defined error handler and timezone
-    if(Config::enabled('timer')) Timer::write('App::setup::system', true);
-    set_error_handler(array('Bogart\Exception', 'error_handler'));
-    date_default_timezone_set(Config::get('system.timezone', 'America/Los_Angeles'));
-    if(Config::enabled('timer')) Timer::write('App::setup::system');
     
     if(Config::enabled('sessions'))
     {

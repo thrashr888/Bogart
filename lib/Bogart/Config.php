@@ -184,21 +184,14 @@ class Config
     self::$data = array_replace_recursive(self::$data, $data);
   }
 
-  public static function load($method, $env)
+  public static function load($method)
   {
     if(Config::enabled('timer')) Timer::write('Config::load', true);
     
     if(is_array($method))
     {
       // we add the given array
-      if(isset($method['all']))
-      {
-        self::$data = array_replace_recursive(self::$data, $method['all']);
-      }
-      if(isset($method[$env]))
-      {
-        self::$data = array_replace_recursive(self::$data, $method[$env]);
-      }
+      self::$data = array_replace_recursive(self::$data, $method);
     }
     elseif(strstr($method, '.yml'))
     {
@@ -220,7 +213,7 @@ class Config
       
       if($load)
       {
-        self::load($load, $env);
+        self::load($load);
       }
       else
       {

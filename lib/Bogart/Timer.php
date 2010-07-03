@@ -5,8 +5,8 @@ namespace Bogart;
 // just uses sfTimer but makes it a little easier to use for us
 // no need to pass the instances around everywhere
 
-include 'vendor/sfTimer/sfTimerManager.class.php';
-include 'vendor/sfTimer/sfTimer.class.php';
+include __DIR__.'/vendor/sfTimer/sfTimerManager.class.php';
+include __DIR__.'/vendor/sfTimer/sfTimer.class.php';
 
 class Timer
 {
