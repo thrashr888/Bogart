@@ -121,9 +121,10 @@ class Cli
   
   protected function getApp($app)
   {
-    if($app == 'bogart')
+    if($app == 'bogart' || $app == 'self')
     {
       // loads up the store, config, etc.
+      //print_r($_SERVER);
       new App(false, 'cli', false, array(
           'setting' => array('sessions' => false)
           ));
@@ -132,8 +133,10 @@ class Cli
     else
     {
       // loads up the store, config, etc.
+      //print_r($_SERVER);
       new App($app, 'cli', false, array(
-          'setting' => array('sessions' => false)
+          'setting' => array('sessions' => false),
+          'bogart.app.dir' => $_SERVER['PWD']
           ));
     }
   }

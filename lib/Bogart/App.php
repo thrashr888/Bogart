@@ -64,13 +64,21 @@ class App
       'String', 'Timer', 'User', 'View'
       );
     
+    // just the includes for now
+    // TODO: get the compiler working
+    foreach($lib_files as $file)
+    {
+        include $dir.'/'.$file.'.php';
+    }
+    return true;
+    
     if($autoload)
     {
       $latest_time = 0;
       foreach($lib_files as $file)
       {
         // get the latest file modified time
-        $file_time = filemtime($dir.'/'.$file);
+        $file_time = filemtime($dir.'/'.$file.'.php');
         $latest_time = $file_time > $latest_file ? $file_time : $latest_time;
       }
       
@@ -174,10 +182,10 @@ class App
     
     Config::set('bogart.dir.bogart', dirname(__FILE__));
     // project_folder/vendor/Bogart/lib/Bogart
-    Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../..'));
+    Config::set('bogart.dir.app', realpath(dirname(__FILE__).'/../../../..'));
     Config::set('bogart.dir.views', Config::get('bogart.dir.app').'/views');
     Config::set('bogart.dir.vendor', Config::get('bogart.dir.bogart').'/vendor');
-    Config::set('bogart.dir.cache', Config::get('bogart.dir.app').'/cache');
+    Config::set('bogart.dir.cache', Config::get('bogart.dir.bogart').'/../../cache');
     Config::set('bogart.dir.public', Config::get('bogart.dir.app').'/public');
     
     // Load the config.yml so we can init Store for Log
