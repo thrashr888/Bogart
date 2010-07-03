@@ -4,11 +4,14 @@ namespace Bogart;
 
 // A command-line test:
 // bogart index test=1 one --help -abc --test=true
+// bogart self demo
 
-// soon this guy will run tasks that look like routes
+// this guy runs tasks that look like routes
 //
 // example:
 // Task('clear', function (Task $task, Cli $cli){ });
+
+include 'App.php';
 
 class Cli
 {
@@ -43,7 +46,7 @@ class Cli
       $this->printHelp($app, $task);
     }
     
-    $this->getApp($app);
+    $this->getApp(!$app ? 'self' : $app);
     $this->getTask($task);
     
     $this->service['cli'] = $this;
@@ -84,7 +87,7 @@ class Cli
     
     if(!$app || $app == 'bogart')
     {
-      exit(1);
+      exit(0);
     }
     
     if(!$task)
@@ -96,7 +99,7 @@ class Cli
       $this->output($app);
       $this->listTasks();
       
-      exit(1);
+      exit(0);
     }
   }
   
@@ -125,20 +128,20 @@ class Cli
     {
       // loads up the store, config, etc.
       //print_r($_SERVER);
-      new App(false, 'cli', false, array(
+      new App(false, array(
           'setting' => array('sessions' => false)
           ));
-      include 'tasks.php';
+      include __DIR__.'/tasks.php';
     }
     else
     {
       // loads up the store, config, etc.
       //print_r($_SERVER);
-      new App($app, 'cli', false, array(
-          'setting' => array('sessions' => false),
-          'bogart.app.dir' => $_SERVER['PWD']
+      new App($_SERVER['PWD'].'/'.$app.'.php', array(
+          'setting' => array('sessions' => false)
           ));
     }
+    Config::disable('cache');
   }
   
   protected function getTask($task)

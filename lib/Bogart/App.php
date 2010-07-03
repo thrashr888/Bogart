@@ -13,23 +13,16 @@ class App
     $service,
     $controller,
     $options = array(
-      'user' => array()
+      'user' => array(),
+      'autoload' => true,
       );
   
   public function __construct($script = false, Array $options = array())
   {
-    $this->options = array_merge($this->options, $options);
-    
-    if(!$script)
-    {
-      $bt = debug_backtrace();
-      $script = $bt[0]['file'];
-    }
-    
     try
     {
       $this->compile(false);
-      $this->init($script);
+      $this->init($script, $options);
     }
     catch(\Exception $e)
     {
@@ -59,18 +52,20 @@ class App
     }
   }
   
-  protected function init($script, Array $options = array())
+  protected function init($script = false, Array $options = array())
   {
     Request::$id = sha1(microtime(true).$_SERVER['SERVER_NAME'].$_SERVER['HTTP_HOST']);
+    $this->options = array_merge($this->options, $options);
     
     Timer::write('App', true);
     Timer::write('App::init', true);
     
-    $this->config($script);
+    $this->config($script, $options);
     
-    // it might be pointing to itself, who's already loaded
-    if($_SERVER['SCRIPT_FILENAME'] != $script)
+    // it might be pointing to itself, which is already loaded
+    if($script && $_SERVER['SCRIPT_FILENAME'] != $script)
     {
+      // load our routes file
       if(!file_exists(Config::get('app.file')) || !include_once(Config::get('app.file')))
       {
         Log::write('Script file ( '.Config::get('app.file').' ) does not exist.');
@@ -115,30 +110,45 @@ class App
     }
   }
   
-  protected function config($script)
+  /**
+   * Setup config vars based on the passed script
+   */
+  protected function config($script = false, Array $options = array())
   {
     Timer::write('App::config', true);
     
     // default Bogart path: project_folder/vendor/Bogart/lib/Bogart
     
-    Config::set('app.file', realpath($script));
-    Config::set('app.path', realpath(dirname($script)));
-    Config::set('app.name', basename($script, '.php'));
-    
     Config::set('bogart.dir.bogart', __DIR__);
-    Config::set('bogart.dir.app', Config::get('app.path'));
-    Config::set('bogart.dir.public', $_SERVER['DOCUMENT_ROOT']);
-    Config::set('bogart.dir.cache', Config::get('app.path').'/cache');
-    Config::set('bogart.dir.views', Config::get('app.path').'/views');
     
     Timer::write('App::config.yml', true);
-    // Load the config.yml so we can init Store for Log
     Config::load(Config::get('bogart.dir.bogart').'/config.yml');
-    if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
-    {
-      Config::load(Config::get('bogart.dir.app').'/config.yml');
-    }
     Timer::write('App::config.yml');
+    
+    if($script)
+    {
+      Config::set('app.file', realpath($script));
+      Config::set('app.path', realpath(dirname($script)));
+      Config::set('app.name', basename($script, '.php'));
+      Config::set('bogart.dir.app', Config::get('app.path'));
+      Config::set('bogart.dir.public', $_SERVER['DOCUMENT_ROOT']);
+      Config::set('bogart.dir.cache', Config::get('app.path').'/cache');
+      Config::set('bogart.dir.views', Config::get('app.path').'/views');
+      
+      Timer::write('App::config.yml', true);
+      // Load the config.yml so we can init Store for Log
+      if(file_exists(Config::get('bogart.dir.app').'/config.yml'))
+      {
+        Config::load(Config::get('bogart.dir.app').'/config.yml');
+      }
+      Timer::write('App::config.yml');
+    }
+    
+    // passed settings override default settings from yml files
+    foreach($options['setting'] as $setting => $value)
+    {
+      Config::setting($setting, $value);
+    }
     
     // set to the user defined error handler and timezone
     set_error_handler(array('Bogart\Exception', 'error_handler'));
@@ -147,6 +157,9 @@ class App
     Timer::write('App::config');
   }
   
+  /**
+   * Init the classes we need as services
+   */
   protected function setup()
   {
     if(Config::enabled('timer')) Timer::write('App::setup', true);
@@ -178,6 +191,9 @@ class App
     if(Config::enabled('timer')) Timer::write('App::setup');
   }
   
+  /**
+   * setup indexes/defaults for mongodb
+   */
   protected function dbinit()
   {
     Store::db()->createCollection('log', true, 5*1024*1024, 100000);

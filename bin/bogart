@@ -3,8 +3,7 @@
 
 namespace Bogart;
 
-require realpath(__DIR__.'/../lib/Bogart').'/ClassLoader.php';
-ClassLoader::register();
+require __DIR__.'/../lib/Bogart/Cli.php';
 
 $cli = new Cli($argv);
 $cli->run();
