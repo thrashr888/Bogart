@@ -15,9 +15,10 @@ class Twig extends Renderer
     \Twig_Autoloader::register();
     
     $loader = new \Twig_Loader_Filesystem(array(Config::get('bogart.dir.views'), Config::get('bogart.dir.bogart').'/views'));
+    
     $this->instance = new \Twig_Environment($loader, array(
       'cache' => Config::get('bogart.dir.cache'),
-      'auto_reload' => (Config::enabled('debug') || Config::setting('env') == 'dev' ? true : false),
+      'auto_reload' => isset($options['reload']) || Config::enabled('debug') || Config::setting('env') == 'dev' ? true : false,
       'debug' => Config::setting('debug')
     ));
   }

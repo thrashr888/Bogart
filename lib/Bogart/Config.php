@@ -19,11 +19,11 @@ class Config
       {
         if(!is_array($return) || !isset($return[$depth]))
         {
-          return null;
+          return $default;
         }
         $return = $return[$depth];
       }
-      return $return;
+      return !empty($return) ? $return : $default;
     }
     else
     {
@@ -62,7 +62,7 @@ class Config
   
   public static function has($name)
   {
-    (bool) self::get($name);
+    return (bool) self::get($name);
   }
   
   public static function getAll($object = true)
@@ -148,6 +148,11 @@ class Config
     }
   }
   
+  public static function in($name, $value)
+  {
+    return in_array($value, self::get($name, array())) ?  true : false;
+  }
+  
   public static function enable()
   {
     foreach(func_get_args() as $arg)
@@ -183,7 +188,52 @@ class Config
   {
     self::$data = array_replace_recursive(self::$data, $data);
   }
+  
+  // this func recursively and progressively loads self::$data
+  protected static function loadRecursive($array, $array1, $first_pass = false)
+  {
+    foreach ($array1 as $key => $value)
+    {
+      // create new key in $array, if it is empty or not an array
+      if (!isset($array[$key]) || (isset($array[$key]) && !is_array($array[$key])))
+      {
+        $array[$key] = array();
+        
+        if($first_pass){
+          self::$data[$key] = array();
+        }
+      }
 
+      // overwrite the value in the base array
+      if (is_array($value))
+      {
+        $value = self::loadRecursive($array[$key], $value);
+      }
+      
+      if(is_string($value) && preg_match('/^\%([a-zA-Z\.]+)\%$/i', $value, $matches))
+      {
+        $array[$key] = self::get($matches[1]);
+        
+        if($first_pass){
+          self::$data[$key] = self::get($matches[1]);
+        }
+      }else{
+        $array[$key] = $value;
+        
+        if($first_pass){
+          self::$data[$key] = $value;
+        }
+      }
+    }
+    
+    if($first_pass)
+    {
+      self::$data = $array;
+    }else{
+      return $array;
+    }
+  }
+  
   public static function load($method)
   {
     if(Config::enabled('timer')) Timer::write('Config::load', true);
@@ -191,7 +241,7 @@ class Config
     if(is_array($method))
     {
       // we add the given array
-      self::$data = array_replace_recursive(self::$data, $method);
+      self::loadRecursive(self::$data, $method, true);
     }
     elseif(strstr($method, '.yml'))
     {

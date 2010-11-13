@@ -27,7 +27,7 @@ class Exception extends \Exception
 
   static public function createFromException(\Exception $e)
   {
-    $exception = new self(sprintf('Wrapped %s: %s', get_class($e), $e->getMessage()), $e->getCode());
+    $exception = new self(sprintf('Wrapped %s in %s on line %d: %s', get_class($e), $e->getFile(), $e->getLine(), $e->getMessage()), $e->getCode());
     $exception->setWrappedException($e);
     self::$lastException = $e;
     return $exception;
@@ -133,3 +133,9 @@ class Exception extends \Exception
     return true;
   }
 }
+
+class PassException extends \Exception {}
+
+class StoreException extends Exception {}
+
+class CliException extends Exception {}

@@ -17,19 +17,19 @@ class View
     $service = array()
     ;
   
-  public function __construct($template, Array $data = array(), $renderer = null, Array $options = array())
+  public function __construct($template = null, Array $data = array(), $renderer = null, Array $options = array())
   {
     if(null != $renderer)
     {
       $this->renderer = $renderer;
       $this->format = $this->renderer->extention;
-      $this->template = strstr($template, '.') ? $template : $template.'.'.$this->format;
+      $this->template = $template ? (strstr($template, '.') ? $template : $template.'.'.$this->format) : null;
       $this->layout = 'layout.'.$this->format;
     }
     else
     {
       $this->format = substr($template, strpos($template, '.'));
-      $this->template = strstr($template, '.') ? $template : $template.'.'.$this->format;
+      $this->template = $template ? (strstr($template, '.') ? $template : $template.'.'.$this->format) : null;
       $this->layout = 'layout.'.$this->format;
     }
     
@@ -45,20 +45,48 @@ class View
   public function render(Array $options = array())
   {
     $options = array_merge(array(
-      'layout' => $this->layout
+      'layout' => $this->layout,
+      'template' => null
       ), $this->options, $options);
     
-    $template = Config::get('bogart.dir.app').'/views/'.$this->template;
-    
-    if(!file_exists($template))
+    if(!$template = $options['template'])
     {
-      $template = Config::get('bogart.dir.bogart').'/views/'.$this->template;
-      if(!file_exists($template))
+      // app-level views
+      $templates = array();
+      $templates[] = Config::get('bogart.dir.app').'/views/'.$this->template;
+      $templates[] = Config::get('bogart.dir.app').'/views/'.$this->template.'.php';
+
+      // plugin-level views
+      if(Config::has('bogart.plugins'))
       {
-        //throw new Error404Exception('Template ('.$this->template.') not found.');
+        foreach(Config::get('bogart.plugins') as $plugin)
+        {
+          $templates[] = Config::get('bogart.dir.app').'/'.$plugin.'Plugin/views/'.$this->template;
+          $templates[] = Config::get('bogart.dir.app').'/'.$plugin.'Plugin/views/'.$this->template.'.php';
+        }
+      }
+
+      // bogart provided views
+      $templates[] = Config::get('bogart.dir.bogart').'/views/'.$this->template;
+      $templates[] = Config::get('bogart.dir.bogart').'/views/'.$this->template.'.php';
+
+      // find the first file that exists
+      foreach($templates as $try_template)
+      {
+        if(file_exists($try_template))
+        {
+          $template = $try_template;
+          break;
+        }
       }
     }
     
+    if(!$template)
+    {
+      //throw new Error404Exception('Template ('.$this->template.') not found.');
+    }
+    
+    // look for the layout in the app
     if(!isset($options['skip_layout']) || $this->layout == null)
     {
       $layout_file = Config::get('bogart.dir.app').'/views/'.$this->layout;
@@ -73,8 +101,6 @@ class View
     Config::set('bogart.view.template_file', $template);
     Config::set('bogart.view.options', $options);
     if(Config::enabled('log')) Log::write('Using template: `'.$template.'`');
-    
-    $this->data['cfg'] = Config::getAllFlat();
     
     return $this->renderer->render($template, $this->data, $options);
   }

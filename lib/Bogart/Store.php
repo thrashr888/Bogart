@@ -9,9 +9,9 @@ class Store
     $connected = false;
   
   public
-    $mongo,
-    $conn,
-    $dbname;
+    $mongo = null,
+    $conn = null,
+    $dbname = null;
   
   public function __construct($dbname = null, $config = array())
   {

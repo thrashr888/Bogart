@@ -42,9 +42,9 @@ class Request
     return $this->url;
   }
   
-  public function __construct($env)
+  public function __construct(Array $options = array())
   {
-    $this->env = $env;
+    $this->env = $options['env'];
     $this->init();
   }
   

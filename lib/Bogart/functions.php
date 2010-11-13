@@ -97,9 +97,9 @@ function Basic($template, Array $data = array(), Array $options = array())
   return View::Basic($template, $data, $options);
 }
 
-function None($template, Array $data = array(), Array $options = array())
+function None(Array $data = array())
 {
-  return View::None($template, $data, $options);
+  return View::None(null, $data, null);
 }
 
 /**
@@ -124,6 +124,11 @@ function Put($route, $callback_or_filter = null, $callback = null)
 function Delete($route, $callback_or_filter = null, $callback = null)
 {
   return Router::Delete($route, $callback_or_filter, $callback);
+}
+
+function Any($route, $callback_or_filter = null, $callback = null)
+{
+  return Router::Any($route, $callback_or_filter, $callback);
 }
 
 function Before($callback = null)

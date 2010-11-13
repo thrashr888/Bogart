@@ -17,6 +17,7 @@ class User
   
   public
     $user_id = null,
+    $session = null,
     $options = array();
   
   protected
@@ -30,6 +31,8 @@ class User
   
   public function init()
   {
+    $this->session = $_SESSION;
+    
     if(isset($_SESSION[self::$persist_name]) && $_SESSION[self::$persist_name])
     {
       $this->setUserId($_SESSION[self::$persist_name]);

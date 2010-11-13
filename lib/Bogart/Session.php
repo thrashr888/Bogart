@@ -48,7 +48,7 @@ class Session
   public function read($id)
   {
     $data = Store::findOne('session', array($this->options['db_id_col'] => $id));
-    return isset($data[$this->options['db_data_col']]) ?: false;
+    return isset($data[$this->options['db_data_col']]) ? $data[$this->options['db_data_col']] : false;
   }
 
   public function write($id, $sess_data)
@@ -58,7 +58,7 @@ class Session
       $this->options['db_data_col'] => $sess_data,
       $this->options['db_time_col'] => new \MongoDate(time())
       );
-    return (bool) Store::update('session', array($this->options['db_id_col'] => $id), $session, array('upsert' => true, 'multiple' => false, 'safe' => false));
+    return (bool) Store::update('session', array($this->options['db_id_col'] => $id), $session, array('upsert' => true, 'multiple' => false, 'safe' => true));
   }
 
   public function destroy($id)

@@ -37,15 +37,16 @@ class App
   protected function compile($autoload = true)
   {  
     // it's faster to preload our files than autoload them. it's a small list.
-    // we'll autoload plugin classes/files elsewhere.
+    // we'll load plugin classes/files elsewhere.
     
     foreach(array(
-      'Cache', 'Exception', 'CliException', 'Config', 'Controller', 'DateTime',
-      'Debug', 'Error404Exception', 'EventDispatcher', 'Event', 'FileCache', 'Log',
+      'Cache', 'Exception', 'Config', 'Controller', 'DateTime',
+      'Debug', 'Error404Exception', 'EventDispatcher', 'Event',
+      'FileCache', 'Log', 'MemcacheCache', 'Plugin',
       'Renderer/Renderer', 'Renderer/Html', 'Renderer/Less', 'Renderer/Minify',
       'Renderer/Mustache', 'Renderer/None', 'Renderer/Php', 'Renderer/Twig',
-      'Request', 'Response', 'Route', 'Router', 'Service', 'Store', 'Session', 'StoreException',
-      'String', 'Timer', 'User', 'View'
+      'Request', 'Response', 'Route', 'Router', 'Service', 'Store',
+      'Session', 'String', 'Timer', 'User', 'View'
       ) as $file)
     {
         require __DIR__.'/'.$file.'.php';
@@ -119,14 +120,13 @@ class App
     
     // default Bogart path: project_folder/vendor/Bogart/lib/Bogart
     
+    // library config
     Config::set('bogart.dir.bogart', __DIR__);
-    
-    Timer::write('App::config.yml', true);
-    Config::load(Config::get('bogart.dir.bogart').'/config.yml');
-    Timer::write('App::config.yml');
+    Config::set('bogart.dir.cache', '/tmp');
     
     if($script)
     {
+      // app-level config
       Config::set('app.file', realpath($script));
       Config::set('app.path', realpath(dirname($script)));
       Config::set('app.name', basename($script, '.php'));
@@ -134,6 +134,16 @@ class App
       Config::set('bogart.dir.public', $_SERVER['DOCUMENT_ROOT']);
       Config::set('bogart.dir.cache', Config::get('app.path').'/cache');
       Config::set('bogart.dir.views', Config::get('app.path').'/views');
+    }
+    
+    // global config
+    Timer::write('App::config.yml', true);
+    Config::load(Config::get('bogart.dir.bogart').'/config.yml');
+    Timer::write('App::config.yml');
+    
+    if($script)
+    {
+      // continue loading app-level config
       
       Timer::write('App::config.yml', true);
       // Load the config.yml so we can init Store for Log
@@ -145,9 +155,12 @@ class App
     }
     
     // passed settings override default settings from yml files
-    foreach($options['setting'] as $setting => $value)
+    if(isset($options['setting']))
     {
-      Config::setting($setting, $value);
+      foreach($options['setting'] as $setting => $value)
+      {
+        Config::setting($setting, $value);
+      }
     }
     
     // set to the user defined error handler and timezone
@@ -179,10 +192,26 @@ class App
     }
     
     $this->service = new Service();
-    $this->service['request'] = new Request(Config::setting('env'));
+    $this->service['request'] = new Request(array('env' => Config::setting('env')));
     $this->service['response'] = new Response();
     $this->service['user'] = new User($this->options['user']);
     $this->service['event_dispatcher'] = new EventDispatcher();
+    
+    /*if(Config::has('service'))
+    {
+      foreach(Config::get('service') as $service => $options)
+      {
+        if(isset($options['options']))
+        {
+          $this->service[$service] = new $options['class']($options['options']);
+        }
+        else
+        {
+          $this->service[$service] = new $options['class']();
+        }
+      }
+    }*/
+    
     //$this->service['store'] = new Store();
     //$this->service['timer'] = new Timer();
     //$this->service['router'] = new Router();

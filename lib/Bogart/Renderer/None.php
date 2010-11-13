@@ -7,7 +7,7 @@ use \Bogart\Config;
 class None extends Renderer
 {
   public
-    $extention = '';
+    $extention = 'empty';
   
   public function render($template = null, Array $data = array(), Array $options = array())
   {

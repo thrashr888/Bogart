@@ -42,7 +42,7 @@ class Route
   
   public function isMethod($method)
   {
-    return $this->method == $method;
+    return $this->method == $method || $this->method == 'ANY' || $method == 'ANY';
   }
   
   public function isRegex()
@@ -154,7 +154,7 @@ class Route
       $request->server['argv'] = $argv;
     }
     
-    // get for a regex route match to the requested url
+    // check for a regex route match to the requested url
     if(!preg_match($this->regex, $request->path, $this->matches)) return false;
     
     $this->params = $this->matchParams();

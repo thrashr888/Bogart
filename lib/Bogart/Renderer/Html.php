@@ -11,7 +11,7 @@ class Html extends Renderer
   {
     $content = file_get_contents($file);
     $content = $this->strtr($content, $data);
-    $content = preg_replace('/{{ \.* }}/', '', $content);
+    $content = preg_replace('/({{ .* }})/', '', $content);
     
     if(isset($options['layout']))
     {
@@ -30,7 +30,7 @@ class Html extends Renderer
     {
       if(is_array($val))
       {
-        $out = $this->strtr($out, $val, '{{ '.$key.'.');
+        $out = $this->strtr($out, $val, $start.$key.'.');
       }
       elseif(is_string($val))
       {

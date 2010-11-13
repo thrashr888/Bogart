@@ -23,9 +23,13 @@ class Controller
     
     // routing
     $this->getRoute();
-    
     // render
     $this->renderView();
+    
+    Config::set('bogart.request', $this->service['request']);
+    Config::set('bogart.user', $this->service['user']);
+    Config::set('bogart.route', $this->service['route']);
+    Config::set('bogart.view', $this->service['view']->toArray());
     
     // send
     $this->sendResponse();
@@ -75,7 +79,7 @@ class Controller
   {
     if(!Router::hasRoutes())
     {
-      throw new Exception('No routes available.');
+      throw new Error404Exception('No routes available.', 404);
     }
     
     // try to match a route, one by one
@@ -98,7 +102,7 @@ class Controller
       $this->service['request']->params = array_merge($this->service['request']->params, $route->params);
       $this->service['request']->route = $route->name;
       
-      Log::write('Matched route: '.$route->name, 'route');
+      Log::write('Matched route: '.$route->method.': '.$route->name, 'route');
       
       $this->service['route'] = $route;
       
@@ -109,15 +113,14 @@ class Controller
       {
         $this->service['view'] = $this->getView();
         
-        if($this->service['view']) Config::set('bogart.view', $this->service['view']->toArray());
+        if($this->service->hasService('view')) Config::set('bogart.view', $this->service['view']->toArray());
+      }
+      catch(PassException $e)
+      {
+        continue; // skip executing this route and move to the next one
       }
       catch(Exception $e)
       {
-        if($e->getMessage() == 'pass')
-        {
-          // catch an exception from Router::pass()
-          continue;
-        }
         throw $e; // and pass it back up
       }
       
@@ -127,7 +130,7 @@ class Controller
       return true;
     }
     
-    //throw new Error404Exception('Route not found.', 404);
+    throw new Error404Exception('Route not found.', 404);
   }
   
   protected function getView()
@@ -157,7 +160,12 @@ class Controller
       
       if(Config::enabled('timer')) Timer::write('Controller::getView::callback');
       
-      if(!$view)
+      if($view == null)
+      {
+        // just return the echo'd content within the closure
+        return View::None(array('content' => $this->controller_content));
+      }
+      elseif(is_bool($view))
       {
         // just return the echo'd content within the closure
         return View::None(array('content' => $this->controller_content));
@@ -206,10 +214,10 @@ class Controller
   
   protected function renderView()
   {
-    if(!$this->service['view'])
+    if(!isset($this->service['view']))
     {
       Log::write('View not found.', 'controller');
-      //throw new Error404Exception('View not found.', 404);
+      throw new Error404Exception('View not found.', 404);
     }
     else
     {
@@ -218,7 +226,7 @@ class Controller
       $this->service['view']->data['content'] = $this->controller_content;
       if(!$this->service['view']->template)
       {
-        $view->template = Config::get('bogart.script.name');
+        $this->service['view']->template = Config::get('bogart.script.name');
       }
       //$view->format = $request->format;
     }
@@ -234,6 +242,8 @@ class Controller
       
       // add our services to it
       $this->service['view']->service = $this->service;
+      $this->service['view']->data['cfg'] = Config::getAllFlat();
+      $this->service['view']->data['services'] = $this->service;
       
       // render it
       $this->view_content = $this->service['view']->render();
