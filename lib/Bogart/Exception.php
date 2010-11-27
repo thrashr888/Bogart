@@ -62,23 +62,23 @@ class Exception extends \Exception
       {
         $this->outputStackTrace();
       }
+      
+      if(Config::enabled('debug'))
+      {
+        if($this->wrappedException)
+        {
+          echo '<pre>'.get_class($this->wrappedException).': '.$this->wrappedException->getMessage().'</pre>';
+          echo '<pre>'.$this->wrappedException->getTraceAsString().'</pre>';
+        }
+        else
+        {
+          echo '<pre>'.get_class($this).': '.$this->getMessage().'</pre>';
+          echo '<pre>'.$this->getTraceAsString().'</pre>';
+        }
+        Debug::outputDebug();
+      }
     }
     catch(\Exception $e){}; // ignore
-    
-    if(Config::enabled('debug'))
-    {
-      if($this->wrappedException)
-      {
-        echo '<pre>'.get_class($this->wrappedException).': '.$this->wrappedException->getMessage().'</pre>';
-        echo '<pre>'.$this->wrappedException->getTraceAsString().'</pre>';
-      }
-      else
-      {
-        echo '<pre>'.get_class($this).': '.$this->getMessage().'</pre>';
-        echo '<pre>'.$this->getTraceAsString().'</pre>';
-      }
-      Debug::outputDebug();
-    }
     
     die(1);
   }

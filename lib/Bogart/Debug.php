@@ -36,6 +36,8 @@ class Debug
       $profile = Store::find('system.profile', array('ts' => array('$gt' => new \MongoDate($_SERVER['REQUEST_TIME']))));
     }
     
+    $request_url = Config::get('bogart.request.path');
+    
     echo "<div id='bogart_debug_container' style=\"border-bottom: 2px solid {$color}; border-left: 2px solid {$color}; position: absolute; top: 0; right: 0; background-color: #eee; text-align: right; -webkit-border-bottom-left-radius: 10px; -moz-border-radius-bottomleft: 10px; border-bottom-left-radius: 10px; color: green; font-family: Arial, Helvetica Neue, Helvetica, sans-serif; font-size: 14px;\"
       >&nbsp;&#x272A; ";
     
@@ -55,10 +57,10 @@ class Debug
         style=\"text-decoration:none; color: grey;\">&#x278C; config</a> | ";
     
     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_server_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
-        style=\"text-decoration:none; color: grey;\">&#x278D; server</a> | ";
+        style=\"text-decoration:none; color: grey;\">&#x278D; server ({$_SERVER['HTTP_HOST']})</a> | ";
     
     echo "<a href=\"javascript::void(0);\" onclick=\"this.blur();el=document.getElementById('bogart_request_container');if(el.style.display == 'block'){el.style.display = 'none';}else{el.style.display='block';}\"
-        style=\"text-decoration:none; color: grey;\">&#x278E; request</a> | ";
+        style=\"text-decoration:none; color: grey;\">&#x278E; request ($request_url)</a> | ";
     
     if(Config::enabled('log'))
     {
@@ -268,27 +270,40 @@ class Debug
       {
         if(is_array($setting))
         {
-          $out .= sprintf("<b>%s</b><br />\n", strtoupper($key));
+          $out .= sprintf("<b>%s</b><br />\n", $key);
           foreach($setting as $k2 => $s2)
           {
             if(is_array($s2))
             {
+              if(empty($s2))
+              {
+                $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k2, '<em>array(NULL)</em>');
+                continue;
+              }
+              
               $out .= sprintf("<b>&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k2);
               foreach($s2 as $k3 => $s3)
               {
                 if(is_array($s3))
                 {
-                  $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k3);
+                  if(empty($s3))
+                  {
+                    $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k3, '<em>array(NULL)</em>');
+                    continue;
+                  }
+                  
+                  $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s</b><br />\n", $k3);
+                  
                   foreach($s3 as $k4 => $s4)
                   {
-                    if(is_object($s3) || is_array($s3))
+                    if(is_object($s4) || is_array($s4))
                     {
-                      $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, is_array($s3) ? stripslashes(json_encode($s3)) : "instance of ".get_class($s3));
+                      $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, is_array($s4) ? stripslashes(json_encode($s4)) : "instance of ".get_class($s4));
                       continue;
                     }
                     else
                     {
-                      $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, $s4 ? htmlentities($s4) : '<em>NULL</em>');
+                      $out .= sprintf("<b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514; %s:</b> <code style=\"color:grey\">%s</code><br />\n", $k4, $s4 ? htmlentities($s4) : '<em>NULL</em>');
                       continue;
                     }
                   }

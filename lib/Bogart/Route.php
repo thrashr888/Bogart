@@ -95,7 +95,8 @@ class Route
   {  
     if($this->filter)
     {
-      //array('user-agent' => 'FF3()')
+      // example:
+      // array('user-agent' => 'FF3()')
       $safe = false;
       
       $argv = isset($request->server['argv'])?:null;
@@ -133,14 +134,6 @@ class Route
           }
         }
         
-        // check http headers
-        if($match = preg_grep($filter_value, $request->headers))
-        {
-          $this->params = array_merge($this->params, $match);
-          $safe = true;
-          continue;
-        }
-        
         // check server
         if($match = preg_grep($filter_value, $request->server))
         {
@@ -148,8 +141,17 @@ class Route
           $safe = true;
           continue;
         }
+        
+        // check http headers
+        if($match = preg_grep($filter_value, $request->headers))
+        {
+          $this->params = array_merge($this->params, $match);
+          $safe = true;
+          continue;
+        }
       }
-      if(!$safe) return false;
+      
+      if(!$safe) return false; // didn't pass the all filters
       
       $request->server['argv'] = $argv;
     }

@@ -27,7 +27,7 @@ class App
     catch(\Exception $e)
     {
       $exception = Exception::createFromException($e);
-      $exception->printStackTrace();
+      //$exception->printStackTrace();
     }
   }
   
@@ -40,9 +40,9 @@ class App
     // we'll load plugin classes/files elsewhere.
     
     foreach(array(
-      'Cache', 'Exception', 'Config', 'Controller', 'DateTime',
-      'Debug', 'Error404Exception', 'EventDispatcher', 'Event',
-      'FileCache', 'Log', 'MemcacheCache', 'Plugin',
+      'Cache', 'Exception', 'Config', 'Controller', 'Collection', 'DateTime',
+      'Debug', 'Entity', 'Error404Exception', 'EventDispatcher', 'Event', 'Events',
+      'FileCache', 'Filter', 'Log', 'MemcacheCache', 'Model', 'Plugin',
       'Renderer/Renderer', 'Renderer/Html', 'Renderer/Less', 'Renderer/Minify',
       'Renderer/Mustache', 'Renderer/None', 'Renderer/Php', 'Renderer/Twig',
       'Request', 'Response', 'Route', 'Router', 'Service', 'Store',
@@ -84,6 +84,8 @@ class App
     Log::write('Running.');
     Timer::write('App::run', true);
     
+    Raise('bogart.app.run');
+    
     try
     {
       ob_start();
@@ -118,6 +120,8 @@ class App
   {
     Timer::write('App::config', true);
     
+    Raise('bogart.app.config', compact('script', 'options'));
+    
     // default Bogart path: project_folder/vendor/Bogart/lib/Bogart
     
     // library config
@@ -132,6 +136,7 @@ class App
       Config::set('app.name', basename($script, '.php'));
       Config::set('bogart.dir.app', Config::get('app.path'));
       Config::set('bogart.dir.public', $_SERVER['DOCUMENT_ROOT']);
+      Config::set('bogart.dir.models', Config::get('app.path').'/models');
       Config::set('bogart.dir.cache', Config::get('app.path').'/cache');
       Config::set('bogart.dir.views', Config::get('app.path').'/views');
     }
@@ -165,9 +170,15 @@ class App
     
     // set to the user defined error handler and timezone
     set_error_handler(array('Bogart\Exception', 'error_handler'));
+    register_shutdown_function(array(get_class($this), "shutdown"));
     date_default_timezone_set(Config::get('system.timezone', 'America/Los_Angeles'));
     
     Timer::write('App::config');
+  }
+  
+  public static function shutdown()
+  {
+    
   }
   
   /**
@@ -176,6 +187,8 @@ class App
   protected function setup()
   {
     if(Config::enabled('timer')) Timer::write('App::setup', true);
+    
+    Raise('bogart.app.setup');
     
     if(Config::enabled('sessions'))
     {
@@ -192,6 +205,7 @@ class App
     }
     
     $this->service = new Service();
+    
     $this->service['request'] = new Request(array('env' => Config::setting('env')));
     $this->service['response'] = new Response();
     $this->service['user'] = new User($this->options['user']);
@@ -224,7 +238,9 @@ class App
    * setup indexes/defaults for mongodb
    */
   protected function dbinit()
-  {
+  {  
+    Raise('bogart.app.db.init');
+    
     Store::db()->createCollection('log', true, 5*1024*1024, 100000);
     Store::db()->createCollection('query_log', true, 5*1024*1024, 100000);
     Store::db()->createCollection('timer', true, 5*1024*1024, 100000);

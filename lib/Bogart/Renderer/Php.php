@@ -12,7 +12,7 @@ class Php extends Renderer
   public function render($template_file, Array $template_data = array(), Array $template_options = array())
   {   
     ob_start();
-    extract($template_data);
+    extract($template_data, EXTR_OVERWRITE);
     include($template_file);
     
     if(isset($template_options['layout']))

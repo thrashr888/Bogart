@@ -32,15 +32,14 @@ class Request
     $port = 80,
     $query_string = null,
     $GET = null,
-    $POST = null;
+    $POST = null,
+    $COOKIE = null,
+    $SESSION = null,
+    $FILES = null,
+    $REQUEST = null;
   
   public static
     $id = null; // a unique id for each request. used for logging.
-  
-  public function __toString()
-  {
-    return $this->url;
-  }
   
   public function __construct(Array $options = array())
   {
@@ -59,15 +58,16 @@ class Request
       $this->method = $this->getMethod();
       $this->GET = $_GET;
       $this->POST = $_POST;
-      $this->cookies = $_COOKIE;
-      $this->session = $_SESSION;
-      $this->files = $_FILES;
+      $this->COOKIE = $_COOKIE;
+      $this->SESSION = $_SESSION;
+      $this->FILES = $_FILES;
+      $this->REQUEST = $_REQUEST;
       $this->params = array_merge($_GET, $_POST);
       $this->headers = getallheaders();
       $this->url = (isset($_SERVER['HTTPS']) ? 'https' : 'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'].($_SERVER['SERVER_PORT'] == 80 ? null : ':'.$_SERVER['SERVER_PORT']);
       $this->uri = $_SERVER['REQUEST_URI']?:null;
       $this->parsed = parse_url($this->url);
-      $this->path = $this->parsed['path'];
+      $this->path = preg_replace('(\:.*)', '', $this->parsed['path']); // remove the port
       $this->cache_key = $this->getCacheKey();
       $this->xhr = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == "XMLHttpRequest";
       $this->ip = $_SERVER['REMOTE_ADDR'];
@@ -96,6 +96,35 @@ class Request
   public function __set($key, $value)
   {
     $this->params[$key] = $value;
+  }
+  
+  public function toArray()
+  {
+    return array(
+      'env' => $this->env,
+      'server' => $this->server,
+      'method' => $this->method,
+      'GET' => $this->GET,
+      'POST' => $this->POST,
+      'COOKIE' => $this->COOKIE,
+      'REQUEST' => $this->REQUEST,
+      'FILES' => $this->FILES,
+      'params' => $this->params,
+      'headers' => $this->headers,
+      'url' => $this->url,
+      'uri' => $this->uri,
+      'parsed' => $this->parsed,
+      'path' => $this->path,
+      'cache_key' => $this->cache_key,
+      'xhr' => $this->xhr,
+      'ip' => $this->ip,
+      'scheme' => $this->scheme,
+      'user_agent' => $this->user_agent,
+      'host' => $this->host,
+      'port' => $this->port,
+      'base' => $this->base,
+      'query_string' => $this->query_string,
+    );
   }
   
   protected function getMethod()

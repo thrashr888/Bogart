@@ -22,7 +22,10 @@ class Session
   }
   
   public function init()
-  {
+  {  
+    //Store::coll('session')->ensureIndex(array('session_id' => 1), array('background' => true, 'safe' => false, 'unique' => true));
+    //Store::coll('session')->ensureIndex(array('session_time' => 1), array('background' => true, 'safe' => false));
+    
     //session_name(Config::get('app.name'));
     session_set_save_handler(
       array($this, 'open'),

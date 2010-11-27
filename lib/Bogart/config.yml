@@ -4,6 +4,7 @@ app:
     servers: ['/']
 bogart:
   setting:
+    env: dev
     sessions: true
     store: true
     dbinit: false

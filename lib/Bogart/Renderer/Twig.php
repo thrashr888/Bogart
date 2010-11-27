@@ -27,6 +27,7 @@ class Twig extends Renderer
   {
     $file = str_replace(Config::get('bogart.dir.views'), '', $file);
     $template = $this->instance->loadTemplate($file);
+    
     return $template->render($data);
   }
 }

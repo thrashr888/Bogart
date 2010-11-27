@@ -180,8 +180,12 @@ class Router
       ));
   }
   
-  public static function pass()
+  /**
+   * pass() lets us continue out of the current route and move to the next one
+   **/
+  public static function pass($url = false)
   {
+    if($url) throw new PassException($url, 302);
     throw new PassException();
   }
 }

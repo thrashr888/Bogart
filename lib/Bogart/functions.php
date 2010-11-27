@@ -4,7 +4,7 @@ namespace Bogart;
 
 /**
  * Debug funcs
- */
+ **/
 
 function debug($var = null, $showHtml = false, $return=false) {
 	$var = print_r($var, true);
@@ -60,7 +60,7 @@ function stop($var = 'stop')
 
 /**
  *  View funcs
- */
+ **/
 
 function Twig($template, Array $data = array(), Array $options = array())
 {
@@ -102,9 +102,14 @@ function None(Array $data = array())
   return View::None(null, $data, null);
 }
 
+function Filter($name, $callback)
+{
+  return Filter::add($name, $callback);
+}
+
 /**
  * Router funcs
- */
+ **/
 
 function Get($route, $callback_or_filter = null, $callback = null)
 {
@@ -151,14 +156,14 @@ function Template($name, $callback)
   return Router::Template($name, $callback);
 }
 
-function pass()
+function pass($url = false)
 {
-  return Router::pass();
+  return Router::pass($url);
 }
 
 /**
  * Config funcs
- */
+ **/
 
 function GetAll()
 {
@@ -174,14 +179,33 @@ function Enable()
 {
   foreach(func_get_args() as $arg)
   {
-    Config::enable('bogart.setting.'.$arg);
+    Config::enable($arg);
   }
+}
+
+function Enabled($name)
+{
+  return Config::enabled('bogart.setting.'.$name);
 }
 
 function Disable()
 {
   foreach(func_get_args() as $arg)
   {
-    Config::disable('bogart.setting.'.$arg);
+    Config::disable($arg);
   }
+}
+
+/**
+ * Events
+ **/
+
+function Listen($name, $callback)
+{
+  return Events::Listen($name, $callback);
+}
+
+function Raise($name, $values = array())
+{
+  return Events::Raise($name, $values);
 }

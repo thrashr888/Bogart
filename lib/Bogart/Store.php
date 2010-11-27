@@ -69,7 +69,9 @@ class Store
   {
     if(Config::enabled('timer')) Timer::write('Store::find', true);
     $time = new \sfTimer();
+    
     $results = $query ? self::coll($collection)->find($query) : self::coll($collection)->find();
+    
     $time->addTime();
     if(Config::enabled('timer')) Timer::write('Store::find');
     
@@ -85,7 +87,9 @@ class Store
   {
     if(Config::enabled('timer')) Timer::write('Store::findOne', true);
     $time = new \sfTimer();
+    
     $result = $query ? self::coll($collection)->findOne($query) : self::coll($collection)->findOne();
+    
     $time->addTime();
     if(Config::enabled('timer')) Timer::write('Store::findOne');
     
@@ -93,7 +97,7 @@ class Store
       'query' => $query,
       'elapsed_time' => $time->getElapsedTime(),
       ));
-    
+      
     return $result ?: null;
   }
   
@@ -101,7 +105,9 @@ class Store
   {
     if(Config::enabled('timer')) Timer::write('Store::count', true);
     $time = new \sfTimer();
+    
     $result = $query ? self::coll($collection)->count($query) : self::coll($collection)->count();
+    
     $time->addTime();
     if(Config::enabled('timer')) Timer::write('Store::count');
     
@@ -190,6 +196,30 @@ class Store
     return $result;
   }
   
+  public static function save($collection, &$data = null, $options = null)
+  {
+    try
+    {
+      if(Config::enabled('timer')) Timer::write('Store::save', true);
+      $time = new \sfTimer();
+      $result = self::coll($collection)->save($data, $options);
+      $time->addTime();
+      if(Config::enabled('timer')) Timer::write('Store::save');
+    }
+    catch(Exception $e)
+    {
+      throw StoreException::createFromException($e);
+    }
+    
+    self::query_log('save', $collection, array(
+      'query' => $data,
+      'options' => $options,
+      'elapsed_time' => $time->getElapsedTime(),
+      ));
+    
+    return $result;
+  }
+  
   public static function remove($collection, $query, $options = null)
   {
     try
@@ -225,9 +255,15 @@ class Store
   }
   
   public static function query_log($type, $collection, $data)
-  {  
-    if(!Config::enabled('log') || !Config::enabled('debug') || $collection == 'query_log' || $collection == 'timer' || $collection == 'log' || $collection == 'system.profile' || $collection == 'session') return;
-    
+  {
+    if(!Config::enabled('log')
+        || !Config::enabled('debug')
+        || $collection == 'query_log'
+        || $collection == 'timer'
+        || $collection == 'log'
+        || $collection == 'system.profile'
+        || $collection == 'session'
+      ) return;
     $insert = array_merge(array(
       'type' => $type,
       'collection' => $collection,
