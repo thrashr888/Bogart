@@ -19,10 +19,9 @@ class Request
     $base = null,
     $path = null,
     $cache_key = null,
-    $server = null,
+    $SERVER = null,
+    $_ENV = null,
     $headers = null,
-    $cookies = null,
-    $session = null,
     $files = null,
     $xhr = false,
     $ip = null,
@@ -50,6 +49,7 @@ class Request
   public function init()
   {
     $this->server = $_SERVER;
+    $this->ENV = $_ENV;
     
     if(isset($_SERVER['HTTP_HOST']))
     {
@@ -62,6 +62,7 @@ class Request
       $this->SESSION = $_SESSION;
       $this->FILES = $_FILES;
       $this->REQUEST = $_REQUEST;
+      $this->SERVER = $_SERVER;
       $this->params = array_merge($_GET, $_POST);
       $this->headers = getallheaders();
       $this->url = (isset($_SERVER['HTTPS']) ? 'https' : 'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'].($_SERVER['SERVER_PORT'] == 80 ? null : ':'.$_SERVER['SERVER_PORT']);
@@ -79,6 +80,7 @@ class Request
       $this->query_string = $_SERVER['QUERY_STRING'];
       
       // take a basic guess as to what file type it's asking for
+      // default is html
       if(preg_match('/.*\.([a-z0-9]+)/i', $this->parsed['path'], $format))
       {
         $this->format = $format[1];
@@ -90,7 +92,7 @@ class Request
   
   public function __get($name)
   {
-    return $this->params[$name]?:null;
+    return isset($this->params[$name])?:null;
   }
   
   public function __set($key, $value)
@@ -102,13 +104,13 @@ class Request
   {
     return array(
       'env' => $this->env,
-      'server' => $this->server,
       'method' => $this->method,
       'GET' => $this->GET,
       'POST' => $this->POST,
       'COOKIE' => $this->COOKIE,
       'REQUEST' => $this->REQUEST,
       'FILES' => $this->FILES,
+      'SERVER' => $this->SERVER,
       'params' => $this->params,
       'headers' => $this->headers,
       'url' => $this->url,
@@ -123,7 +125,7 @@ class Request
       'host' => $this->host,
       'port' => $this->port,
       'base' => $this->base,
-      'query_string' => $this->query_string,
+      'query_string' => $this->query_string
     );
   }
   

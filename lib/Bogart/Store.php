@@ -147,13 +147,15 @@ class Store
     return self::insert($collection, $value);
   }
   
-  public static function insert($collection, &$value = null, $safe = true)
+  public static function insert($collection, $value = null, $safe = true)
   {
     try
     {
       if(Config::enabled('timer')) Timer::write('Store::insert', true);
       $time = new \sfTimer();
-      $result = self::coll($collection)->insert(&$value, $safe);
+      
+      $result = self::coll($collection)->insert($value, $safe);
+      
       $time->addTime();
       if(Config::enabled('timer')) Timer::write('Store::insert');
     }
@@ -168,7 +170,7 @@ class Store
       'elapsed_time' => $time->getElapsedTime(),
       ));
     
-    return $result;
+    return $value;
   }
   
   public static function update($collection, $query, &$value = null, $options = null)
@@ -177,7 +179,9 @@ class Store
     {
       if(Config::enabled('timer')) Timer::write('Store::update', true);
       $time = new \sfTimer();
+      
       $result = self::coll($collection)->update($query, array('$set' => $value), $options);
+      
       $time->addTime();
       if(Config::enabled('timer')) Timer::write('Store::update');
     }
@@ -193,16 +197,18 @@ class Store
       'elapsed_time' => $time->getElapsedTime(),
       ));
     
-    return $result;
+    return $value;
   }
   
-  public static function save($collection, &$data = null, $options = null)
+  public static function save($collection, $data = null, $options = null)
   {
     try
     {
       if(Config::enabled('timer')) Timer::write('Store::save', true);
       $time = new \sfTimer();
+      
       $result = self::coll($collection)->save($data, $options);
+      
       $time->addTime();
       if(Config::enabled('timer')) Timer::write('Store::save');
     }
@@ -217,7 +223,7 @@ class Store
       'elapsed_time' => $time->getElapsedTime(),
       ));
     
-    return $result;
+    return $data;
   }
   
   public static function remove($collection, $query, $options = null)
@@ -226,7 +232,9 @@ class Store
     {
       if(Config::enabled('timer')) Timer::write('Store::remove', true);
       $time = new \sfTimer();
+      
       $result = self::coll($collection)->remove($query, $options);
+      
       $time->addTime();
       if(Config::enabled('timer')) Timer::write('Store::remove');
     }

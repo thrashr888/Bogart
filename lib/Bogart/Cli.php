@@ -29,8 +29,8 @@ class Cli
   
   public function run()
   {
-    $app = $this->args[0];
-    $task = $this->args[1];
+    $app = isset($this->args[0]) ? $this->args[0] : null;
+    $task = isset($this->args[1]) ? $this->args[1] : null;
     
     $this->fieldOptions();
     
@@ -47,6 +47,7 @@ class Cli
     }
     
     $this->getApp(!$app ? 'self' : $app);
+    
     $this->getTask($task);
     
     $this->service['cli'] = $this;
@@ -54,6 +55,25 @@ class Cli
     $this->callTask($this->service['route']['callback']);
     
     exit(0); // okay
+  }
+  
+  protected function compile()
+  {  
+    // it's faster to preload our files than autoload them. it's a small list.
+    // we'll load plugin classes/files elsewhere.
+    
+    foreach(array(
+      'Cache/Interface', 'Cache/APC', 'Cache/File', 'Cache/Memcache', 'Cache/Singleton',
+      'Cache', 'Exception', 'Config', 'DateTime',
+      'Events',
+      'FileCache', 'Filter', 'Log', 'MemcacheCache', 'Plugin',
+      'Request', 'Response', 'Route', 'Router', 'Service', 'Store',
+      'Timer'
+      ) as $file)
+    {
+      require __DIR__.'/'.$file.'.php';
+      //memory_diff($file);
+    }
   }
   
   protected function callTask($callback)
@@ -67,7 +87,8 @@ class Cli
     {
       foreach($m->getParameters() as $param)
       {
-        $args[] = $this->service[$param->getName()]; // grab the actual service param
+        if(isset($this->service[$param->getName()]))
+          $args[] = $this->service[$param->getName()]; // grab the actual service param
       }
     }
     
@@ -105,18 +126,18 @@ class Cli
   
   protected function fieldOptions()
   {
-    if($this->args['V'] == 1 || isset($this->args['version']))
+    if(isset($this->args['V']) && $this->args['V'] == 1 || isset($this->args['version']))
     {
       $this->output("Bogart version ".App::VERSION." (".__DIR__.")");
       exit(0);
     }
     
-    if($this->args['H'] == 1 || isset($this->args['help']))
+    if(isset($this->args['H']) && $this->args['H'] == 1 || isset($this->args['help']))
     {
       $this->printHelp($this->args[0], $this->args[1]);
     }
     
-    if($this->args['q'] == 1 || isset($this->args['quiet']))
+    if(isset($this->args['q']) && $this->args['q'] == 1 || isset($this->args['quiet']))
     {
       $this->quiet = true;
     }
@@ -128,18 +149,22 @@ class Cli
     {
       // loads up the store, config, etc.
       //print_r($_SERVER);
+      $this->compile();
       new App(false, array(
-          'setting' => array('sessions' => false)
-          ));
+        'autoload' => false,
+        'setting' => array('sessions' => false)
+        ));
       include __DIR__.'/tasks.php';
     }
     else
     {
       // loads up the store, config, etc.
       //print_r($_SERVER);
+      $this->compile();
       new App($_SERVER['PWD'].'/'.$app.'.php', array(
-          'setting' => array('sessions' => false)
-          ));
+        'autoload' => false,
+        'setting' => array('sessions' => false)
+        ));
     }
     Config::disable('cache');
   }
@@ -181,14 +206,19 @@ Options:
 ");
   }
   
-  public function interactive($prompt = "$ ", $callback, $options = null)
+  public function interactive($prompt = "$ ", $callback, $options = array())
   {
     $prompt_out = str_replace(
-      array('\t'),
-      array(time()),
+      array('\t', '\d'),
+      array(time(), date('r')),
       $prompt);
     
-    if('quit' == $resp = $this->ask($prompt_out))
+    $options = array_merge(array(
+      'quit' => array('q', 'quit')
+      ), $options);
+    
+    $resp = $this->ask($prompt_out);
+    if(in_array($resp, $options['quit']))
     {
       return true;
     }

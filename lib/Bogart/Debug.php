@@ -118,21 +118,21 @@ class Debug
     
     if(Config::enabled('sessions') && isset($_SESSION))
     {
-      echo "<h3>Session</h3>";
+      echo "<h3>SESSION</h3>";
       echo self::prettyPrint($_SESSION);
     }
     
-    echo "<h3>Cookie</h3>";
+    echo "<h3>COOKIE</h3>";
     echo self::prettyPrint($_COOKIE);
     
-    echo "<h3>Request</h3>";
+    echo "<h3>REQUEST</h3>";
     echo self::prettyPrint($_REQUEST);
     
-    echo "<h3>Server</h3>";
+    echo "<h3>SERVER</h3>";
     echo self::prettyPrint($_SERVER);
     //echo '<pre>'.\sfYaml::dump($_SERVER).'</pre>'; // this is kinda easier
     
-    echo "<h3>Environment</h3>";
+    echo "<h3>ENV</h3>";
     echo self::prettyPrint($_ENV);
     
     echo "</div>";

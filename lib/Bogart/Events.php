@@ -16,7 +16,8 @@ Event::Listen('error', function(){
 Event::Listen('error', function($message){
   echo 'an error event: '.$message."\n";
 });
-Event::Raise('error', array('test'));
+
+Event::Raise('error', 'test');
 
 Event::Listen('not_found', function(){
   echo 'not found.'."\n";
@@ -34,13 +35,14 @@ class Events
     self::$events[$name][] = $callback;
   }
   
-  public static function Raise($name, $values = array())
+  public static function Raise($name, $values = null)
   {
     if(!isset(self::$events[$name])) return false;
     Log::write('Raising event '.$name, 'Events');
-    foreach(self::$events[$name] as $callback)
+    foreach(self::$events[$name] as $i => $callback)
     {
       $callback($values);
+      unset(self::$events[$name][$i]);
     }
   }
 }

@@ -2,6 +2,7 @@ app:
   name: Bogart App
   asset:
     servers: ['/']
+
 bogart:
   setting:
     env: dev
@@ -9,22 +10,33 @@ bogart:
     store: true
     dbinit: false
     cache: true
+    compressed: true
     log: true
     user: true
     timer: true
     renderer: mustache
+
 cache:
+  type: Store
+  config:
+    persist: true
+    ttl: 600 # 10 minutes
   persist: true
   ttl: 600 # 10 minutes
+
 db:
   type: Mongo # we're Mongo only
   connection: 'localhost:27017'
   persist: true
   dbname: Bogart
+
 service:  
   cache:
     class: \Bogart\FileCache
     options: %cache%
+  database:
+    class: \Bogart\Database
+    options: %database%
   debug:
     class: \Bogart\Debug
     options: %debug%
@@ -56,8 +68,27 @@ service:
   user:
     class: \Bogart\User
     options: %user%
+
+request:
+  formats:
+    html: [text/html]
+    txt:  [text/plain]
+    js:   [application/javascript, application/x-javascript, text/javascript]
+    css:  [text/css]
+    json: [application/json, application/x-json]
+    xml:  [text/xml, application/xml, application/x-xml]
+    rdf:  [application/rdf+xml]
+    atom: [application/atom+xml]
+
 system:
   timezone: America/Los_Angeles
+
+session:  
+  db_id_col: session_id
+  db_data_col: session_data
+  db_time_col: session_time
+  ttl: 3600# 30 minutes
+
 view:
   cache:
     ttl: 600 # 10 minutes

@@ -92,6 +92,8 @@ class Response
   
   public function finish()
   {
+    Events::Raise('response.finish', &$this);
+    
     // cookies
     foreach ($this->cookies as $cookie)
     {

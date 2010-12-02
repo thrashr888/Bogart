@@ -92,15 +92,18 @@ class Route
   }
   
   public function matchRequest(Request $request)
-  {  
+  {
     if($this->filter)
     {
       // example:
       // array('user-agent' => 'FF3()')
       $safe = false;
       
-      $argv = isset($request->server['argv'])?:null;
-      unset($request->server['argv']);
+      if(isset($request->server['argv']))
+      {
+        $argv = $request->server['argv'];
+        unset($request->server['argv']);
+      }
       
       foreach($this->filter as $filter_name => $filter_value)
       {
@@ -112,48 +115,34 @@ class Route
         
         $filter_value = '/'.$filter_value.'/';
         
-        // to match user agent like sinatra
-        if($filter_name == 'agent' || $filter_name == 'user_agent')
-        {
-          if(preg_match($filter_value, $request->server['HTTP_USER_AGENT'], $matches))
-          {
-            $this->params = array_merge($this->params, array('agent' => $match));
-            $safe = true;
-            continue;
-          }
-        }
-        
-        // to match host name like sinatra
-        if($filter_name == 'host_name')
-        {
-          if(preg_match($filter_value, $request->server['HTTP_HOST'], $matches))
-          {
-            $this->params = array_merge($this->params, array('host_name' => $match));
-            $safe = true;
-            continue;
-          }
-        }
-        
         // check server
-        if($match = preg_grep($filter_value, $request->server))
+        if(isset($request->SERVER[$filter_name]) && preg_match($filter_value, $request->SERVER[$filter_name], $matches))
         {
-          $this->params = array_merge($this->params, $match);
+          $this->params[$filter_name] = $matches[0];
+          $safe = true;
+          continue;
+        }
+        
+        // shortcuts for HTTP stuff
+        if(isset($request->SERVER['HTTP_'.strtoupper($filter_name)]) && preg_match($filter_value, $request->SERVER['HTTP_'.strtoupper($filter_name)], $matches))
+        {
+          $this->params[$filter_name] = $matches[0];
           $safe = true;
           continue;
         }
         
         // check http headers
-        if($match = preg_grep($filter_value, $request->headers))
+        if(isset($request->headers[$filter_name]) && preg_match($filter_value, $request->headers[$filter_name], $matches))
         {
-          $this->params = array_merge($this->params, $match);
+          $this->params[$filter_name] = $matches[0];
           $safe = true;
           continue;
         }
       }
       
-      if(!$safe) return false; // didn't pass the all filters
+      if(isset($argv)) $request->server['argv'] = $argv;
       
-      $request->server['argv'] = $argv;
+      if(!$safe) return false; // didn't pass the all filters
     }
     
     // check for a regex route match to the requested url

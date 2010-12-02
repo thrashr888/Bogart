@@ -51,17 +51,16 @@ class User
   
   public function getUsername()
   {
-    return $this->getUserId() ? $this->getProfile()->username : null;
+    return $this->getUserId() && $this->getProfile() ? $this->getProfile()->username : null;
   }
   
   public function getProfile()
   {
     if(!$this->profile)
     {
-      $this->profile = Store::getOne('User', array('_id' => new \MongoId($this->getUserId())));
+      $this->profile = Store::findOne('User', array('_id' => new \MongoId($this->getUserId())));
     }
-    
-    return $this->profile ?: null;
+    return $this->profile ? (object) $this->profile : null;
   }
   
   public function getUserId()
@@ -71,20 +70,23 @@ class User
   
   public function setUserId($user_id)
   {
-    $_SESSION[self::$persist_name] = (int) $user_id;
+    $_SESSION[self::$persist_name] = $user_id;
     $this->user_id = $user_id;
   }
   
-  public function setProfile(&$user)
-  {  
-    $user['salt'] = rand(11111, 99999);
-    $user['hash_method'] = self::$hash_method;
-    $user['password'] =  $user['hash_method']($user['password'].$user['salt']);
+  public function createProfile(&$user)
+  {
+    if(isset($user['password']))
+    {
+      $user['salt'] = rand(11111, 99999);
+      $user['hash_method'] = self::$hash_method;
+      $user['password'] =  $user['hash_method']($user['password'].$user['salt']);
+    }
     
     try
     {
-      Store::insert('User', $user);
-      $this->setUserId((string) $user['_id']);
+      $user = Store::insert('User', $user);
+      $this->setUserId($user['_id']->__toString());
       $this->profile = $user;
       return true;
     }
@@ -92,6 +94,31 @@ class User
     {
       return false;
     }
+  }
+  
+  public function setProfile(&$profile)
+  {
+    //debug($profile);exit;
+    if(is_array($profile) && isset($profile['_id']))
+    {
+      $user_id = $profile['_id']->__toString();
+    }
+    elseif(is_object($profile) && isset($profile->_data['_id']))
+    {
+      $user_id = $profile->_data['_id']->__toString();
+    }
+    elseif(is_object($profile) && is_a($profile, 'MongoCursor'))
+    {
+      $user_id = $profile->key();
+    }
+    else
+    {
+      throw new Exception('Given data is not a valid profile.');
+    }
+    
+    $this->setUserId($user_id);
+    $this->profile = $profile;
+    return true;
   }
   
   public function login($username, $password)
@@ -103,7 +130,7 @@ class User
         'password' => $user['hash_method']($password.$user['salt'])
         )))
     {
-      $this->setUserId((string) $user['_id']);
+      $this->setUserId($user['_id']->__toString());
       $this->profile = $user;
       return true;
     }

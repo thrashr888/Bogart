@@ -6,29 +6,31 @@ namespace Bogart;
  * Debug funcs
  **/
 
-function debug($var = null, $showHtml = false, $return=false) {
-	$var = print_r($var, true);
-	
-	$calledFrom = debug_backtrace();
-	$trace = '<strong>' . str_replace('/var/www/html/', '', $calledFrom[0]['file']) . '</strong>';
-	$trace .= ' (line <strong>' . $calledFrom[0]['line'] . '</strong>)'."\n";
-
-	if ($showHtml) {
-		$var = str_replace('<', '&lt;', str_replace('>', '&gt;', $var));
-	}
-	
-	$var = $trace.$var;
-	
-	error_log($var);
-	
-	if(!$return){
-		print "\n<pre class=\"debug\">\n{$var}\n</pre>\n";
-	}else{
-		return $var;
-	}
+function debug($var = null, $showHtml = false, $return=false)
+{
+  $var = print_r($var, true);
+  
+  $calledFrom = debug_backtrace();
+  $trace = '<strong>' . str_replace(Config::get('bogart.dir.app'), '', $calledFrom[0]['file']) . '</strong>';
+  $trace .= ' (line <strong>' . $calledFrom[0]['line'] . '</strong>)'."\n";
+  
+  if ($showHtml) {
+    $var = str_replace('<', '&lt;', str_replace('>', '&gt;', $var));
+  }
+  
+  $var = $trace.$var;
+  
+  error_log($var);
+  
+  if(!$return){
+    print "\n<pre class=\"debug\">\n{$var}\n</pre>\n";
+  }else{
+    return $var;
+  }
 }
 
-function dump($var = null, $showHtml = false, $return=false) {
+function dump($var = null, $showHtml = false, $return=false)
+{
 	ob_start();
 	var_dump($var);
 	$var = ob_get_clean();
@@ -56,6 +58,35 @@ function stop($var = 'stop')
 	debug($var);
   Exception::outputDebug();
   exit;
+}
+
+function darg()
+{
+	$var = print_r(func_get_args(), true);
+	
+	$calledFrom = debug_backtrace();
+	$trace = '<strong>' . str_replace(Config::get('bogart.dir.app', ''), '', $calledFrom[0]['file']) . '</strong>';
+	$trace .= ' (line <strong>' . $calledFrom[0]['line'] . '</strong>)'."\n";
+	
+	$var = $trace.$var;
+	
+	error_log($var);
+	
+	print "\n<pre class=\"debug\">\n{$var}\n</pre>\n";
+}
+
+function memory_diff($name = '')
+{
+  static $last;
+  if(!$last) $last = 0;
+  
+	$calledFrom = debug_backtrace();
+	$trace = $calledFrom[0]['file'] . ' (line ' . $calledFrom[0]['line'] . ')'."\n";
+	$calledFrom = null;
+	
+  $current = memory_get_usage();
+  echo sprintf("diff %s %sb of %sb: %s", $name, number_format($current-$last), number_format($current), $trace);
+  $last = $current;
 }
 
 /**
@@ -104,7 +135,7 @@ function None(Array $data = array())
 
 function Filter($name, $callback)
 {
-  return Filter::add($name, $callback);
+  return Filter::Add($name, $callback);
 }
 
 /**

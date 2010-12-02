@@ -3,6 +3,13 @@
 
 namespace Bogart;
 
+ini_set('memory_limit', '512M');
+ini_set('xdebug.extended_info', 'Off');
+if(function_exists('xdebug_disable'))
+{
+  xdebug_disable();
+}
+
 require __DIR__.'/../lib/Bogart/Cli.php';
 
 $cli = new Cli($argv);

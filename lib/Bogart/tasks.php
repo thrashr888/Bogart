@@ -7,7 +7,9 @@ namespace Bogart;
 // $ bogart self cc
 Task('cc', 'Clears the cache folder.', function($args, Cli $cli)
 {
-  $files = glob(Config::get('bogart.dir.cache', '/tmp').'/*');
+  $files = glob($_SERVER['PWD'].'/cache/*');
+  if(empty($files)) $cli->output('cache is empty');
+  
   foreach($files as $file)
   {
     unlink($file);
@@ -25,7 +27,7 @@ Task('demo', 'A demo of the Bogart Cli.', function($args, Cli $cli)
   $cli->output('echo: '.$cli->ask('echo: '));
   
   $cli->output("Interactive mode:\n(`quit` or `q` to quit)");
-  $cli->interactive("\\t $ ", function($resp, $cli, $options)
+  $cli->interactive("moo: \\d $ ", function($resp, $cli, $options)
   {  
     $cli->output($resp);
     if($resp == 'e')
@@ -35,7 +37,7 @@ Task('demo', 'A demo of the Bogart Cli.', function($args, Cli $cli)
       return false;
     }
     
-    return 'moo: \\t $ '; // the new prompt
+    return 'moo: \\d $ '; // the new prompt
   }, array('test' => 1));
   
   $cli->output("You get one more shot. Last chance, buddy!");
@@ -54,21 +56,23 @@ Task('echo', 'Just an echo echo echo.', function($args, Cli $cli)
 // $ bogart self init project_name
 Task('init', 'Make a new project.', function($args, Cli $cli)
 {
-  $cli->cmd('mkdir', $args[1]);
-  $cli->cmd('cd', $args[1]);
-  $cli->cmd('mkdir', 'public');
-  $cli->cmd('mkdir', 'views');
-  $cli->cmd('mkdir', 'cache');
-  $cli->cmd('chmod', '777 cache');
-  $cli->cmd('echo', '"<?php
+  $root = $_SERVER['PWD'];
+  
+  $cli->exec('mkdir', $args[1]);
+  $cli->exec('cd', $args[1]);
+  $cli->exec('mkdir', 'public');
+  $cli->exec('mkdir', 'views');
+  $cli->exec('mkdir', 'cache');
+  $cli->exec('chmod', '777 cache');
+  file_put_contents('<?php
 
 namespace Bogart;
 
-Get('/', function()
+Get(\'/\', function()
 {
   
 });
 
-" index.php');
-  $cli->cmd('mkdir', 'public');
+', 'index.php');
+  $cli->exec('mkdir', 'public');
 });

@@ -19,9 +19,13 @@ class App
   
   public function __construct($script = false, Array $options = array())
   {
+    $options = array_merge(array(
+      'autoload' => true
+    ), $options);
+    
     try
     {
-      $this->compile(false);
+      if($options['autoload']) $this->compile();
       $this->init($script, $options);
     }
     catch(\Exception $e)
@@ -40,6 +44,7 @@ class App
     // we'll load plugin classes/files elsewhere.
     
     foreach(array(
+      'Cache/Interface', 'Cache/APC', 'Cache/File', 'Cache/Memcache', 'Cache/Store', 'Cache/Singleton',
       'Cache', 'Exception', 'Config', 'Controller', 'Collection', 'DateTime',
       'Debug', 'Entity', 'Error404Exception', 'EventDispatcher', 'Event', 'Events',
       'FileCache', 'Filter', 'Log', 'MemcacheCache', 'Model', 'Plugin',
@@ -49,31 +54,41 @@ class App
       'Session', 'String', 'Timer', 'User', 'View'
       ) as $file)
     {
-        require __DIR__.'/'.$file.'.php';
+      require __DIR__.'/'.$file.'.php';
     }
   }
   
   protected function init($script = false, Array $options = array())
   {
-    Request::$id = sha1(microtime(true).$_SERVER['SERVER_NAME'].$_SERVER['HTTP_HOST']);
+    if(isset($_SERVER['HTTP_HOST']))
+      Request::$id = sha1(microtime(true).$_SERVER['SERVER_NAME'].$_SERVER['HTTP_HOST']);
+    
     $this->options = array_merge($this->options, $options);
     
     Timer::write('App', true);
     Timer::write('App::init', true);
     
-    $this->config($script, $options);
-    
-    // it might be pointing to itself, which is already loaded
-    if($script && $_SERVER['SCRIPT_FILENAME'] != $script)
-    {
-      // load our routes file
-      if(!file_exists(Config::get('app.file')) || !include_once(Config::get('app.file')))
+    try{
+      $this->config($script, $options);
+      
+      // it might be pointing to itself, which is already loaded
+      if($script && $_SERVER['SCRIPT_FILENAME'] != $script)
       {
-        Log::write('Script file ( '.Config::get('app.file').' ) does not exist.');
+        // load our routes file
+        if(!file_exists(Config::get('app.file')) || !include_once(Config::get('app.file')))
+        {
+          Log::write('Script file ( '.Config::get('app.file').' ) does not exist.');
+        }
       }
+      
+      $this->setup($options);
     }
-    
-    $this->setup();
+    catch(\Exception $e)
+    {
+      header('HTTP/1.1 500 Internal Server Error');
+      include 'views/error.html';
+      exit;
+    }
     
     Log::write("Init project: script: '".Config::get('app.file')."'");
     Timer::write('App::init');
@@ -193,7 +208,15 @@ class App
     if(Config::enabled('sessions'))
     {
       if(Config::enabled('timer')) Timer::write('App::setup::sessions', true);
-      new Session($this->options['user']);
+      try
+      {
+        new Session(Config::get('session'));
+      }
+      catch(\Exception $e)
+      {
+        echo 'sessions not available';
+        exit;
+      }
       if(Config::enabled('timer')) Timer::write('App::setup::sessions');
     }
     
@@ -206,10 +229,13 @@ class App
     
     $this->service = new Service();
     
-    $this->service['request'] = new Request(array('env' => Config::setting('env')));
-    $this->service['response'] = new Response();
-    $this->service['user'] = new User($this->options['user']);
-    $this->service['event_dispatcher'] = new EventDispatcher();
+    if(isset($_SERVER['HTTP_HOST']))
+    {
+      $this->service['request'] = new Request(array('env' => Config::setting('env')));
+      $this->service['response'] = new Response();
+      $this->service['user'] = new User($this->options['user']);
+      //$this->service['event_dispatcher'] = new EventDispatcher();
+    }
     
     /*if(Config::has('service'))
     {
