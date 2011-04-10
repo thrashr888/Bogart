@@ -42,7 +42,7 @@ class Events
     foreach(self::$events[$name] as $i => $callback)
     {
       $callback($values);
-      unset(self::$events[$name][$i]);
     }
+    return true;
   }
 }

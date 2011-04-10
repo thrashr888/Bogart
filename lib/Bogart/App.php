@@ -45,8 +45,8 @@ class App
     
     foreach(array(
       'Cache/Interface', 'Cache/APC', 'Cache/File', 'Cache/Memcache', 'Cache/Store', 'Cache/Singleton',
-      'Cache', 'Exception', 'Config', 'Controller', 'Collection', 'DateTime',
-      'Debug', 'Entity', 'Error404Exception', 'EventDispatcher', 'Event', 'Events',
+      'Cache', 'Exception', 'Config', 'Controller', 'Model/Collection', 'DateTime',
+      'Debug', 'Model/Entity', 'Error404Exception', 'EventDispatcher', 'Event', 'Events',
       'FileCache', 'Filter', 'Log', 'MemcacheCache', 'Model', 'Plugin',
       'Renderer/Renderer', 'Renderer/Html', 'Renderer/Less', 'Renderer/Minify',
       'Renderer/Mustache', 'Renderer/None', 'Renderer/Php', 'Renderer/Twig',
@@ -87,6 +87,13 @@ class App
     {
       header('HTTP/1.1 500 Internal Server Error');
       include 'views/error.html';
+      
+      if(isset($options['debug']))
+      {
+        echo '<pre>'.get_class($e).': '.$e->getMessage().'</pre>';
+        echo '<pre><code>'.$e->getTraceAsString().'</code></pre>';
+      }
+      
       exit;
     }
     

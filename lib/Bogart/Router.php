@@ -163,6 +163,30 @@ class Router
    * @param $callback_or_filter The callback or a filter array
    * @param $callback The callback if there's a filter
    */
+  public static function Head($route, $callback_or_filter = null, $callback = null)
+  {
+    if(is_array($callback_or_filter))
+    {
+      $filter = $callback_or_filter;
+    }else{
+      $callback = $callback_or_filter;
+      $filter = null;
+    }
+    self::$routes[] = new Route(array(
+      'method' => 'HEAD',
+      'name' => $route,
+      'callback' => $callback,
+      'filter' => $filter,
+      ));
+  }
+  
+  // For TRACE or CONNECT, just use Any and check for them in the callback.
+  
+  /**
+   * @param $route The name of the route. String with splats, named routes or regex.
+   * @param $callback_or_filter The callback or a filter array
+   * @param $callback The callback if there's a filter
+   */
   public static function Any($route, $callback_or_filter = null, $callback = null)
   {
     if(is_array($callback_or_filter))

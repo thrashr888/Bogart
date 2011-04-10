@@ -75,7 +75,8 @@ class Controller
         $this->service['response']->redirect($route->filter['redirect']);
       }
       
-      $this->service['request']->params = array_merge($this->service['request']->params, $route->params);
+      $this->service['request']->params = array_merge($this->service['request']->params, $route->params); // TODO: cleaned input
+      //$this->service['request']->raw = array_merge($this->service['request']->raw, $route->params); // unclean input
       $this->service['request']->route = $route->name;
       
       Log::write('Matched route: '.$route->method.': '.$route->name, 'route');
@@ -194,6 +195,7 @@ class Controller
       }
       elseif(is_string($view))
       {
+        debug($view);
         return View::HTML($view);
       }
       elseif(is_array($view) && preg_match("/([a-z0-9_\-]+)/i", $this->service['route']->name, $matches))

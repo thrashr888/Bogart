@@ -162,6 +162,11 @@ function Delete($route, $callback_or_filter = null, $callback = null)
   return Router::Delete($route, $callback_or_filter, $callback);
 }
 
+function Head($route, $callback_or_filter = null, $callback = null)
+{
+  return Router::Head($route, $callback_or_filter, $callback);
+}
+
 function Any($route, $callback_or_filter = null, $callback = null)
 {
   return Router::Any($route, $callback_or_filter, $callback);

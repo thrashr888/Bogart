@@ -63,7 +63,12 @@ class Request
       $this->FILES = $_FILES;
       $this->REQUEST = $_REQUEST;
       $this->SERVER = $_SERVER;
-      $this->params = array_merge($_GET, $_POST);
+      $this->params = array_merge($_GET, $_POST); // TODO: escape me
+      //array_walk_recursive(array_merge($_GET, $_POST), function(&$item){
+      //  $item = htmlentities($item, ENT_QUOTES, 'UTF-8');
+      //  $item = htmlspecialchars($item, ENT_QUOTES, 'UTF-8');
+      //}, $this->params);
+      $this->raw = array_merge($_GET, $_POST); // unclean input
       $this->headers = getallheaders();
       $this->url = (isset($_SERVER['HTTPS']) ? 'https' : 'http').'://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'].($_SERVER['SERVER_PORT'] == 80 ? null : ':'.$_SERVER['SERVER_PORT']);
       $this->uri = $_SERVER['REQUEST_URI']?:null;
@@ -112,6 +117,7 @@ class Request
       'FILES' => $this->FILES,
       'SERVER' => $this->SERVER,
       'params' => $this->params,
+      'raw' => $this->raw,
       'headers' => $this->headers,
       'url' => $this->url,
       'uri' => $this->uri,
@@ -128,12 +134,26 @@ class Request
       'query_string' => $this->query_string
     );
   }
-  
+/**
+ * "DELETE", "GET", "HEAD", "POST", "PUT", "CONNECT", "OPTIONS", "TRACE", "COPY", "LOCK", "MKCOL", "MOVE", "PROPFIND", "PROPPATCH", "UNLOCK", "REPORT", "MKACTIVITY", "CHECKOUT", "MERGE", "M-SEARCH", "NOTIFY", "SUBSCRIBE", "UNSUBSCRIBE"
+**/
   protected function getMethod()
   {
-    if(isset($_POST) && isset($_POST['_method']) && strtolower($_POST['_method']) == 'delete') return 'DELETE';
-    if(isset($_POST) && isset($_POST['_method']) && strtolower($_POST['_method']) == 'put') return 'PUT';
-    return strtoupper($_SERVER['REQUEST_METHOD']);
+    if(isset($_POST) && isset($_POST['_method'])){
+      if(strtoupper($_POST['_method']) == 'PUT') return 'PUT';
+      if(strtoupper($_POST['_method']) == 'DELETE') return 'DELETE';
+      return strtoupper($_POST['_method']); // catch-all
+    }
+    
+    if(isset($_GET) && isset($_GET['_method'])){
+      if(strtoupper($_GET['_method']) == 'OPTIONS') return 'OPTIONS';
+      if(strtoupper($_GET['_method']) == 'HEAD') return 'HEAD';
+      if(strtoupper($_GET['_method']) == 'TRACE') return 'TRACE';
+      if(strtoupper($_GET['_method']) == 'CONNECT') return 'CONNECT';
+      return strtoupper($_GET['_method']); // catch-all
+    }
+    
+    return strtoupper($_SERVER['REQUEST_METHOD']); // GET or POST or custom
   }
   
   public function getCacheKey()

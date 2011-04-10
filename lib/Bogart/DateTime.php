@@ -58,48 +58,4 @@ class DateTime extends \DateTime
 		$rv = round ((($firstDateTimeStamp - $secondDateTimeStamp))/86400);
 		return $rv;
 	}
-
-	/**
-	 * This function returns an object of DateClass from $time in format $format. See date() for possible values for $format
-	 **/
-	static function createFromFormat ($format, $time){
-		assert ($format!="");
-		if($time==""){
-			return new self();
-		}
-
-		$regexpArray['Y'] = "(?P<Y>19|20\d\d)";
-		$regexpArray['m'] = "(?P<m>0[1-9]|1[012])";
-		$regexpArray['d'] = "(?P<d>0[1-9]|[12][0-9]|3[01])";
-		$regexpArray['-'] = "[-]";
-		$regexpArray['.'] = "[\. /.]";
-		$regexpArray[':'] = "[:]";
-		$regexpArray['space'] = "[\s]";
-		$regexpArray['H'] = "(?P<H>0[0-9]|1[0-9]|2[0-3])";
-		$regexpArray['i'] = "(?P<i>[0-5][0-9])";
-		$regexpArray['s'] = "(?P<s>[0-5][0-9])";
-
-		$formatArray = str_split ($format);
-		$regex = "";
-
-		// create the regular expression
-		foreach($formatArray as $character){
-			if ($character==" ") $regex = $regex.$regexpArray['space'];
-			elseif (array_key_exists($character, $regexpArray)) $regex = $regex.$regexpArray[$character];
-		}
-		$regex = "/".$regex."/";
-
-		// get results for regualar expression
-		preg_match ($regex, $time, $result);
-
-		// create the init string for the new DateTime
-		$initString = $result['Y']."-".$result['m']."-".$result['d'];
-
-		// if no value for hours, minutes and seconds was found add 00:00:00
-		if (isset($result['H'])) $initString = $initString." ".$result['H'].":".$result['i'].":".$result['s'];
-		else {$initString = $initString." 00:00:00";}
-
-		$newDate = new self ($initString);
-		return $newDate;
-	}
 }

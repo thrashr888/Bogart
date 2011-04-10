@@ -148,7 +148,6 @@ class View
   
   public static function Minify($template, Array $data = array(), Array $options = array())
   {
-    \Bogart\d($template, $data, $options);
     $options['cache'] = false;
     $view = new View($template, $data, new Renderer\Minify($options), $options);
     $view->layout = null;

@@ -15,7 +15,7 @@ class Minify extends Renderer
   
   public function __construct(Array $options = array())
   {
-    \Bogart\debug($options);
+    //\Bogart\debug($options);
     // Minify libs require include_path
     set_include_path(Config::get('bogart.dir.bogart').'/vendor/minify_2.1.3/min/lib/' . PATH_SEPARATOR . get_include_path());
   }

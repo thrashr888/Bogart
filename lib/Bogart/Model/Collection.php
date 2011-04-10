@@ -5,6 +5,8 @@ namespace Bogart\Model;
 use \Bogart\Store;
 use \Bogart\Config;
 
+// sorta works like ActiveRecord, just more MongoDB like.
+
 abstract class Collection
 {
   const name = null; // the collection name
