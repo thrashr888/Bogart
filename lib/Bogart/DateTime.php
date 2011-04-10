@@ -22,20 +22,6 @@ class DateTime extends \DateTime
 	}
 
 	/**
-	 * Return difference between $this and $now
-	 * 
-	 * @requires PHP 5.3
-	 * @param Datetime|String $now
-	 * @return DateInterval
-	 */
-	public function diff($now = 'NOW') {
-		if(!($now instanceOf DateTime)) {
-			$now = new DateTime($now);
-		}
-		return parent::diff($now); // requires PHP 5.3
-	}
-
-	/**
 	 * Return Age in Years
 	 * 
 	 * @param Datetime|String $now
