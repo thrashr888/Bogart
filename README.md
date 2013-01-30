@@ -2,7 +2,7 @@
 Bogart: Sinatra for PHP
 =======================
 
-This is Bogart, Sinatra for PHP. We can't be as consise as Ruby, but can at least try.
+This is Bogart, Sinatra for PHP. PHP 5.3 and MongoDB only.
 
 Installation
 ------------
@@ -16,7 +16,7 @@ You get going quick by using the [Bogart-sandbox project](http://github.com/thra
     git submodule init
     git submodule update --init --recursive
 
-*This will get easier, I'll update this readme when I get that worked out.*
+*This should get simpler, I'll update this readme when I get that worked out.*
 
 Examples
 -------
