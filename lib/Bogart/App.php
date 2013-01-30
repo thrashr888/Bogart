@@ -153,6 +153,16 @@ class App
     if($script)
     {
       // app-level config
+      $app_path = realpath(dirname($script));
+      Config::set('bogart.dir', array(
+        'app.file' => realpath($script),
+        'app.path' => $app_path,
+        'app.name' => basename($script, '.php'),
+        'public' => $_SERVER['DOCUMENT_ROOT'],
+        'cache' => $app_path.'/cache',
+        'views' => $app_path.'/views',
+        ));
+      
       Config::set('app.file', realpath($script));
       Config::set('app.path', realpath(dirname($script)));
       Config::set('app.name', basename($script, '.php'));
